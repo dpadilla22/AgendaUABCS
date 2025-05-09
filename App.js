@@ -12,26 +12,20 @@ const Drawer = createDrawerNavigator();
 
 function DrawerNavigator() {
   return (
-    <Drawer.Navigator initialRouteName="Home">
-      <Drawer.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          headerShown: false, 
-        }}
-      />
-      <Drawer.Screen
-        name="Cerrar sesion"
-        component={WelcomeScreen}
-        options={{
-          headerShown: false,
-        }}
-      />
+    <Drawer.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        headerShown: false,
+        drawerActiveTintColor: '#4A96BD', 
+        drawerActiveBackgroundColor: '#FFF7A3', 
+        drawerInactiveTintColor: 'black', 
+      }}
+    >
+      <Drawer.Screen name="Home" component={HomeScreen} />
+      <Drawer.Screen name="Cerrar sesion" component={WelcomeScreen} />
     </Drawer.Navigator>
-  )
+  );
 }
-
-
 export default function App() {
   return (
     <NavigationContainer>

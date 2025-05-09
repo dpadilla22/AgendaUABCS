@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image } from "react-native"; // ✅ import Image
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image } from "react-native"; 
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -23,7 +23,7 @@ const LoginScreen = ({ navigation }) => {
               <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Ingresa tu usuario"
+                // placeholder="Ingresa tu usuario"
                 value={username}
                 onChangeText={setUsername}
               />
@@ -36,7 +36,7 @@ const LoginScreen = ({ navigation }) => {
               <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Ingresa tu contraseña"
+                // placeholder="Ingresa tu contraseña"
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -68,9 +68,8 @@ const styles = StyleSheet.create({
   },
   blueSection: {
     height: 220,
-    backgroundColor: "#2D6FA4",
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "center"
   },
   people: {
     width: 400,
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   formContainer: {
-    width: "85%",
+    width: "90%",
     alignSelf: "center",
     padding: 20,
   },
@@ -119,11 +118,9 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
   },
-  eyeIcon: {
-    padding: 10,
-  },
+
   button: {
-    backgroundColor: "#4A9FD1",
+    backgroundColor: "#003366",
     paddingVertical: 15,
     borderRadius: 10,
     marginTop: 20,
@@ -140,7 +137,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   helpText: {
-    color: "#4A9FD1",
+    color: "#000000",
     fontSize: 14,
     textAlign: "center",
     marginTop: 20,
