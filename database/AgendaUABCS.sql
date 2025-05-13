@@ -1,18 +1,20 @@
-DROP DATABASE IF EXISTS AGENDA_UABCS;
-CREATE DATABASE AGENDA_UABCS;
-USE AGENDA_UABCS;
+USE railway;
 
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 -- 												TABLES
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS Account;
+DROP TABLE IF EXISTS events;
+
 CREATE TABLE Account(
     idAccount CHAR(6) NOT NULL PRIMARY KEY UNIQUE,
     nameUser VARCHAR(100) NOT NULL,
     emailUser VARCHAR(50) NOT NULL UNIQUE,
     passwordUser VARCHAR(100) NOT NULL
 );
+
 
 CREATE TABLE events (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,6 +35,7 @@ CREATE TABLE favorites (
 -- 											GENERATE ID ACCOUNT
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DROP TRIGGER IF EXISTS generateId;
 DELIMITER //
 CREATE TRIGGER generateId BEFORE INSERT ON Account
 FOR EACH ROW
@@ -78,6 +81,7 @@ DELIMITER ;
 -- 													LOGIN
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DROP PROCEDURE IF EXISTS SP_LOGIN;
 DELIMITER $$
 CREATE PROCEDURE SP_LOGIN(
     IN l_emailUser VARCHAR(50)
@@ -88,3 +92,5 @@ BEGIN
     WHERE emailUser = l_emailUser;
 END$$
 DELIMITER ;
+
+CALL SP_CREATE_ACCOUNT('Juan', 'juan@gmail.com', '1234568788');
