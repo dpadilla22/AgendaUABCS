@@ -103,14 +103,15 @@ const HomeScreen = ({ navigation }) => {
 
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.bottomNavItem}>
-          <Image source={require("../assets/bookmark.png")} style={styles.bookMarkIcon} />
+         <Image source={require('../assets/location.png')} style={styles.locationIcon} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.bottomNavItem}>
           <Image source={require("../assets/home.png")} style={styles.homeIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Image source={require("../assets/profile.png")} style={styles.profileIcon} />
-        </TouchableOpacity>
+       <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
+      <Image source={require("../assets/profile.png")} style={styles.profileIcon} />
+      </TouchableOpacity>
+
       </View>
 
       <StatusBar style="dark" />
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#333",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
   },
   headerIcons: {
@@ -279,9 +280,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: "100%",
   },
-  bookMarkIcon: {
-    width: 45,
-    height: 45,
+  locationIcon: {
+    width: 34,
+    height: 35,
     tintColor: "white",
   },
   homeIcon: {
@@ -296,4 +297,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default HomeScreen
+export default HomeScreen;

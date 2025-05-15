@@ -2,11 +2,61 @@ import { useState } from "react";
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image } from "react-native"; 
+import Toast from 'react-native-toast-message';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+
+  const handleLogin = async () => {
+  if (!username || !password) {
+    alert('Por favor ingresa usuario y contraseña');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch('http://localhost:3000/login', {  
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        identifierUser: username,
+        passwordUser: password
+      })
+    });
+
+   const data = await response.json();
+
+    if (response.ok) {
+      Toast.show({
+        type: 'success',
+        text1: '¡Bienvenido!',
+        text2: `Hola de nuevo, ${data.user.name} `,
+      });
+      navigation.navigate('Home', { user: data.user });
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Error de acceso',
+        text2: data.message || 'Credenciales incorrectas ',
+      });
+    }
+  } catch (error) {
+    Toast.show({
+      type: 'error',
+      text1: 'Error de red',
+      text2: 'No se pudo conectar al servidor 😭',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -23,7 +73,7 @@ const LoginScreen = ({ navigation }) => {
               <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                // placeholder="Ingresa tu usuario"
+                
                 value={username}
                 onChangeText={setUsername}
               />
@@ -46,9 +96,10 @@ const LoginScreen = ({ navigation }) => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Home")}>
-            <Text style={styles.buttonText}>Iniciar sesión</Text>
-          </TouchableOpacity>
+         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+  <Text style={styles.buttonText}>{loading ? 'Cargando...' : 'Iniciar sesión'}</Text>
+</TouchableOpacity>
+
 
           <TouchableOpacity>
             <Text style={styles.helpText}>¿Problemas para ingresar?</Text>

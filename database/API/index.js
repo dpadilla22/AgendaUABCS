@@ -4,13 +4,16 @@ import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 dotenv.config();
 import bcrypt from 'bcrypt';
+import cors from 'cors'; 
 
 const app = express();
+app.use(cors()); 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
-
+console.log('User:', process.env.DB_USER);
+console.log('Password:', process.env.DB_PASSWORD);
 app.listen(PORT, () => {
     console.log('Server is running baby!');
 });
