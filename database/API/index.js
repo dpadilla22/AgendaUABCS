@@ -12,8 +12,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
-console.log('User:', process.env.DB_USER);
-console.log('Password:', process.env.DB_PASSWORD);
 app.listen(PORT, () => {
     console.log('Server is running baby!');
 });
