@@ -6,6 +6,22 @@
 
 ###
 
+<h2 align="left">Languages</h2>
+
+###
+
+<div align="left">
+  <img src="https://skillicons.dev/icons?i=js" height="40" alt="javascript logo"  />
+  <img width="12" />
+  <img src="https://skillicons.dev/icons?i=react" height="40" alt="react logo"  />
+  <img width="12" />
+  <img src="https://skillicons.dev/icons?i=nodejs" height="40" alt="nodejs logo"  />
+  <img width="12" />
+  <img src="https://skillicons.dev/icons?i=express" height="40" alt="express logo"  />
+</div>
+
+###
+
 <h2 align="left">Development team</h2>
 
 ###
@@ -26,22 +42,6 @@
 
 <div align="center">
   <img height="150" src="https://avatars.githubusercontent.com/u/113967954?v=4"  />
-</div>
-
-###
-
-<h2 align="left">Languages</h2>
-
-###
-
-<div align="left">
-  <img src="https://skillicons.dev/icons?i=js" height="40" alt="javascript logo"  />
-  <img width="12" />
-  <img src="https://skillicons.dev/icons?i=react" height="40" alt="react logo"  />
-  <img width="12" />
-  <img src="https://skillicons.dev/icons?i=nodejs" height="40" alt="nodejs logo"  />
-  <img width="12" />
-  <img src="https://skillicons.dev/icons?i=express" height="40" alt="express logo"  />
 </div>
 
 ###
