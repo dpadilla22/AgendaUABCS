@@ -8,6 +8,8 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import Profile from './screens/profile';
 import DepartamentScreen from './screens/DepartamentScreen';
+import Notificaciones from './screens/notificaction';
+import LocationScreen from './screens/LocationScreen';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -39,6 +41,10 @@ export default function App() {
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Home" component={DrawerNavigator} />
+          <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="DepartamentScreen" component={DepartamentScreen} />
+          <Stack.Screen name="Notificaciones" component={Notificaciones} />
+          <Stack.Screen name="LocationScreen" component={LocationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       

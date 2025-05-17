@@ -37,9 +37,16 @@ const HomeScreen = ({ navigation }) => {
           <TouchableOpacity style={styles.iconButton}>
             <Image source={require("../assets/search.png")} style={styles.headerIcon} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={require("../assets/notification.png")} style={styles.headerIcon} />
-          </TouchableOpacity>
+          <TouchableOpacity 
+          style={styles.iconButton} 
+        onPress={() => navigation.navigate("Notificaciones")}
+          >
+         <Image
+         source={require("../assets/notification.png")} 
+       style={styles.headerIcon} 
+  />
+</TouchableOpacity>
+
         </View>
       </View>
 
@@ -102,7 +109,7 @@ const HomeScreen = ({ navigation }) => {
       </ScrollView>
 
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("LocationScreen")}>
          <Image source={require('../assets/location.png')} style={styles.locationIcon} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.bottomNavItem}>
@@ -159,7 +166,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "#333",
     fontSize: 15,
-    fontWeight: "bold",
   },
   headerIcons: {
     flexDirection: "row",

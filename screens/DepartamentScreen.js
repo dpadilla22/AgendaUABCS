@@ -8,11 +8,8 @@ const DepartamentScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Agenda UABCS</Text>
+        <Text style={styles.headerTitle}>Calendario</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={require('../assets/notification.png')} style={styles.notificationIcon} />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -73,10 +70,10 @@ const DepartamentScreen = ({ navigation }) => {
 
     
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("LocationScreen")}>
           <Image source={require('../assets/location.png')} style={styles.locationIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
           <Image source={require('../assets/home.png')} style={styles.homeIcon} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
@@ -96,8 +93,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
-    paddingTop: 30,
+    paddingHorizontal: 20,
+    paddingTop: 45,
     paddingBottom: 15,
     backgroundColor: '#3498db',
   },
@@ -111,9 +108,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "#33",
     fontSize: 15,
-    fontWeight: "bold",
     textAlign: "center",
-    flex: 1,
   },
   headerIcons: {
     flexDirection: "row",

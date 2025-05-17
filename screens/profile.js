@@ -97,9 +97,9 @@ const Profile = ({ navigation }) => {
       </View>
 
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Image source={require("../assets/bookmark.png")} style={styles.bookMarkIcon} />
-        </TouchableOpacity>
+         <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("LocationScreen")}>
+                 <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+                </TouchableOpacity>
         <TouchableOpacity style={styles.bottomNavItem} onPress={()=> navigation.navigate("Home")}>
           <Image source={require("../assets/home.png")} style={styles.homeIcon} />
         </TouchableOpacity>
@@ -257,9 +257,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: "100%",
   },
-  bookMarkIcon: {
-    width: 45,
-    height: 45,
+  locationIcon: {
+    width: 34,
+    height: 35,
     tintColor: "white",
   },
   homeIcon: {

@@ -19,8 +19,20 @@ const LoginScreen = ({ navigation }) => {
 
   setLoading(true);
 
+  // try {
+  //   const response = await fetch('http://localhost:3000/login', {  
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     body: JSON.stringify({
+  //       identifierUser: username,
+  //       passwordUser: password
+  //     })
+  //   });
+
   try {
-    const response = await fetch('http://localhost:3000/login', {  
+    const response = await fetch('https://e115-2806-265-5402-ca4-44e0-9b17-5951-e773.ngrok-free.app/login', {  
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -31,11 +43,12 @@ const LoginScreen = ({ navigation }) => {
       })
     });
 
+
    const data = await response.json();
 
     if (response.ok) {
+      type: 'success',
       Toast.show({
-        type: 'success',
         text1: '¡Bienvenido!',
         text2: `Hola de nuevo, ${data.user.name} `,
       });
@@ -44,14 +57,14 @@ const LoginScreen = ({ navigation }) => {
       Toast.show({
         type: 'error',
         text1: 'Error de acceso',
-        text2: data.message || 'Credenciales incorrectas ',
+        text2: data.message || 'Credenciales incorrectas',
       });
     }
   } catch (error) {
     Toast.show({
       type: 'error',
       text1: 'Error de red',
-      text2: 'No se pudo conectar al servidor 😭',
+      text2: 'No se pudo conectar al servidor',
     });
   } finally {
     setLoading(false);
