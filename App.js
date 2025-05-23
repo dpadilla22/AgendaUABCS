@@ -27,9 +27,8 @@ function DrawerNavigator() {
       }}
     >
       <Drawer.Screen name="Home" component={HomeScreen} />
-      <Drawer.Screen name="Cerrar sesion" component={WelcomeScreen} />
-      <Drawer.Screen name="Profile" component={Profile} />
       <Drawer.Screen name="Humanidades" component={DepartamentScreen} />
+      <Drawer.Screen name="Cerrar sesion" component={WelcomeScreen} />
     </Drawer.Navigator>
   );
 }

@@ -1,27 +1,107 @@
-import { useState } from "react"
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView } from "react-native"
-import { StatusBar } from "expo-status-bar"
+import React, { useState, useEffect,useRef } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView,RefreshControl } from "react-native";
+import EventCard from "../components/EventCard";
+import { ActivityIndicator, Animated } from "react-native";
+
 
 const COLORS = {
-  coral: "#FF7B6B", 
-  darkBlue: "#003366", 
-  lightBlue: "#7BBFFF", 
-  lightGray: "#D9D9D9", 
-  offWhite: "#F5F5F5", 
+  coral: "#FF7B6B",
+  darkBlue: "#003366",
+  lightBlue: "#7BBFFF",
+  lightGray: "#D9D9D9",
+  offWhite: "#F5F5F5",
   yellow: "#FFCC33",
-  purple: "#9966FF", 
-}
+  purple: "#9966FF",
+};
 
 const HomeScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState("Hoy")
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("Hoy");
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleTabPress = (tabName) => {
-    setActiveTab(tabName)
+    const onRefresh = async () => {
+  setRefreshing(true);
+  try {
+    const response = await fetch('https://80d3-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
+    const data = await response.json();
+    setEvents(data.events || []);
+  } catch (error) {
+    console.error("Error al refrescar eventos:", error);
+    setEvents([]);
+  } finally {
+    setRefreshing(false);
   }
+};
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('https://80d3-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
+        const data = await response.json();
+        console.log("Eventos cargados:", data);
+        setEvents(data.events || []);
+      } catch (error) {
+        console.error('Error al obtener eventos:', error);
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [loading, fadeAnim]);
+
+  const handleTabPress = (tab) => {
+    setActiveTab(tab);
+  };
+
+  const getHour = (dateString) => {
+    const dateObj = new Date(dateString);
+    return dateObj.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <Image
+          source={require("../assets/agendaLogo.png")} 
+          style={{ width: 120, height: 120, marginBottom: 20 }}
+          resizeMode="contain"
+        />
+        <ActivityIndicator size="large" color={COLORS.coral} />
+      </View>
+    );
+  }
+
 
   return (
     <SafeAreaView style={styles.container}>
-  
       <View style={styles.whiteHeader}>
         <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <View style={styles.menuIcon}>
@@ -38,18 +118,16 @@ const HomeScreen = ({ navigation }) => {
             <Image source={require("../assets/search.png")} style={styles.headerIcon} />
           </TouchableOpacity>
           <TouchableOpacity 
-          style={styles.iconButton} 
-        onPress={() => navigation.navigate("Notificaciones")}
+            style={styles.iconButton} 
+            onPress={() => navigation.navigate("Notificaciones")}
           >
-         <Image
-         source={require("../assets/notification.png")} 
-       style={styles.headerIcon} 
-  />
-</TouchableOpacity>
-
+            <Image
+              source={require("../assets/notification.png")} 
+              style={styles.headerIcon} 
+            />
+          </TouchableOpacity>
         </View>
       </View>
-
 
       <View style={styles.tabSection}>
         <View style={styles.tabContainer}>
@@ -74,57 +152,66 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScrollView style={styles.content}>
-      
-        <View style={styles.eventCard}>
-          <Image
-            source={require("../assets/code.jpg")}
-            style={styles.eventImage}
+      <ScrollView
+  style={styles.container}
+  refreshControl={
+    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+  }
+>
+  {events.length === 0 ? (
+    <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
+  ) : (
+    events.map((event, index) => {
+      const time = getHour(event.date);  
+      return (
+        <EventCard
+          key={index}
+          title={event.title}
+          department={event.department}
+          date={event.date}
+          time={time} 
+          location={event.location}
+          imageUrl={event.imageUrl}
+        />
+      );
+    })
+  )}
 
-          />
-          <View style={styles.eventContent}>
-            <View style={styles.categoryTag}>
-              <Text style={styles.categoryText}>Sistemas computacionales</Text>
-            </View>
-            <Text style={styles.eventTitle}>Conferencia:Avances en la inteligencia artificial</Text>
-            <View style={styles.eventDetails}>
-              <View style={styles.eventDetailRow}>
-                <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
-                <Text style={styles.detailText}>01 de mayo 2025</Text>
-              </View>
-              <View style={styles.eventDetailRow}>
-                <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
-                <Text style={styles.detailText}>14:00 - 16:00</Text>
-              </View>
-              <View style={styles.eventDetailRow}>
-                <Image source={require("../assets/location.png")} style={styles.detailIcon} />
-                <Text style={styles.detailText}>Poliforo</Text>
-              </View>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.bookmarkButton}>
-            <Image source={require("../assets/bookmark.png")} style={styles.bookmarkIcon} />
-          </TouchableOpacity>
-        </View>
+
       </ScrollView>
-
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("LocationScreen")}>
-         <Image source={require('../assets/location.png')} style={styles.locationIcon} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Image source={require("../assets/home.png")} style={styles.homeIcon} />
-        </TouchableOpacity>
-       <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
-      <Image source={require("../assets/profile.png")} style={styles.profileIcon} />
-      </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.bottomNavItem} 
+                onPress={() => navigation.navigate("LocationScreen")}
+              >
+                <Image 
+                  source={require('../assets/location.png')} 
+                  style={[styles.navIcon, styles.locationIcon]} 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem, activeTab === "Hoy" && styles.activeNavItem]}
+                onPress={() => navigation.navigate("Home")}
+              >
+                <Image 
+                  source={require("../assets/home.png")} 
+                  style={[styles.navIcon, styles.homeIcon]} 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem]} 
+                onPress={() => navigation.navigate("Profile")}
+              >
+                <Image 
+                  source={require("../assets/profile.png")} 
+                  style={[styles.navIcon, styles.profileIcon]} 
+                />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+  );
+};
 
-      </View>
-
-      <StatusBar style="dark" />
-    </SafeAreaView>
-  )
-}
 
 const styles = StyleSheet.create({
   container: {
@@ -199,7 +286,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   activeTabText: {
-    color:"#000000" ,
+    color: "#000000",
     fontWeight: "bold",
   },
   content: {
@@ -209,14 +296,14 @@ const styles = StyleSheet.create({
   eventCard: {
     backgroundColor: "white",
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 30,
     padding: 15,
     flexDirection: "row",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 5,
   },
   eventImage: {
     width: 80,
@@ -266,7 +353,6 @@ const styles = StyleSheet.create({
     padding: 5,
     width: 40,
     height: 40,
-
   },
   bookmarkIcon: {
     width: 35,
@@ -276,15 +362,28 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: "row",
     backgroundColor: COLORS.darkBlue,
-    height: 60,
+    height: 65,
     justifyContent: "space-around",
     alignItems: "center",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 8,
   },
   bottomNavItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
+  },
+  activeNavItem: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 30,
+    marginHorizontal: 10,
+  },
+  navIcon: {
+    width: 24,
+    height: 24,
+    tintColor: "white",
   },
   locationIcon: {
     width: 34,
@@ -301,6 +400,19 @@ const styles = StyleSheet.create({
     height: 45,
     tintColor: "white",
   },
-})
+  loaderContainer: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: COLORS.offWhite,
+},
+loadingText: {
+  marginTop: 15,
+  fontSize: 18,
+  fontWeight: "600",
+  color: COLORS.coral,
+},
+
+});
 
 export default HomeScreen;

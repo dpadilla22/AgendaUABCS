@@ -6,20 +6,23 @@ import { useNavigation } from '@react-navigation/native';
 const eventos = [
   {
     nombre: "Poliforo",
+    descripcion: "Conferencia: Avances en IA\n14:00 - 15:00",
     latitud: 24.103180,
     longitud: -110.315872,
     color: "#fff977"
   },
   {
     nombre: "Sistemas",
-    latitud:24.102723,
+    descripcion: "Conferencia: Avances en IA\n14:00 - 15:00",
+    latitud: 24.102723,
     longitud: -110.316121,
     color: "#2e60bf"
   },
   {
     nombre: "Agronomia",
+    descripcion: "Taller de Agricultura\n13:00 - 14:00",
     latitud: 24.10034836471127,
-    longitud:-110.31432432711246,
+    longitud: -110.31432432711246,
     color: "#f6973e"
   }
 ];
@@ -37,34 +40,38 @@ const LocationScreen = () => {
       </View>
 
      <MapView
-  style={styles.map}
-  initialRegion={{
-    latitude: 24.103422,
-    longitude: -110.315374,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }}
-  showsUserLocation={false}
-  showsMyLocationButton={false}
-  toolbarEnabled={false}
-  zoomControlEnabled={false}
-  loadingEnabled={true}
->
-  {eventos.map((evento, index) => (
-    <Marker
-      key={index}
-      coordinate={{ latitude: evento.latitud, longitude: evento.longitud }}
+      style={styles.map}
+      initialRegion={{
+        latitude: 24.103422,
+        longitude: -110.315374,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }}
+      showsUserLocation={false}
+      showsMyLocationButton={false}
+      toolbarEnabled={false}
+      zoomControlEnabled={false}
+      loadingEnabled={true}
     >
+      {eventos.map((evento, index) => (
+  <Marker
+    key={index}
+    coordinate={{ latitude: evento.latitud, longitude: evento.longitud }}
+    onPress={() => {}}
+  >
+    <TouchableOpacity activeOpacity={0.8}>
       <View style={[styles.marker, { backgroundColor: evento.color }]} />
-      <Callout>
-        <View style={styles.calloutContainer}>
-          <Text style={styles.calloutTitle}>{evento.nombre}</Text>
-        </View>
-      </Callout>
-    </Marker>
-  ))}
-</MapView>
+    </TouchableOpacity>
 
+    <Callout tooltip>
+      <View style={styles.calloutContainer}>
+        <Text style={styles.calloutTitle}>{evento.nombre}</Text>
+        <Text style={styles.calloutDescription}>{evento.descripcion}</Text>
+      </View>
+    </Callout>
+  </Marker>
+))}
+    </MapView>
        
       <View style={styles.legend}>
         {eventos.map((e, i) => (
@@ -75,15 +82,35 @@ const LocationScreen = () => {
         ))}
       </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+                <View style={styles.bottomNav}>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem, styles.activeNavItem]} 
+          onPress={() => navigation.navigate("LocationScreen")}
+        >
+          <Image 
+            source={require('../assets/location.png')} 
+            style={[styles.navIcon, styles.locationIcon]} 
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
-          <Image source={require("../assets/home.png")} style={styles.homeIcon} />
+      
+        <TouchableOpacity 
+          style={[styles.bottomNavItem, styles.activeNavItem]} 
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Image 
+            source={require("../assets/home.png")} 
+            style={[styles.navIcon, styles.homeIcon]} 
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
-          <Image source={require("../assets/profile.png")} style={styles.profileIcon} />
+      
+        <TouchableOpacity 
+          style={styles.bottomNavItem} 
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Image 
+            source={require("../assets/profile.png")} 
+            style={[styles.navIcon, styles.profileIcon]} 
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -133,27 +160,28 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     borderWidth: 2,
   },
-  universityMarker: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#ff595e',
-    borderColor: 'white',
-    borderWidth: 2,
-  },
   calloutContainer: {
     backgroundColor: 'white',
-    borderRadius: 6,
-    padding: 8,
-    minWidth: 120,
-    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 10,
+    width: 200,
+    borderColor: '#eee',
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
   },
   calloutTitle: {
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 14,
     color: '#333',
-    textAlign: 'center',
+    marginBottom: 4,
+  },
+  calloutDescription: {
+    fontSize: 12,
+    color: '#666',
   },
   legend: {
     position: 'absolute',

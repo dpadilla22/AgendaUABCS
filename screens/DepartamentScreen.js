@@ -1,83 +1,116 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { Calendar } from 'react-native-calendars';
+
+const today = new Date();
+const todayString = today.toISOString().split('T')[0]; 
+
+const COLORS = {
+  darkBlue: "#003366",
+  lightBlue: "#4dabf7",
+  accent: "#3498db",
+  yellow: "#FFF7A3",
+  green: "#E6FFE6",
+  orange: "#FFEBCD",
+  red: "#FFE4E1",
+  gray: "#F5F5F5",
+  textDark: "#333333",
+  textLight: "#666666"
+};
 
 const DepartamentScreen = ({ navigation }) => {
+  const [selectedDate, setSelectedDate] = useState("2025-05-23");
+
+  
+  const markedDates = {
+    [selectedDate]: { selected: true, selectedColor: COLORS.accent }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={COLORS.accent} barStyle="light-content" />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Image 
+            source={require("../assets/back-arrow.png")} 
+            style={[styles.backIcon, {tintColor: "#fff"}]} 
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Calendario</Text>
-        <View style={styles.headerIcons}>
-        </View>
+        <View style={styles.emptySpace} />
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.calendarPlaceholder}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+     
+        <View style={styles.calendarContainer}>
+          <Calendar
+  current={selectedDate}
+  minDate={todayString}   
+  onDayPress={day => setSelectedDate(day.dateString)}
+  markedDates={markedDates}
+  theme={{
+    backgroundColor: COLORS.lightBlue,
+    calendarBackground: COLORS.lightBlue,
+    textSectionTitleColor: '#fff',
+    selectedDayBackgroundColor: COLORS.accent,
+    selectedDayTextColor: '#fff',
+    todayTextColor: COLORS.yellow,
+    dayTextColor: '#fff',
+    textDisabledColor: 'rgba(255, 255, 255, 0.5)',
+    arrowColor: '#fff',
+    monthTextColor: '#fff',
+    indicatorColor: '#fff',
+  }}
+  style={{
+    borderRadius: 20,
+    padding: 10,
+  }}
+/>
         </View>
 
-      
+        
         <View style={styles.eventsContainer}>
           <View style={styles.eventsHeader}>
             <Text style={styles.eventsTitle}>Humanidades</Text>
-            <Text style={styles.eventsSubtitle}>Eventos 23 de mayo</Text>
+            <Text style={styles.eventsSubtitle}>Eventos {selectedDate.split('-')[2]} de mayo</Text>
           </View>
 
-         
-          <View style={styles.eventCard}>
-            <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle}>Concurso de cosplay literario: ir disfrazado de personajes de libros o filosofía</Text>
-              
-              <View style={styles.eventDetail}>
-                <Image source={require('../assets/clock.png')} style={styles.eventIcon} />
-                <Text style={styles.eventTime}>14:00 - 16:00</Text>
-              </View>
-              
-              <View style={styles.eventDetail}>
-                <Image source={require('../assets/location.png')} style={styles.eventIcon} />
-                <Text style={styles.eventLocation}>Poliforo</Text>
-              </View>
-            </View>
-            
-            <TouchableOpacity style={styles.bookmarkButton}>
-              <Image source={require('../assets/bookmark.png')} style={styles.bookmarkIcon} />
-            </TouchableOpacity>
-          </View>
+        
 
-          
-          <View style={styles.eventCard}>
-            <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle}>Reconocimiento a estudiantes destacados</Text>
-              
-              <View style={styles.eventDetail}>
-                <Image source={require('../assets/clock.png')} style={styles.eventIcon} />
-                <Text style={styles.eventTime}>18:00 - 19:00</Text>
-              </View>
-              
-              <View style={styles.eventDetail}>
-                <Image source={require('../assets/location.png')} style={styles.eventIcon} />
-                <Text style={styles.eventLocation}>Poliforo</Text>
-              </View>
-            </View>
-            
-            <TouchableOpacity style={styles.bookmarkButton}>
-              <Image source={require('../assets/bookmark.png')} style={styles.bookmarkIcon} />
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
 
-    
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("LocationScreen")}>
-          <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+        <TouchableOpacity 
+          style={styles.bottomNavItem} 
+          onPress={() => navigation.navigate("LocationScreen")}
+        >
+          <Image 
+            source={require('../assets/location.png')} 
+            style={[styles.navIcon, styles.locationIcon]} 
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
-          <Image source={require('../assets/home.png')} style={styles.homeIcon} />
+        <TouchableOpacity 
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Image 
+            source={require('../assets/home.png')} 
+            style={[styles.navIcon, styles.homeIcon]} 
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
-          <Image source={require('../assets/profile.png')} style={styles.profileIcon} />
+        <TouchableOpacity 
+          style={styles.bottomNavItem} 
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Image 
+            source={require('../assets/profile.png')} 
+            style={[styles.navIcon, styles.profileIcon]} 
+          />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -87,52 +120,93 @@ const DepartamentScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3498db',
+    backgroundColor: COLORS.accent,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 45,
-    paddingBottom: 15,
-    backgroundColor: '#3498db',
+    paddingTop: 50,
+    paddingBottom: 20,
   },
   backButton: {
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   backIcon: {
-    width: 24,
-    height: 24,
-  },
-  headerTitle: {
-    color: "#33",
-    fontSize: 15,
-    textAlign: "center",
-  },
-  headerIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  iconButton: {
-    padding: 8,
-    marginLeft: 5,
-  },
-  notificationIcon: {
-    margintop:30,
     width: 20,
     height: 20,
   },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  emptySpace: {
+    width: 36,
+  },
   content: {
     flex: 1,
-    backgroundColor: '#3498db',
   },
-  calendarPlaceholder: {
-    height: 220, 
-    backgroundColor: '#4dabf7', 
+  calendarContainer: {
+    backgroundColor: COLORS.lightBlue,
     borderRadius: 20,
     margin: 15,
     marginBottom: 0,
+    padding: 15,
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  calendarMonthYear: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  calendarControls: {
+    flexDirection: "row",
+  },
+  calendarControl: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  calendarControlText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  calendarDaysContainer: {
+    paddingVertical: 10,
+  },
+  calendarDay: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  },
+  selectedCalendarDay: {
+    backgroundColor: "#fff",
+  },
+  calendarDayText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  selectedCalendarDayText: {
+    color: COLORS.accent,
   },
   eventsContainer: {
     backgroundColor: '#fff',
@@ -140,26 +214,26 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     marginTop: 15,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 25,
     paddingBottom: 100,
   },
   eventsHeader: {
     marginBottom: 20,
   },
   eventsTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textDark,
+    marginBottom: 5,
   },
   eventsSubtitle: {
-    fontSize: 10,
-    color: '#666',
+    fontSize: 14,
+    color: COLORS.textLight,
   },
   eventCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     backgroundColor: '#fff',
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 15,
     marginBottom: 15,
     borderWidth: 1,
@@ -168,78 +242,90 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    position: 'relative',
+  },
+  eventColorBar: {
+    position: 'absolute',
+    left: 0,
+    top: 15,
+    bottom: 15,
+    width: 4,
+    backgroundColor: COLORS.accent,
+    borderRadius: 2,
   },
   eventInfo: {
     flex: 1,
+    paddingLeft: 10,
     paddingRight: 10,
   },
   eventTitle: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 10,
-    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: COLORS.textDark,
+    lineHeight: 22,
+  },
+  eventDetails: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   eventDetail: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 15,
     marginBottom: 5,
   },
   eventIcon: {
     width: 16,
     height: 16,
     marginRight: 5,
+    tintColor: COLORS.textLight,
   },
   eventTime: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: COLORS.textLight,
   },
   eventLocation: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textLight,
   },
   bookmarkButton: {
-    marginTop:30,
+    justifyContent: 'center',
     alignItems: 'center',
     width: 40,
   },
   bookmarkIcon: {
-    width: 30,
-    height: 30,
+    width: 24,
+    height: 24,
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#003366',
-    height: 60,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+bottomNav: {
+    flexDirection: "row",
+    backgroundColor: COLORS.darkBlue,
+    height: 65,
+    justifyContent: "space-around",
+    alignItems: "center",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 8,
   },
   bottomNavItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
-    height: '100%',
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+  },
+  activeNavItem: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 30,
+    marginHorizontal: 10,
   },
   navIcon: {
     width: 24,
     height: 24,
-    tintColor: '#fff',
+    tintColor: "white",
   },
-  profileContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#3498db',
-  },
-  profileText: {
-    fontSize: 12,
-    color: '#fff',
-  },
-   locationIcon: {
+  locationIcon: {
     width: 34,
     height: 35,
     tintColor: "white",

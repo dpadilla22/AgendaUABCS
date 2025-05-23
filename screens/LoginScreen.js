@@ -31,24 +31,35 @@ const LoginScreen = ({ navigation }) => {
   //     })
   //   });
 
-  try {
-    const response = await fetch('https://e115-2806-265-5402-ca4-44e0-9b17-5951-e773.ngrok-free.app/login', {  
-      method: 'POST',
-      headers: {
+   try {
+     const response = await fetch('https://80d3-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/login', {  
+       method: 'POST',
+       headers: {
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        identifierUser: username,
-        passwordUser: password
-      })
-    });
+       },
+       body: JSON.stringify({
+         identifierUser: username,
+         passwordUser: password
+       })
+     });
 
+    // try {
+    // const response = await fetch('https://mysql-production-a850.up.railway.app/login', {  
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({
+    //     identifierUser: username,
+    //     passwordUser: password
+    //   })
+    // });
 
    const data = await response.json();
 
     if (response.ok) {
-      type: 'success',
       Toast.show({
+        type: 'success',
         text1: '¡Bienvenido!',
         text2: `Hola de nuevo, ${data.user.name} `,
       });
