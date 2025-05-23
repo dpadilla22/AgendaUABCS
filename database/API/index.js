@@ -154,3 +154,63 @@ app.post("/createEvent", async (req, res) => {
     if (db) db.end();
   }
 });
+
+app.get("/events", async (req, res) => {
+  let db;
+  try {
+    db = await connect();
+
+    const query = `SELECT * FROM events`;
+    const [rows] = await db.execute(query);
+
+    res.json({
+      success: true,
+      events: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching events:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+app.get("/events/:id", async (req, res) => {
+  let db;
+  const eventId = req.params.id;
+
+  try {
+    db = await connect();
+
+    const query = `SELECT * FROM events WHERE id = ?`;
+    const [rows] = await db.execute(query, [eventId]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      event: rows[0],
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching event:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
