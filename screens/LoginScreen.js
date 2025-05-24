@@ -32,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
   //   });
 
    try {
-     const response = await fetch('https://80d3-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/login', {  
+     const response = await fetch('https://60e0-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/login', {  
        method: 'POST',
        headers: {
         'Content-Type': 'application/json'
@@ -58,12 +58,17 @@ const LoginScreen = ({ navigation }) => {
    const data = await response.json();
 
     if (response.ok) {
+
+      
+
       Toast.show({
         type: 'success',
         text1: '¡Bienvenido!',
         text2: `Hola de nuevo, ${data.user.name} `,
       });
       navigation.navigate('Home', { user: data.user });
+      
+  console.log('idAccount guardado:', idAccount);
     } else {
       Toast.show({
         type: 'error',

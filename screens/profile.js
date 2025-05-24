@@ -169,34 +169,34 @@ const Profile = ({ navigation }) => {
         </ScrollView>
       </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.bottomNavItem} 
-          onPress={() => navigation.navigate("LocationScreen")}
-        >
-          <Image 
-            source={require('../assets/location.png')} 
-            style={[styles.navIcon, styles.locationIcon]} 
-          />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.bottomNavItem} 
-          onPress={() => navigation.navigate("Home")}
-        >
-          <Image 
-            source={require("../assets/home.png")} 
-            style={[styles.navIcon, styles.homeIcon]} 
-          />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.bottomNavItem, styles.activeNavItem]} 
-        >
-          <Image 
-            source={require("../assets/profile.png")} 
-            style={[styles.navIcon, styles.profileIcon]} 
-          />
-        </TouchableOpacity>
-      </View>
+       <View style={styles.bottomNav}>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem]}
+                onPress={() => navigation.navigate("Home")}
+                >
+                <Image 
+                  source={require('../assets/home.png')} 
+                  style={[styles.navIcon, styles.homeIcon]} 
+                  />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem]}
+                onPress={() => navigation.navigate("EventScreen")}
+              >
+                <Image 
+                  source={require("../assets/more.png")} 
+                  style={[styles.navIcon, styles.moreIcon]} 
+                  />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem,styles.activeNavItem]} 
+                >
+                <Image 
+                  source={require("../assets/profile.png")} 
+                  style={[styles.navIcon, styles.profileIcon]} 
+                  />
+              </TouchableOpacity>
+            </View>
     </SafeAreaView>
   );
 };
@@ -412,6 +412,10 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     tintColor: "white",
+  },
+  moreIcon: {
+    width: 40,
+    height: 40,
   },
 });
 

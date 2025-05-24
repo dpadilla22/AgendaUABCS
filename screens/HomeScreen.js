@@ -1,8 +1,11 @@
-import React, { useState, useEffect,useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView,RefreshControl } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, Animated } from "react-native";
 import EventCard from "../components/EventCard";
-import { ActivityIndicator, Animated } from "react-native";
+import { ActivityIndicator } from "react-native";
 
+const { width: screenWidth } = Dimensions.get('window');
+const CAROUSEL_WIDTH = screenWidth - 20; 
+const CAROUSEL_HEIGHT = 200;
 
 const COLORS = {
   coral: "#FF7B6B",
@@ -14,31 +17,63 @@ const COLORS = {
   purple: "#9966FF",
 };
 
+const carouselData = [
+  {
+    id: 1,
+    image: require("../assets/carrusel1.png"),
+    title: "Eventos que inspiran",
+    subtitle: "¡Tú puedes ser parte!"
+  },
+  {
+    id: 2,
+    image: require("../assets/carrusel2.jpeg"),
+    title: "Conferencias, charlas, networking",
+    subtitle: "¡Activa tu futuro!"
+  },
+  {
+    id: 3,
+    image: require("../assets/carrusel3.jpeg"),
+    title: "La cultura vive en la UABCS",
+    subtitle: "¡Sé parte!"
+  },
+  {
+    id: 4,
+    image: require("../assets/carrusel4.jpeg"),
+    title: "Feria de Ciencias",
+    subtitle: "Innovación y tecnología"
+  }
+];
+
 const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Hoy");
-  const fadeAnim = useRef(new Animated.Value(0)).current;
   const [refreshing, setRefreshing] = useState(false);
+  
 
-    const onRefresh = async () => {
-  setRefreshing(true);
-  try {
-    const response = await fetch('https://80d3-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
-    const data = await response.json();
-    setEvents(data.events || []);
-  } catch (error) {
-    console.error("Error al refrescar eventos:", error);
-    setEvents([]);
-  } finally {
-    setRefreshing(false);
-  }
-};
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const carouselRef = useRef(null);
+  const autoScrollTimer = useRef(null);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const response = await fetch('https://60e0-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
+      const data = await response.json();
+      setEvents(data.events || []);
+    } catch (error) {
+      console.error("Error al refrescar eventos:", error);
+      setEvents([]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://80d3-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
+        const response = await fetch('https://60e0-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
         const data = await response.json();
         console.log("Eventos cargados:", data);
         setEvents(data.events || []);
@@ -50,28 +85,56 @@ const HomeScreen = ({ navigation }) => {
       }
     };
 
-
     fetchEvents();
   }, []);
 
   useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim, {
-            toValue: 0,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+    if (isAutoScrolling) {
+      autoScrollTimer.current = setInterval(() => {
+        setCurrentIndex(prevIndex => {
+          const nextIndex = (prevIndex + 1) % carouselData.length;
+          carouselRef.current?.scrollTo({
+            x: nextIndex * CAROUSEL_WIDTH,
+            animated: true
+          });
+          return nextIndex;
+        });
+      }, 4000); 
     }
-  }, [loading, fadeAnim]);
+
+    return () => {
+      if (autoScrollTimer.current) {
+        clearInterval(autoScrollTimer.current);
+      }
+    };
+  }, [isAutoScrolling]);
+
+  const handleCarouselScroll = (event) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / CAROUSEL_WIDTH);
+    setCurrentIndex(index);
+  };
+
+  const handleCarouselTouchStart = () => {
+    setIsAutoScrolling(false);
+    if (autoScrollTimer.current) {
+      clearInterval(autoScrollTimer.current);
+    }
+  };
+
+  const handleCarouselTouchEnd = () => {
+    setTimeout(() => {
+      setIsAutoScrolling(true);
+    }, 3000);
+  };
+
+  const goToSlide = (index) => {
+    carouselRef.current?.scrollTo({
+      x: index * CAROUSEL_WIDTH,
+      animated: true
+    });
+    setCurrentIndex(index);
+  };
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -87,46 +150,45 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const getFilteredEvents = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); 
-  return events.filter(event => {
-  const eventDate = new Date(event.date);
-  eventDate.setHours(0, 0, 0, 0); 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      eventDate.setHours(0, 0, 0, 0);
 
-  if (eventDate < today) return false;
+      if (eventDate < today) return false;
 
-    if (activeTab === "Hoy") {
-      return (
-        eventDate.getDate() === today.getDate() &&
-        eventDate.getMonth() === today.getMonth() &&
-        eventDate.getFullYear() === today.getFullYear()
-      );
-    } else if (activeTab === "Esta semana") {
-      const startOfWeek = new Date(today);
-      const endOfWeek = new Date(today);
-      const dayOfWeek = today.getDay(); 
+      if (activeTab === "Hoy") {
+        return (
+          eventDate.getDate() === today.getDate() &&
+          eventDate.getMonth() === today.getMonth() &&
+          eventDate.getFullYear() === today.getFullYear()
+        );
+      } else if (activeTab === "Esta semana") {
+        const startOfWeek = new Date(today);
+        const endOfWeek = new Date(today);
+        const dayOfWeek = today.getDay();
 
-      startOfWeek.setDate(today.getDate() - dayOfWeek);
-      endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
+        startOfWeek.setDate(today.getDate() - dayOfWeek);
+        endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
 
-      return eventDate >= startOfWeek && eventDate <= endOfWeek;
-    } else if (activeTab === "Este mes") {
-      return (
-        eventDate.getMonth() === today.getMonth() &&
-        eventDate.getFullYear() === today.getFullYear()
-      );
-    }
+        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+      } else if (activeTab === "Este mes") {
+        return (
+          eventDate.getMonth() === today.getMonth() &&
+          eventDate.getFullYear() === today.getFullYear()
+        );
+      }
 
-    return false;
-  });
-};
-
+      return false;
+    });
+  };
 
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <Image
-          source={require("../assets/agendaLogo.png")} 
+          source={require("../assets/agendaLogo.png")}
           style={{ width: 120, height: 120, marginBottom: 20 }}
           resizeMode="contain"
         />
@@ -135,9 +197,9 @@ const HomeScreen = ({ navigation }) => {
     );
   }
 
-
   return (
     <SafeAreaView style={styles.container}>
+     
       <View style={styles.whiteHeader}>
         <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <View style={styles.menuIcon}>
@@ -165,91 +227,134 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <View style={styles.tabSection}>
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "Hoy" && styles.activeTab]}
-            onPress={() => handleTabPress("Hoy")}
+     
+      <ScrollView
+        style={styles.mainScrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+       
+        <View style={styles.carouselSection}>
+          <ScrollView
+            ref={carouselRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleCarouselScroll}
+            onTouchStart={handleCarouselTouchStart}
+            onTouchEnd={handleCarouselTouchEnd}
+            scrollEventThrottle={16}
+            style={styles.carouselContainer}
+            contentContainerStyle={styles.carouselContent}
           >
-            <Text style={[styles.tabText, activeTab === "Hoy" && styles.activeTabText]}>Hoy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "Esta semana" && styles.activeTab]}
-            onPress={() => handleTabPress("Esta semana")}
-          >
-            <Text style={[styles.tabText, activeTab === "Esta semana" && styles.activeTabText]}>Esta semana</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "Este mes" && styles.activeTab]}
-            onPress={() => handleTabPress("Este mes")}
-          >
-            <Text style={[styles.tabText, activeTab === "Este mes" && styles.activeTabText]}>Este mes</Text>
-          </TouchableOpacity>
+            {carouselData.map((item, index) => (
+              <View key={item.id} style={styles.carouselSlide}>
+                <Image source={item.image} style={styles.carouselImage} />
+                <View style={styles.carouselOverlay}>
+                  <View style={styles.carouselTextContainer}>
+                    <Text style={styles.carouselTitle}>{item.title}</Text>
+                    <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+
+          <View style={styles.dotsContainer}>
+            {carouselData.map((_, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentIndex ? styles.activeDot : styles.inactiveDot
+                ]}
+                onPress={() => goToSlide(index)}
+              />
+            ))}
+          </View>
         </View>
-      </View>
 
-    <ScrollView
-  style={styles.container}
-  refreshControl={
-    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-  }
->
-  <View style={{ paddingHorizontal: 10 }}>
-    {events.length === 0 ? (
-      <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
-    ) : (
-      getFilteredEvents().map((event, index) => {
-        const time = getHour(event.date);
-        return (
-          <EventCard
-            key={index}
-            title={event.title}
-            department={event.department}
-            date={event.date}
-            time={time}
-            location={event.location}
-            imageUrl={event.imageUrl}
-          />
-        );
-      })
-    )}
-  </View>
-</ScrollView>
+     
+        <View style={styles.tabSection}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "Hoy" && styles.activeTab]}
+              onPress={() => handleTabPress("Hoy")}
+            >
+              <Text style={[styles.tabText, activeTab === "Hoy" && styles.activeTabText]}>Hoy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "Esta semana" && styles.activeTab]}
+              onPress={() => handleTabPress("Esta semana")}
+            >
+              <Text style={[styles.tabText, activeTab === "Esta semana" && styles.activeTabText]}>Esta semana</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "Este mes" && styles.activeTab]}
+              onPress={() => handleTabPress("Este mes")}
+            >
+              <Text style={[styles.tabText, activeTab === "Este mes" && styles.activeTabText]}>Este mes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
+      
+        <View style={styles.eventsContent}>
+          {events.length === 0 ? (
+            <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
+          ) : (
+            getFilteredEvents().map((event, index) => {
+              const time = getHour(event.date);
+              return (
+                <EventCard
+                  key={index}
+                  title={event.title}
+                  department={event.department}
+                  date={event.date}
+                  time={time}
+                  location={event.location}
+                  imageUrl={event.imageUrl}
+                />
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
 
+      
       <View style={styles.bottomNav}>
-              <TouchableOpacity 
-                style={styles.bottomNavItem} 
-                onPress={() => navigation.navigate("LocationScreen")}
-              >
-                <Image 
-                  source={require('../assets/location.png')} 
-                  style={[styles.navIcon, styles.locationIcon]} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem, activeTab === "Hoy" && styles.activeNavItem]}
-                onPress={() => navigation.navigate("Home")}
-              >
-                <Image 
-                  source={require("../assets/home.png")} 
-                  style={[styles.navIcon, styles.homeIcon]} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]} 
-                onPress={() => navigation.navigate("Profile")}
-              >
-                <Image 
-                  source={require("../assets/profile.png")} 
-                  style={[styles.navIcon, styles.profileIcon]} 
-                />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem, activeTab === "Hoy" && styles.activeNavItem]}
+        >
+          <Image 
+            source={require('../assets/home.png')} 
+            style={[styles.navIcon, styles.homeIcon]} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]}
+          onPress={() => navigation.navigate("EventScreen")}
+        >
+          <Image 
+            source={require("../assets/more.png")} 
+            style={[styles.navIcon, styles.moreIcon]} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]} 
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Image 
+            source={require("../assets/profile.png")} 
+            style={[styles.navIcon, styles.profileIcon]} 
+          />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -266,13 +371,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
-  },
-  tabSection: {
-    backgroundColor: '#66B2FF',
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginHorizontal: 10,
-    marginTop: 10,
   },
   menuButton: {
     padding: 8,
@@ -305,6 +403,93 @@ const styles = StyleSheet.create({
     height: 20,
     tintColor: "#333",
   },
+  
+ 
+  mainScrollView: {
+    flex: 1,
+  },
+
+  carouselSection: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  carouselContainer: {
+    height: CAROUSEL_HEIGHT,
+  },
+  carouselContent: {
+    paddingHorizontal: 10,
+  },
+  carouselSlide: {
+    width: CAROUSEL_WIDTH,
+    height: CAROUSEL_HEIGHT,
+    marginHorizontal: 0,
+    borderRadius: 15,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  carouselOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+    justifyContent: 'flex-end',
+    padding: 20,
+  },
+  carouselTextContainer: {
+    marginBottom: 10,
+  },
+  carouselTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  carouselSubtitle: {
+    color: 'white',
+    fontSize: 14,
+    opacity: 0.9,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: COLORS.darkBlue,
+    width: 20,
+  },
+  inactiveDot: {
+    backgroundColor: COLORS.lightGray,
+  },
+
+  tabSection: {
+    backgroundColor: '#66B2FF',
+    paddingVertical: 10,
+    borderRadius: 25,
+    marginHorizontal: 10,
+    marginTop: 5,
+  },
   tabContainer: {
     flexDirection: "row",
     paddingHorizontal: 10,
@@ -327,75 +512,17 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontWeight: "bold",
   },
-  content: {
-    flex: 1,
-    padding: 10,
-  },
-  eventCard: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    marginBottom: 30,
-    padding: 15,
-    flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  eventImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 15,
-  },
-  eventContent: {
-    flex: 1,
-  },
-  categoryTag: {
-    backgroundColor: '#FFF7A3',
-    alignSelf: "flex-start",
+  
+ 
+  eventsContent: {
     paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginBottom: 5,
+    paddingBottom: 20,
   },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: "500",
-  },
-  eventTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  eventDetails: {
-    marginTop: 5,
-  },
-  eventDetailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 3,
-  },
-  detailIcon: {
-    width: 14,
-    height: 14,
-    marginRight: 5,
-    tintColor: "#666",
-  },
-  detailText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  bookmarkButton: {
-    padding: 5,
-    width: 40,
-    height: 40,
-  },
-  bookmarkIcon: {
-    width: 35,
-    height: 35,
-    tintColor: "#666",
+  noEventsText: {
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 16,
+    color: '#666',
   },
   bottomNav: {
     flexDirection: "row",
@@ -419,38 +546,26 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   navIcon: {
-    width: 24,
-    height: 24,
     tintColor: "white",
   },
-  locationIcon: {
-    width: 34,
-    height: 35,
-    tintColor: "white",
+  moreIcon: {
+    width: 40,
+    height: 40,
   },
   homeIcon: {
     width: 28,
     height: 28,
-    tintColor: "white",
   },
   profileIcon: {
     width: 45,
     height: 45,
-    tintColor: "white",
   },
   loaderContainer: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  backgroundColor: COLORS.offWhite,
-},
-loadingText: {
-  marginTop: 15,
-  fontSize: 18,
-  fontWeight: "600",
-  color: COLORS.coral,
-},
-
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.offWhite,
+  },
 });
 
 export default HomeScreen;

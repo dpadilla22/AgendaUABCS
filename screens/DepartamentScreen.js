@@ -85,34 +85,34 @@ const DepartamentScreen = ({ navigation }) => {
       </ScrollView>
 
       <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.bottomNavItem} 
-          onPress={() => navigation.navigate("LocationScreen")}
-        >
-          <Image 
-            source={require('../assets/location.png')} 
-            style={[styles.navIcon, styles.locationIcon]} 
-          />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.bottomNavItem}
-          onPress={() => navigation.navigate("Home")}
-        >
-          <Image 
-            source={require('../assets/home.png')} 
-            style={[styles.navIcon, styles.homeIcon]} 
-          />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.bottomNavItem} 
-          onPress={() => navigation.navigate("Profile")}
-        >
-          <Image 
-            source={require('../assets/profile.png')} 
-            style={[styles.navIcon, styles.profileIcon]} 
-          />
-        </TouchableOpacity>
-      </View>
+                    <TouchableOpacity 
+                      style={[styles.bottomNavItem]}
+                      onPress={() => navigation.navigate("Home")}
+                      >
+                      <Image 
+                        source={require('../assets/home.png')} 
+                        style={[styles.navIcon, styles.homeIcon]} 
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.bottomNavItem]}
+                      onPress={() => navigation.navigate("EventScreen")}
+                    >
+                      <Image 
+                        source={require("../assets/more.png")} 
+                        style={[styles.navIcon, styles.moreIcon]} 
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.bottomNavItem]} 
+                      onPress={() => navigation.navigate("Profile")}
+                      >
+                      <Image 
+                        source={require("../assets/profile.png")} 
+                        style={[styles.navIcon, styles.profileIcon]} 
+                        />
+                    </TouchableOpacity>
+                  </View>
     </SafeAreaView>
   );
 };
@@ -339,6 +339,10 @@ bottomNav: {
     width: 45,
     height: 45,
     tintColor: "white",
+  },
+  moreIcon: {
+    width: 40,
+    height: 40,
   },
 });
 
