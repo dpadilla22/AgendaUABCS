@@ -11,9 +11,12 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
   const getDepartmentColor = (dept) => {
     const colors = {
       'Sistemas computacionales': '#FFFACD', 
-      'Economía': '#FFEBCD', 
-      'Ciencias de la tierra': '#E0FFFF', 
+      'Economia': '#FFEBCD', 
+      'Ciencias Sociales y Jurídicas': '#E0FFFF', 
       'Agronomía': '#E6FFE6', 
+      'Ciencias de la Tierra': '#E0FFFF',
+      'Humanidades': '#FFF7A3',
+
     };
     
     return colors[dept] || '#F0F0F0'; 
@@ -44,9 +47,11 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
         </View>
         
         <View style={styles.infoContainer}>
+
           <View style={[styles.departmentTag, { backgroundColor: getDepartmentColor(department) }]}>
-            <Text style={styles.departmentText}>{department}</Text>
+           <Text style={styles.departmentText}>{department}</Text>
           </View>
+
           
           <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
             {title}
@@ -82,7 +87,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     backgroundColor: '#fff',
     borderRadius: 12,
-    elevation: 2,
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
@@ -113,6 +118,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 12,
     marginBottom: 4,
+    color:'white',
   },
   departmentText: {
     fontSize: 12,

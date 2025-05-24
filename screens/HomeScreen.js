@@ -86,6 +86,42 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
+  const getFilteredEvents = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+  return events.filter(event => {
+  const eventDate = new Date(event.date);
+  eventDate.setHours(0, 0, 0, 0); 
+
+  if (eventDate < today) return false;
+
+    if (activeTab === "Hoy") {
+      return (
+        eventDate.getDate() === today.getDate() &&
+        eventDate.getMonth() === today.getMonth() &&
+        eventDate.getFullYear() === today.getFullYear()
+      );
+    } else if (activeTab === "Esta semana") {
+      const startOfWeek = new Date(today);
+      const endOfWeek = new Date(today);
+      const dayOfWeek = today.getDay(); 
+
+      startOfWeek.setDate(today.getDate() - dayOfWeek);
+      endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
+
+      return eventDate >= startOfWeek && eventDate <= endOfWeek;
+    } else if (activeTab === "Este mes") {
+      return (
+        eventDate.getMonth() === today.getMonth() &&
+        eventDate.getFullYear() === today.getFullYear()
+      );
+    }
+
+    return false;
+  });
+};
+
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -152,33 +188,35 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScrollView
+    <ScrollView
   style={styles.container}
   refreshControl={
     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
   }
 >
-  {events.length === 0 ? (
-    <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
-  ) : (
-    events.map((event, index) => {
-      const time = getHour(event.date);  
-      return (
-        <EventCard
-          key={index}
-          title={event.title}
-          department={event.department}
-          date={event.date}
-          time={time} 
-          location={event.location}
-          imageUrl={event.imageUrl}
-        />
-      );
-    })
-  )}
+  <View style={{ paddingHorizontal: 10 }}>
+    {events.length === 0 ? (
+      <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
+    ) : (
+      getFilteredEvents().map((event, index) => {
+        const time = getHour(event.date);
+        return (
+          <EventCard
+            key={index}
+            title={event.title}
+            department={event.department}
+            date={event.date}
+            time={time}
+            location={event.location}
+            imageUrl={event.imageUrl}
+          />
+        );
+      })
+    )}
+  </View>
+</ScrollView>
 
 
-      </ScrollView>
       <View style={styles.bottomNav}>
               <TouchableOpacity 
                 style={styles.bottomNavItem} 
@@ -230,7 +268,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.lightGray,
   },
   tabSection: {
-    backgroundColor: COLORS.darkBlue,
+    backgroundColor: '#66B2FF',
     paddingVertical: 10,
     borderRadius: 25,
     marginHorizontal: 10,
