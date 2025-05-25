@@ -59,7 +59,7 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://60e0-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
+      const response = await fetch('https://9433-2806-265-5402-ca4-8066-f4e4-35fd-2af0.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -73,7 +73,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://60e0-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/events');
+        const response = await fetch('https://9433-2806-265-5402-ca4-8066-f4e4-35fd-2af0.ngrok-free.app/events');
         const data = await response.json();
         console.log("Eventos cargados:", data);
         setEvents(data.events || []);

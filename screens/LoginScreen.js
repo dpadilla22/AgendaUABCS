@@ -32,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
   //   });
 
    try {
-     const response = await fetch('https://60e0-2806-265-5402-ca4-c061-200d-5b0b-6fc4.ngrok-free.app/login', {  
+     const response = await fetch('https://9433-2806-265-5402-ca4-8066-f4e4-35fd-2af0.ngrok-free.app/login', {  
        method: 'POST',
        headers: {
         'Content-Type': 'application/json'
@@ -68,7 +68,6 @@ const LoginScreen = ({ navigation }) => {
       });
       navigation.navigate('Home', { user: data.user });
       
-  console.log('idAccount guardado:', idAccount);
     } else {
       Toast.show({
         type: 'error',

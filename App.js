@@ -11,6 +11,7 @@ import DepartamentScreen from './screens/DepartamentScreen';
 import Notificaciones from './screens/notificaction';
 import LocationScreen from './screens/LocationScreen';
 import EventScreen from './screens/EventScreen';
+import EventDetailScreen from './screens/EventDetailScreen';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -46,6 +47,7 @@ export default function App() {
           <Stack.Screen name="Notificaciones" component={Notificaciones} />
           <Stack.Screen name="LocationScreen" component={LocationScreen} />
           <Stack.Screen name="EventScreen" component={EventScreen} />
+          <Stack.Screen name="EventDetailScreen" component={EventDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       

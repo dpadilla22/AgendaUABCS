@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity,} from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { ActivityIndicator } from 'react-native';
-
 import { Ionicons } from '@expo/vector-icons';
-
-
+import { useNavigation } from '@react-navigation/native';
 
 const EventCard = ({ title, department, date, time, location, imageUrl }) => {
+  const navigation = useNavigation();
  
   const getDepartmentColor = (dept) => {
     const colors = {
@@ -16,13 +15,11 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
       'Agronomía': '#E6FFE6', 
       'Ciencias de la Tierra': '#E0FFFF',
       'Humanidades': '#FFF7A3',
-
     };
     
     return colors[dept] || '#F0F0F0'; 
   };
   
-
   const formatDate = (dateString) => {
     if (!dateString) return "Fecha no disponible";
     
@@ -34,9 +31,22 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
       return dateString; 
     }
   };
+
+  const handlePress = () => {
+    const eventData = {
+      title,
+      department,
+      date,
+      time,
+      location,
+      imageUrl
+    };
+    
+    navigation.navigate('EventDetailScreen', { event: eventData });
+  };
   
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={handlePress}>
       <View style={styles.cardContent}>
         <View style={styles.imageContainer}>
           <Image 
@@ -47,11 +57,9 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
         </View>
         
         <View style={styles.infoContainer}>
-
           <View style={[styles.departmentTag, { backgroundColor: getDepartmentColor(department) }]}>
            <Text style={styles.departmentText}>{department}</Text>
           </View>
-
           
           <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
             {title}
@@ -77,7 +85,7 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
           <Ionicons name="bookmark-outline" size={22} color="#666" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
