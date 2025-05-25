@@ -7,6 +7,11 @@ USE railway;
 DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS Account;
 DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS suggestions;
+DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS attendance;
 
 CREATE TABLE Account(
     idAccount CHAR(6) NOT NULL PRIMARY KEY UNIQUE,
@@ -32,6 +37,52 @@ CREATE TABLE favorites (
   FOREIGN KEY (accountId) REFERENCES Account(idAccount) ON DELETE CASCADE,
   FOREIGN KEY (eventId) REFERENCES events(id) ON DELETE CASCADE
 );
+
+CREATE TABLE departments (
+  idDepartment INT AUTO_INCREMENT PRIMARY KEY,
+  nameDepartment VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE suggestions (
+  idSuggestion INT AUTO_INCREMENT PRIMARY KEY,
+  titleEventSuggestion VARCHAR(150) NOT NULL,
+  idDepartment INT NOT NULL,
+  dateEventSuggestion DATE NOT NULL,
+  timeEventSuggestion TIME NOT NULL,
+  locationEventSuggestion VARCHAR(255) NOT NULL,
+  accountId CHAR(6) NOT NULL,
+  FOREIGN KEY (accountId) REFERENCES Account(idAccount) ON DELETE CASCADE,
+  FOREIGN KEY (idDepartment) REFERENCES departments(idDepartment) ON DELETE CASCADE
+);
+
+CREATE TABLE comments (
+  idComment INT AUTO_INCREMENT PRIMARY KEY,
+  titleComment VARCHAR(255) NOT NULL,
+  descriptionComment TEXT NOT NULL,
+  dateComment TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  accountId CHAR(6) NOT NULL,
+  FOREIGN KEY (accountId) REFERENCES Account(idAccount) ON DELETE CASCADE
+);
+
+CREATE TABLE notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  accountId CHAR(6) NOT NULL,
+  eventId INT NULL,
+  message TEXT NOT NULL,
+  dateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  isRead BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY (accountId) REFERENCES Account(idAccount) ON DELETE CASCADE,
+  FOREIGN KEY (eventId) REFERENCES events(id) ON DELETE SET NULL
+);
+
+CREATE TABLE attendance (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  accountId CHAR(6) NOT NULL,
+  eventId INT NOT NULL,
+  FOREIGN KEY (accountId) REFERENCES Account(idAccount) ON DELETE CASCADE,
+  FOREIGN KEY (eventId) REFERENCES events(id) ON DELETE CASCADE
+);
+
 
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 -- 											GENERATE ID ACCOUNT
@@ -128,6 +179,61 @@ BEGIN
 
     INSERT INTO events(imageUrl, title, department, date, location) 
     VALUES (p_imageUrl, p_title, p_department, p_date, p_location);
+END //
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+-- 											CREATE DEPARTMENT
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DROP PROCEDURE IF EXISTS SP_CREATE_DEPARTMENT;
+DELIMITER //
+CREATE PROCEDURE SP_CREATE_DEPARTMENT(
+    IN p_nameDepartment VARCHAR(100)
+)
+BEGIN
+
+	IF p_nameDepartment IS NULL OR LENGTH(TRIM(p_nameDepartment)) = 0 THEN
+    SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'The name of the department cant be empty';
+	END IF;
+
+
+    INSERT INTO departments(nameDepartment) 
+    VALUES (p_nameDepartment);
+    
+END //
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+-- 											CREATE SUGGESTION
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DROP PROCEDURE IF EXISTS SP_CREATE_SUGGESTION;
+DELIMITER //
+CREATE PROCEDURE SP_CREATE_SUGGESTION(
+    IN p_titleEventSuggestion VARCHAR(150),
+    IN p_idDepartment INT,
+    IN p_dateEventSuggestion DATE,
+    IN p_timeEventSuggestion TIME,
+    IN p_locationEventSuggestion VARCHAR(255),
+    IN p_accountId CHAR(6)
+)
+BEGIN
+
+    IF p_titleEventSuggestion IS NULL OR LENGTH(TRIM(p_titleEventSuggestion)) = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'The title of the suggestion cant be empty';
+    END IF;
+
+    IF p_locationEventSuggestion IS NULL OR LENGTH(TRIM(p_locationEventSuggestion)) = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'The location of the suggestion cant be empty';
+    END IF;
+
+    INSERT INTO suggestions(titleEventSuggestion, idDepartment, dateEventSuggestion, timeEventSuggestion, locationEventSuggestion, accountId) 
+    VALUES (p_titleEventSuggestion, p_idDepartment, p_dateEventSuggestion, p_timeEventSuggestion, p_locationEventSuggestion, p_accountId);
+
 END //
 DELIMITER ;
 

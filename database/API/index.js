@@ -16,6 +16,10 @@ app.listen(PORT, () => {
   console.log("Server is running baby!");
 });
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check Accounts
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 app.get("/Accounts", async (req, res) => {
   let db;
   try {
@@ -34,6 +38,10 @@ app.get("/Accounts", async (req, res) => {
     if (db) db.end();
   }
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		            Login User
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.post("/login", async (req, res) => {
   let db;
@@ -89,18 +97,22 @@ app.post("/login", async (req, res) => {
       },
     };
 
-    console.log("Enviando respuesta:", responseData);
+    console.log("Sending response:", responseData);
     res.json(responseData);
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      message: "Error en el servidor",
+      message: "Server error",
     });
   } finally {
     if (db) await db.end();
   }
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		             Create Account
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.post("/createAccount", async (req, res) => {
   let db;
@@ -124,6 +136,10 @@ app.post("/createAccount", async (req, res) => {
     if (db) db.end();
   }
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		             Create Event
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.post("/createEvent", async (req, res) => {
   let db;
@@ -155,6 +171,10 @@ app.post("/createEvent", async (req, res) => {
   }
 });
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		            Check events
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 app.get("/events", async (req, res) => {
   let db;
   try {
@@ -178,6 +198,10 @@ app.get("/events", async (req, res) => {
     if (db) db.end();
   }
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check event by ID
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.get("/events/:id", async (req, res) => {
   let db;
@@ -212,5 +236,110 @@ app.get("/events/:id", async (req, res) => {
   }
 });
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Add event to favorites
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+app.post("/events/:id/favorite", async (req, res) => {
+  let db;
+  const eventId = req.params.id;
+  const { accountId } = req.body;
+
+  if (!accountId) {
+    return res.status(400).json({
+      success: false,
+      message: "Account ID is required",
+    });
+  }
+
+  try {
+    db = await connect();
+
+    const query = `INSERT INTO favorites (accountId, eventId) VALUES (?, ?)`;
+    await db.execute(query, [accountId, eventId]);
+
+    res.json({
+      success: true,
+      message: "Event added to favorites",
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error adding event to favorites:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Create department
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/createDepartment", async (req, res) => {    
+  let db;
+  try {
+    const { nameDepartment } = req.body;
+    if (!nameDepartment) {
+      return res.status(400).json({
+        success: false,
+        message: "Name department is required",
+      });
+    }
+    db = await connect();
+    const query = `CALL SP_CREATE_DEPARTMENT('${nameDepartment}')`;
+    const [rows] = await db.execute(query);
+    console.log(rows);
+
+    res.json({
+      data: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Create suggestions
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/createSuggestion", async (req, res) => {    
+  let db;
+  try {
+    const { titleEventSuggestion, idDepartment, dateEventSuggestion, timeEventSuggestion, locationEventSuggestion, accountId } = req.body;
+    if (!titleEventSuggestion || !idDepartment || !dateEventSuggestion || !timeEventSuggestion || !locationEventSuggestion || !accountId) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+    db = await connect();
+    const query = `CALL SP_CREATE_SUGGESTION('${titleEventSuggestion}', ${idDepartment}, '${dateEventSuggestion}', '${timeEventSuggestion}', '${locationEventSuggestion}', '${accountId}')`;
+    const [rows] = await db.execute(query);
+    console.log(rows);
+
+    res.json({
+      data: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
 
