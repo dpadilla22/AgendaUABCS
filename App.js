@@ -23,17 +23,72 @@ function DrawerNavigator() {
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
-        drawerActiveTintColor: '#4A96BD', 
-        drawerActiveBackgroundColor: '#FFF7A3', 
-        drawerInactiveTintColor: 'black', 
+        drawerActiveTintColor: '#4A96BD',
+        drawerActiveBackgroundColor: '#FFF7A3',
+        drawerInactiveTintColor: 'black',
       }}
     >
-      <Drawer.Screen name="Home" component={HomeScreen} />
-      <Drawer.Screen name="Humanidades" component={DepartamentScreen} />
-      <Drawer.Screen name="Cerrar sesion" component={WelcomeScreen} />
+     <Drawer.Screen
+     name="Home"
+     component={HomeScreen}
+     options={{
+     drawerItemStyle: { height: 0 }, 
+      }}
+    />
+
+      <Drawer.Screen
+        name="Agronomía"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Agronomía' }}
+      />
+      <Drawer.Screen
+        name="Ciencia animal y conservación del hábitat"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Ciencia animal y conservación del hábitat' }}
+      />
+      <Drawer.Screen
+        name="Ciencias de la tierra"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Ciencias de la tierra' }}
+      />
+      <Drawer.Screen
+        name="Ciencias marinas y costeras"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Ciencias marinas y costeras' }}
+      />
+      <Drawer.Screen
+        name="Ciencias sociales y jurídicas"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Ciencias sociales y jurídicas' }}
+      />
+      <Drawer.Screen
+        name="Economía"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Economía' }}
+      />
+      <Drawer.Screen
+        name="Humanidades"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Humanidades' }}
+      />
+      <Drawer.Screen
+        name="Ingeniería en pesquerías"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Ingeniería en pesquerías' }}
+      />
+      <Drawer.Screen
+        name="Sistemas computacionales"
+        component={DepartamentScreen}
+        initialParams={{ nombreDepartamento: 'Sistemas computacionales' }}
+      />
+
+      <Drawer.Screen name="Cerrar sesión" component={WelcomeScreen} />
     </Drawer.Navigator>
   );
 }
+
+
+
 export default function App() {
    return (
     <>

@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, Image, TouchableOpacity, StyleSheet,
+  ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 const today = new Date();
-const todayString = today.toISOString().split('T')[0]; 
+const todayString = today.toISOString().split('T')[0];
 
 const COLORS = {
   darkBlue: "#003366",
@@ -15,108 +18,242 @@ const COLORS = {
   red: "#FFE4E1",
   gray: "#F5F5F5",
   textDark: "#333333",
-  textLight: "#666666"
+  textLight: "#666666",
+  white: "#FFFFFF",
+  lightGray: "#E0E0E0"
 };
 
-const DepartamentScreen = ({ navigation }) => {
-  const [selectedDate, setSelectedDate] = useState("2025-05-23");
+const DepartamentScreen = ({ navigation, route }) => {
+  const { nombreDepartamento } = route.params;
+  const [selectedDate, setSelectedDate] = useState(todayString);
+  const [eventos, setEventos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  
-  const markedDates = {
-    [selectedDate]: { selected: true, selectedColor: COLORS.accent }
+  useEffect(() => {
+    const fetchEventos = async () => {
+      try {
+        const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/events');
+        const data = await response.json();
+        setEventos(data.events || []);
+      } catch (error) {
+        console.error('Error al obtener eventos:', error);
+        setEventos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEventos();
+  }, []);
+
+  const getMarkedDates = () => {
+    const marked = {};
+    const eventosDelDepartamento = eventos.filter(evento => evento.department === nombreDepartamento);
+    eventosDelDepartamento.forEach(evento => {
+      const eventDate = evento.date.split('T')[0];
+      marked[eventDate] = {
+        marked: true,
+        dotColor: COLORS.yellow,
+        activeOpacity: 0.8
+      };
+    });
+
+    marked[selectedDate] = {
+      ...(marked[selectedDate] || {}),
+      selected: true,
+      selectedColor: COLORS.accent,
+      selectedTextColor: '#fff'
+    };
+    return marked;
   };
+
+  const eventosFiltrados = eventos.filter(evento =>
+    evento.department === nombreDepartamento &&
+    evento.date.split('T')[0] === selectedDate
+  );
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
+  const formatDate = (dateString) => {
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    const date = new Date(`${year}-${month}-${day}T12:00:00`);
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const renderEvento = ({ item }) => (
+    <TouchableOpacity
+      style={styles.eventCard}
+      onPress={() => navigation.navigate('EventDetailScreen', {
+        eventId: item.id,
+        event: {
+          ...item,
+          time: formatTime(item.date),
+          formattedDate: formatDate(item.date)
+        },
+        date: item.date,
+        time: formatTime(item.date),
+      })}
+      activeOpacity={0.7}
+    >
+      <View style={styles.eventImageContainer}>
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={styles.eventImage}
+          resizeMode="cover"
+        />
+      </View>
+      <View style={styles.eventContent}>
+        <View style={styles.eventHeader}>
+          <Text style={styles.eventTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+        </View>
+        <View style={styles.eventInfo}>
+          <View style={styles.eventInfoRow}>
+            <Image source={require("../assets/clock.png")} style={styles.eventIcon} />
+            <Text style={styles.eventInfoText}>
+              {formatTime(item.date)}
+            </Text>
+          </View>
+          <View style={styles.eventInfoRow}>
+            <Image source={require("../assets/location.png")} style={styles.eventIcon} />
+            <Text style={styles.eventInfoText} numberOfLines={1}>
+              {item.location}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.eventBadge}>
+        <Text style={styles.eventBadgeText}>
+          {nombreDepartamento.substring(0, 3).toUpperCase()}
+        </Text>
+      </View>
+      <View style={styles.eventColorIndicator} />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={COLORS.accent} barStyle="light-content" />
 
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Image 
-            source={require("../assets/back-arrow.png")} 
-            style={[styles.backIcon, {tintColor: "#fff"}]} 
+      {loading ? (
+        <View style={styles.fullScreenLoading}>
+          <Image
+         source={require("../assets/agendaLogo.png")}
+          style={styles.loadingImage}
+          resizeMode="contain"
           />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Calendario</Text>
-        <View style={styles.emptySpace} />
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-     
-        <View style={styles.calendarContainer}>
-          <Calendar
-  current={selectedDate}
-  minDate={todayString}   
-  onDayPress={day => setSelectedDate(day.dateString)}
-  markedDates={markedDates}
-  theme={{
-    backgroundColor: COLORS.lightBlue,
-    calendarBackground: COLORS.lightBlue,
-    textSectionTitleColor: '#fff',
-    selectedDayBackgroundColor: COLORS.accent,
-    selectedDayTextColor: '#fff',
-    todayTextColor: COLORS.yellow,
-    dayTextColor: '#fff',
-    textDisabledColor: 'rgba(255, 255, 255, 0.5)',
-    arrowColor: '#fff',
-    monthTextColor: '#fff',
-    indicatorColor: '#fff',
-  }}
-  style={{
-    borderRadius: 20,
-    padding: 10,
-  }}
-/>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Cargando eventos...</Text>
         </View>
-
-        
-        <View style={styles.eventsContainer}>
-          <View style={styles.eventsHeader}>
-            <Text style={styles.eventsTitle}>Humanidades</Text>
-            <Text style={styles.eventsSubtitle}>Eventos {selectedDate.split('-')[2]} de mayo</Text>
+      ) : (
+        <>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Image
+                source={require("../assets/back-arrow.png")}
+                style={[styles.backIcon, { tintColor: "#fff" }]}
+              />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Calendario</Text>
+            <View style={styles.emptySpace} />
           </View>
 
-        
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.calendarContainer}>
+              <Calendar
+                current={selectedDate}
+                minDate={todayString}
+                onDayPress={day => setSelectedDate(day.dateString)}
+                markedDates={getMarkedDates()}
+                theme={{
+                  backgroundColor: COLORS.lightBlue,
+                  calendarBackground: COLORS.lightBlue,
+                  textSectionTitleColor: '#fff',
+                  selectedDayBackgroundColor: COLORS.accent,
+                  selectedDayTextColor: '#fff',
+                  todayTextColor: COLORS.yellow,
+                  dayTextColor: '#fff',
+                  textDisabledColor: 'rgba(255, 255, 255, 0.5)',
+                  arrowColor: '#fff',
+                  monthTextColor: '#fff',
+                  dotColor: COLORS.yellow,
+                  selectedDotColor: '#fff',
+                }}
+                style={{ borderRadius: 20, padding: 10 }}
+              />
+            </View>
 
-        </View>
-      </ScrollView>
+            <View style={styles.eventsContainer}>
+              <View style={styles.eventsHeader}>
+                <Text style={styles.eventsTitle}>{nombreDepartamento}</Text>
+                <Text style={styles.eventsSubtitle}>
+                  Eventos del {formatDate(selectedDate)}
+                </Text>
+                {eventosFiltrados.length > 0 && (
+                  <Text style={styles.eventsCount}>
+                    {eventosFiltrados.length} evento{eventosFiltrados.length !== 1 ? 's' : ''}
+                  </Text>
+                )}
+              </View>
 
-      <View style={styles.bottomNav}>
-                    <TouchableOpacity 
-                      style={[styles.bottomNavItem]}
-                      onPress={() => navigation.navigate("Home")}
-                      >
-                      <Image 
-                        source={require('../assets/home.png')} 
-                        style={[styles.navIcon, styles.homeIcon]} 
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.bottomNavItem]}
-                      onPress={() => navigation.navigate("EventScreen")}
-                    >
-                      <Image 
-                        source={require("../assets/more.png")} 
-                        style={[styles.navIcon, styles.moreIcon]} 
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.bottomNavItem]} 
-                      onPress={() => navigation.navigate("Profile")}
-                      >
-                      <Image 
-                        source={require("../assets/profile.png")} 
-                        style={[styles.navIcon, styles.profileIcon]} 
-                        />
-                    </TouchableOpacity>
-                  </View>
+              {eventosFiltrados.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Image source={require("../assets/calendar.png")} style={styles.emptyImage} />
+                  <Text style={styles.emptyText}>No hay eventos para esta fecha</Text>
+                  <Text style={styles.emptySubtext}>Selecciona otra fecha en el calendario</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={eventosFiltrados}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={renderEvento}
+                  scrollEnabled={false}
+                  showsVerticalScrollIndicator={false}
+                  ItemSeparatorComponent={() => <View style={styles.eventSeparator} />}
+                />
+              )}
+            </View>
+          </ScrollView>
+
+          <View style={styles.bottomNav}>
+  <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
+    <Image 
+      source={require('../assets/home.png')} 
+      style={[styles.navIcon, styles.homeIcon]} 
+    />
+  </TouchableOpacity>
+  
+  <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("EventScreen")}>
+    <Image 
+      source={require("../assets/more.png")} 
+      style={[styles.navIcon, styles.moreIcon]} 
+    />
+  </TouchableOpacity>
+  
+  <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
+    <Image 
+      source={require("../assets/profile.png")} 
+      style={[styles.navIcon, styles.profileIcon]} 
+    />
+  </TouchableOpacity>
+</View>
+
+        </>
+      )}
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -155,58 +292,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     margin: 15,
     marginBottom: 0,
-    padding: 15,
-  },
-  calendarHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  calendarMonthYear: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  calendarControls: {
-    flexDirection: "row",
-  },
-  calendarControl: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  calendarControlText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  calendarDaysContainer: {
-    paddingVertical: 10,
-  },
-  calendarDay: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-  },
-  selectedCalendarDay: {
-    backgroundColor: "#fff",
-  },
-  calendarDayText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  selectedCalendarDayText: {
-    color: COLORS.accent,
+    padding: 20,
   },
   eventsContainer: {
     backgroundColor: '#fff',
@@ -218,7 +304,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   eventsHeader: {
-    marginBottom: 20,
+    marginBottom: 25,
   },
   eventsTitle: {
     fontSize: 20,
@@ -229,77 +315,131 @@ const styles = StyleSheet.create({
   eventsSubtitle: {
     fontSize: 14,
     color: COLORS.textLight,
+    marginBottom: 5,
   },
+  eventsCount: {
+    fontSize: 12,
+    color: COLORS.accent,
+    fontWeight: '600',
+  },
+  
+ 
   eventCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#eee',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden',
+    position: 'relative',
+    flexDirection: 'row', 
+    height: 120, 
+  },
+  eventImageContainer: {
+    width: 80,
+    height: '100%',
     position: 'relative',
   },
-  eventColorBar: {
-    position: 'absolute',
-    left: 0,
-    top: 15,
-    bottom: 15,
-    width: 4,
-    backgroundColor: COLORS.accent,
-    borderRadius: 2,
+  eventImage: {
+    width: '100%',
+    height: '100%',
   },
-  eventInfo: {
+  eventContent: {
     flex: 1,
-    paddingLeft: 10,
-    paddingRight: 10,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  eventHeader: {
+    marginBottom: 8,
   },
   eventTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
     color: COLORS.textDark,
-    lineHeight: 22,
+    lineHeight: 20,
   },
-  eventDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  eventInfo: {
+    gap: 4, 
   },
-  eventDetail: {
+  eventInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 15,
-    marginBottom: 5,
   },
   eventIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 5,
+    width: 12,
+    height: 12,
     tintColor: COLORS.textLight,
+    marginRight: 8,
   },
-  eventTime: {
-    fontSize: 14,
+  eventInfoText: {
+    fontSize: 12,
     color: COLORS.textLight,
+    flex: 1,
+    fontWeight: '500',
   },
-  eventLocation: {
-    fontSize: 14,
-    color: COLORS.textLight,
+  eventBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
-  bookmarkButton: {
-    justifyContent: 'center',
+  eventBadgeText: {
+    color: COLORS.white,
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  eventColorIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 3,
+    height: '100%',
+    backgroundColor: COLORS.accent,
+  },
+  eventSeparator: {
+    height: 4, 
+  },
+  
+
+  loadingContainer: {
+    padding: 30,
     alignItems: 'center',
-    width: 40,
   },
-  bookmarkIcon: {
-    width: 24,
-    height: 24,
+  loadingText: {
+    color: COLORS.textLight,
+    fontSize: 16,
   },
-bottomNav: {
+  emptyContainer: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  emptyImage: {
+    width: 60,
+    height: 60,
+    marginBottom: 12,
+    tintColor: COLORS.lightGray,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.textLight,
+    textAlign: 'center',
+  },
+  
+
+  bottomNav: {
     flexDirection: "row",
     backgroundColor: COLORS.darkBlue,
     height: 65,
@@ -315,34 +455,28 @@ bottomNav: {
     justifyContent: "center",
     height: "100%",
   },
-  activeNavItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 30,
-    marginHorizontal: 10,
-  },
   navIcon: {
     width: 24,
     height: 24,
     tintColor: "white",
   },
-  locationIcon: {
-    width: 34,
-    height: 35,
-    tintColor: "white",
-  },
   homeIcon: {
     width: 28,
     height: 28,
-    tintColor: "white",
   },
   profileIcon: {
     width: 45,
     height: 45,
-    tintColor: "white",
   },
   moreIcon: {
     width: 40,
     height: 40,
+  },
+  fullScreenLoading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.offWhite,
   },
 });
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, Animated } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient'; 
 import EventCard from "../components/EventCard";
 import { ActivityIndicator } from "react-native";
 
 const { width: screenWidth } = Dimensions.get('window');
-const CAROUSEL_WIDTH = screenWidth - 20; 
-const CAROUSEL_HEIGHT = 200;
+const CAROUSEL_WIDTH = screenWidth - 32; 
+const CAROUSEL_HEIGHT = 220; 
 
 const COLORS = {
   coral: "#FF7B6B",
@@ -41,7 +42,13 @@ const carouselData = [
     image: require("../assets/carrusel4.jpeg"),
     title: "Feria de Ciencias",
     subtitle: "Innovación y tecnología"
-  }
+  },
+  {
+    id: 5,
+    image: require("../assets/carrusel5.png"),
+    title: "Aquí se estudia...",
+    subtitle: "y también se vive la cultura"
+  },
 ];
 
 const HomeScreen = ({ navigation }) => {
@@ -50,7 +57,6 @@ const HomeScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState("Hoy");
   const [refreshing, setRefreshing] = useState(false);
   
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const carouselRef = useRef(null);
@@ -59,7 +65,7 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://9433-2806-265-5402-ca4-8066-f4e4-35fd-2af0.ngrok-free.app/events');
+      const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -73,9 +79,9 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://9433-2806-265-5402-ca4-8066-f4e4-35fd-2af0.ngrok-free.app/events');
+        const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/events');
         const data = await response.json();
-        console.log("Eventos cargados:", data);
+        
         setEvents(data.events || []);
       } catch (error) {
         console.error('Error al obtener eventos:', error);
@@ -94,7 +100,7 @@ const HomeScreen = ({ navigation }) => {
         setCurrentIndex(prevIndex => {
           const nextIndex = (prevIndex + 1) % carouselData.length;
           carouselRef.current?.scrollTo({
-            x: nextIndex * CAROUSEL_WIDTH,
+            x: nextIndex * (CAROUSEL_WIDTH + 16), 
             animated: true
           });
           return nextIndex;
@@ -111,7 +117,7 @@ const HomeScreen = ({ navigation }) => {
 
   const handleCarouselScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
-    const index = Math.round(scrollPosition / CAROUSEL_WIDTH);
+    const index = Math.round(scrollPosition / (CAROUSEL_WIDTH + 16));
     setCurrentIndex(index);
   };
 
@@ -130,7 +136,7 @@ const HomeScreen = ({ navigation }) => {
 
   const goToSlide = (index) => {
     carouselRef.current?.scrollTo({
-      x: index * CAROUSEL_WIDTH,
+      x: index * (CAROUSEL_WIDTH + 16),
       animated: true
     });
     setCurrentIndex(index);
@@ -199,7 +205,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-     
+      
       <View style={styles.whiteHeader}>
         <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <View style={styles.menuIcon}>
@@ -227,7 +233,6 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-     
       <ScrollView
         style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
@@ -240,7 +245,7 @@ const HomeScreen = ({ navigation }) => {
           <ScrollView
             ref={carouselRef}
             horizontal
-            pagingEnabled
+            pagingEnabled={false}
             showsHorizontalScrollIndicator={false}
             onScroll={handleCarouselScroll}
             onTouchStart={handleCarouselTouchStart}
@@ -248,20 +253,26 @@ const HomeScreen = ({ navigation }) => {
             scrollEventThrottle={16}
             style={styles.carouselContainer}
             contentContainerStyle={styles.carouselContent}
+            snapToInterval={CAROUSEL_WIDTH + 16}
+            decelerationRate="fast"
           >
             {carouselData.map((item, index) => (
               <View key={item.id} style={styles.carouselSlide}>
                 <Image source={item.image} style={styles.carouselImage} />
-                <View style={styles.carouselOverlay}>
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
+                  style={styles.carouselOverlay}
+                >
                   <View style={styles.carouselTextContainer}>
                     <Text style={styles.carouselTitle}>{item.title}</Text>
                     <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
                   </View>
-                </View>
+                </LinearGradient>
               </View>
             ))}
           </ScrollView>
 
+      
           <View style={styles.dotsContainer}>
             {carouselData.map((_, index) => (
               <TouchableOpacity
@@ -276,7 +287,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-     
+        
         <View style={styles.tabSection}>
           <View style={styles.tabContainer}>
             <TouchableOpacity
@@ -300,7 +311,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-      
+       
         <View style={styles.eventsContent}>
           {events.length === 0 ? (
             <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
@@ -323,7 +334,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      
+   
       <View style={styles.bottomNav}>
         <TouchableOpacity 
           style={[styles.bottomNavItem, activeTab === "Hoy" && styles.activeNavItem]}
@@ -364,13 +375,18 @@ const styles = StyleSheet.create({
   whiteHeader: {
     backgroundColor: "white",
     paddingTop: 40,
-    paddingBottom: 10,
+    paddingBottom: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   menuButton: {
     padding: 8,
@@ -388,7 +404,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#333",
-    fontSize: 15,
+    fontSize: 18,
+    fontWeight: '600',
   },
   headerIcons: {
     flexDirection: "row",
@@ -399,33 +416,38 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   headerIcon: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     tintColor: "#333",
   },
   
- 
   mainScrollView: {
     flex: 1,
   },
 
+
   carouselSection: {
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 20,
+    marginBottom: 20,
   },
   carouselContainer: {
     height: CAROUSEL_HEIGHT,
   },
   carouselContent: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
   },
   carouselSlide: {
     width: CAROUSEL_WIDTH,
     height: CAROUSEL_HEIGHT,
-    marginHorizontal: 0,
-    borderRadius: 15,
+    marginRight: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   carouselImage: {
     width: '100%',
@@ -437,8 +459,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '50%',
-    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+    height: '60%',
     justifyContent: 'flex-end',
     padding: 20,
   },
@@ -447,102 +468,125 @@ const styles = StyleSheet.create({
   },
   carouselTitle: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 5,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    lineHeight: 24,
   },
   carouselSubtitle: {
     color: 'white',
-    fontSize: 14,
-    opacity: 0.9,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    fontSize: 16,
+    opacity: 0.95,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    lineHeight: 20,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 20,
     marginBottom: 5,
   },
   dot: {
-    width: 8,
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
+    transition: 'all 0.3s ease',
   },
   activeDot: {
     backgroundColor: COLORS.darkBlue,
-    width: 20,
+    width: 24,
   },
   inactiveDot: {
     backgroundColor: COLORS.lightGray,
+    width: 8,
   },
+
 
   tabSection: {
     backgroundColor: '#66B2FF',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 25,
-    marginHorizontal: 10,
+    marginHorizontal: 16,
     marginTop: 5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   tabContainer: {
     flexDirection: "row",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
     borderRadius: 20,
-    marginHorizontal: 2,
+    marginHorizontal: 4,
   },
   activeTab: {
     backgroundColor: "white",
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   tabText: {
     color: "white",
-    fontWeight: "500",
+    fontWeight: "600",
+    fontSize: 14,
   },
   activeTabText: {
-    color: "#000000",
+    color: "#333",
     fontWeight: "bold",
   },
   
- 
   eventsContent: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     paddingBottom: 20,
+    marginTop: 10,
   },
   noEventsText: {
     textAlign: 'center',
     marginTop: 50,
     fontSize: 16,
     color: '#666',
+    fontStyle: 'italic',
   },
+  
+
   bottomNav: {
     flexDirection: "row",
     backgroundColor: COLORS.darkBlue,
-    height: 65,
+    height: 70,
     justifyContent: "space-around",
     alignItems: "center",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 8,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    paddingBottom: 10,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   bottomNavItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    height: "100%",
+    height: "80%",
+    borderRadius: 20,
   },
   activeNavItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 30,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     marginHorizontal: 10,
   },
   navIcon: {

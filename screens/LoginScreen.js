@@ -1,8 +1,17 @@
 import { useState } from "react";
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image } from "react-native"; 
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image, ActivityIndicator } from "react-native";
 import Toast from 'react-native-toast-message';
+
+const COLORS = {
+  primary: "#003366",
+  secondary: "#4dabf7",
+  white: "#FFFFFF",
+  gray: "#F5F5F5",
+  darkGray: "#666666",
+  lightGray: "#E0E0E0",
+};
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -10,132 +19,142 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-
   const handleLogin = async () => {
-  if (!username || !password) {
-    alert('Por favor ingresa usuario y contraseña');
-    return;
-  }
-
-  setLoading(true);
-
-  // try {
-  //   const response = await fetch('http://localhost:3000/login', {  
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     },
-  //     body: JSON.stringify({
-  //       identifierUser: username,
-  //       passwordUser: password
-  //     })
-  //   });
-
-   try {
-     const response = await fetch('https://9433-2806-265-5402-ca4-8066-f4e4-35fd-2af0.ngrok-free.app/login', {  
-       method: 'POST',
-       headers: {
-        'Content-Type': 'application/json'
-       },
-       body: JSON.stringify({
-         identifierUser: username,
-         passwordUser: password
-       })
-     });
-
-    // try {
-    // const response = await fetch('https://mysql-production-a850.up.railway.app/login', {  
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({
-    //     identifierUser: username,
-    //     passwordUser: password
-    //   })
-    // });
-
-   const data = await response.json();
-
-    if (response.ok) {
-
-      
-
-      Toast.show({
-        type: 'success',
-        text1: '¡Bienvenido!',
-        text2: `Hola de nuevo, ${data.user.name} `,
-      });
-      navigation.navigate('Home', { user: data.user });
-      
-    } else {
+    if (!username.trim() || !password.trim()) {
       Toast.show({
         type: 'error',
-        text1: 'Error de acceso',
-        text2: data.message || 'Credenciales incorrectas',
+        text1: 'Campos requeridos',
+        text2: 'Por favor ingresa usuario y contraseña',
       });
+      return;
     }
-  } catch (error) {
-    Toast.show({
-      type: 'error',
-      text1: 'Error de red',
-      text2: 'No se pudo conectar al servidor',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/login', {  
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          identifierUser: username.trim(),
+          passwordUser: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Toast.show({
+          type: 'success',
+          text1: '¡Bienvenido!',
+          text2: `Hola de nuevo, ${data.user.name}`,
+        });
+        navigation.navigate('Home', { user: data.user });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error de acceso',
+          text2: data.message || 'Credenciales incorrectas',
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error de conexión',
+        text2: 'No se pudo conectar al servidor',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.blueSection}>
-        <Image source={require('../assets/uabcs.jpg')} style={styles.people} resizeMode="contain" />
+      <StatusBar style="light" backgroundColor={COLORS.primary} />
+      
+     
+      <View style={styles.imageSection}>
+        <Image 
+          source={require('../assets/uabcs.jpg')} 
+          style={styles.logo} 
+          resizeMode="contain" 
+        />
       </View>
 
-      <View style={styles.whiteSection}>
+      
+      <View style={styles.formSection}>
         <View style={styles.formContainer}>
           
+     
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Usuario</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="person-outline" size={20} color={COLORS.darkGray} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                
+                placeholder="Ingresa tu usuario"
+                placeholderTextColor={COLORS.darkGray}
                 value={username}
                 onChangeText={setUsername}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="default"
               />
             </View>
           </View>
 
+        
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Contraseña</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={COLORS.darkGray} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                // placeholder="Ingresa tu contraseña"
+                placeholder="Ingresa tu contraseña"
+                placeholderTextColor={COLORS.darkGray}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
-              <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+              <TouchableOpacity 
+                style={styles.eyeIcon} 
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                  size={20} 
+                  color={COLORS.darkGray} 
+                />
               </TouchableOpacity>
             </View>
           </View>
 
-         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-  <Text style={styles.buttonText}>{loading ? 'Cargando...' : 'Iniciar sesión'}</Text>
-</TouchableOpacity>
+        
+          <TouchableOpacity 
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]} 
+            onPress={handleLogin} 
+            disabled={loading}
+          >
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={COLORS.white} />
+                <Text style={styles.buttonText}>Cargando...</Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>Iniciar sesión</Text>
+            )}
+          </TouchableOpacity>
 
-
-          <TouchableOpacity>
+         
+          <TouchableOpacity style={styles.helpContainer}>
             <Text style={styles.helpText}>¿Problemas para ingresar?</Text>
           </TouchableOpacity>
         </View>
       </View>
-
-      <StatusBar style="light" />
     </SafeAreaView>
   );
 };
@@ -143,83 +162,99 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: COLORS.primary,
   },
-  blueSection: {
-    height: 220,
-    justifyContent: "center",
-    alignItems: "center"
+  
+
+  imageSection: {
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
   },
-  people: {
-    width: 400,
-    height: 400,
-    resizeMode: 'contain',
+  logo: {
+    width: 550,
+    height: 500,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333", 
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  whiteSection: {
+
+  formSection: {
     flex: 1,
-    backgroundColor: "white",
-    paddingTop: 20,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 40,
   },
   formContainer: {
-    width: "90%",
-    alignSelf: "center",
-    padding: 20,
+    paddingHorizontal: 30,
   },
+
+
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: '600',
+    color: COLORS.primary,
     marginBottom: 8,
   },
   inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    backgroundColor: "white",
+    borderColor: COLORS.lightGray,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 15,
+    height: 50,
   },
   inputIcon: {
-    paddingHorizontal: 10,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    padding: 15,
     fontSize: 16,
+    color: COLORS.primary,
+    paddingVertical: 0, 
+  },
+  eyeIcon: {
+    padding: 5,
+  },
+  loginButton: {
+  backgroundColor: 'white',
+  borderRadius: 15,
+  paddingVertical: 15,
+  alignItems: 'center',
+  borderWidth: 2,
+  borderColor: COLORS.darkBlue,
+  flexDirection: 'row',
+  justifyContent: 'center',
+  marginTop: 20, 
   },
 
-  button: {
-    backgroundColor: "#003366",
-    paddingVertical: 15,
-    borderRadius: 10,
-    marginTop: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  loginButtonDisabled: {
+    backgroundColor: COLORS.darkGray,
   },
   buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+  color: COLORS.darkBlue, 
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+
+  helpContainer: {
+    alignItems: 'center',
+    marginTop: 30,
   },
   helpText: {
-    color: "#000000",
+    color: COLORS.primary,
     fontSize: 14,
-    textAlign: "center",
-    marginTop: 20,
+    fontWeight: '500',
   },
 });
 

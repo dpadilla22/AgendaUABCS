@@ -7,18 +7,22 @@ import { useNavigation } from '@react-navigation/native';
 const EventCard = ({ title, department, date, time, location, imageUrl }) => {
   const navigation = useNavigation();
  
-  const getDepartmentColor = (dept) => {
-    const colors = {
-      'Sistemas computacionales': '#FFFACD', 
-      'Economia': '#FFEBCD', 
-      'Ciencias Sociales y Jurídicas': '#E0FFFF', 
-      'Agronomía': '#E6FFE6', 
-      'Ciencias de la Tierra': '#E0FFFF',
-      'Humanidades': '#FFF7A3',
-    };
-    
-    return colors[dept] || '#F0F0F0'; 
+const getDepartmentColor = (dept) => {
+  const colors = {
+    'Agronomia': '#32CD32',                          
+    'Ciencia animal y conservación del hábitat': '#8FBC8F',  
+    'Ciencias de la tierra': '#20B2AA',                 
+    'Ciencias marinas y costeras': '#1E90FF',          
+    'Ciencias sociales y jurídicas': '#6495ED',        
+    'Economía': '#FF8C00',                            
+    'Humanidades': '#FF69B4',                           
+    'Ingeniería en pesquerías': '#4682B4',            
+    'Sistemas computacionales': '#FFD700',            
   };
+  return colors[dept] || '#CCCCCC';  
+};
+
+
   
   const formatDate = (dateString) => {
     if (!dateString) return "Fecha no disponible";

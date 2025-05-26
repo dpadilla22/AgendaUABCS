@@ -23,9 +23,29 @@ const UABCS_LOCATIONS = {
     latitude: 24.103169,
     longitude: -110.315887,
   },
-  'Departamento de sistemas': {
-    latitude: 24.102741,
-    longitude: -110.316120,
+  'Agronomía':{
+    latitude: 24.100630834143022,
+    longitude: -110.3145877928253,
+  },
+  'Ciencia animal y conservación del hábitat': {
+    latitude: 24.100630834143022,
+    longitude: -110.3145877928253,
+  },
+  'Ciencias de la tierra': {
+    latitude: 24.100913,
+    longitude: -110.315223,
+  },
+  'Ciencias marinas y costeras': {
+    latitude: 24.100913,
+    longitude: -110.315223,
+  },
+  'Ingeniería en pesquerías': {
+    latitude: 24.098834,
+    longitude: -110.315974,
+  },
+  'Foro escénico UABCS': {
+    latitude: 24.102828,
+    longitude: -110.314879,
   },
   'default': {
     latitude:24.102751,
@@ -41,7 +61,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     const colors = {
       'Sistemas computacionales': '#FFFACD', 
       'Economía': '#FFEBCD', 
-      'Ciencias Sociales y jurídicas': '#E0FFFF', 
+      'Ciencias Sociales y urídicas': '#E0FFFF', 
       'Agronomia': '#E6FFE6', 
       'Ciencias de la tierra': '#E0FFFF',
       'Humanidades': '#FFF7A3',
@@ -120,12 +140,7 @@ const EventDetailScreen = ({ navigation, route }) => {
               style={styles.eventImage}
             />
            
-            <View style={styles.flagContainer}>
-              <Image 
-                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Flag_of_Mexico.svg/320px-Flag_of_Mexico.svg.png' }} 
-                style={styles.flagIcon}
-              />
-            </View>
+           
           </View>
           
           <View style={styles.eventInfo}>
@@ -146,7 +161,7 @@ const EventDetailScreen = ({ navigation, route }) => {
                 <Ionicons 
                   name={isBookmarked ? "bookmark" : "bookmark-outline"} 
                   size={24} 
-                  color={isBookmarked ? COLORS.coral : '#666'} 
+                  color={isBookmarked ? COLORS.yellow : '#666'} 
                 />
               </TouchableOpacity>
             </View>
@@ -220,13 +235,40 @@ const EventDetailScreen = ({ navigation, route }) => {
          
           
           <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="share-outline" size={20} color={COLORS.darkBlue} style={{ marginRight: 8 }} />
-            <Text style={styles.secondaryButtonText}>Compartir</Text>
+            <Text style={styles.secondaryButtonText}>Asistir</Text>
           </TouchableOpacity>
           
          
         </View>
       </ScrollView>
+      <View style={styles.bottomNav}>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem]}
+              >
+                <Image 
+                  source={require('../assets/home.png')} 
+                  style={[styles.navIcon, styles.homeIcon]} 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem]}
+                onPress={() => navigation.navigate("EventScreen")}
+              >
+                <Image 
+                  source={require("../assets/more.png")} 
+                  style={[styles.navIcon, styles.moreIcon]} 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bottomNavItem]} 
+                onPress={() => navigation.navigate("Profile")}
+              >
+                <Image 
+                  source={require("../assets/profile.png")} 
+                  style={[styles.navIcon, styles.profileIcon]} 
+                />
+              </TouchableOpacity>
+            </View>
     </SafeAreaView>
   );
 };
@@ -442,6 +484,42 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  bottomNav: {
+    flexDirection: "row",
+    backgroundColor: COLORS.darkBlue,
+    height: 65,
+    justifyContent: "space-around",
+    alignItems: "center",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 8,
+  },
+  bottomNavItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+  },
+  activeNavItem: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 30,
+    marginHorizontal: 10,
+  },
+  navIcon: {
+    tintColor: "white",
+  },
+  moreIcon: {
+    width: 40,
+    height: 40,
+  },
+  homeIcon: {
+    width: 28,
+    height: 28,
+  },
+  profileIcon: {
+    width: 45,
+    height: 45,
   },
 });
 
