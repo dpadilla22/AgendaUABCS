@@ -303,6 +303,34 @@ app.post("/events/:id/favorite", async (req, res) => {
   }
 });
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check favorites by account
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/favorites/:accountId", async (req, res) => {
+  let db;
+  const accountId = req.params.accountId;
+  try {
+    db = await connect();
+    const query = `SELECT * FROM favorites WHERE accountId = ?`;
+    const [rows] = await db.execute(query, [accountId]);
+    console.log(rows);
+    res.json({
+      success: true,
+      favorites: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching favorites:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
 
 
 
