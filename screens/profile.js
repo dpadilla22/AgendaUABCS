@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, StatusBar } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient'; 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const COLORS = {
   darkBlue: "#003366",
@@ -15,9 +16,73 @@ const COLORS = {
   textLight: "#666666"
 };
 
-
-
 const Profile = ({ navigation }) => {
+  const [accountId, setAccountId] = useState(null);
+  const [savedEvents, setSavedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAccountIdAndFavorites = async () => {
+      try {
+        const id = await AsyncStorage.getItem("accountId");
+        if (id) {
+          setAccountId(id);
+          await fetchFavorites(id);
+        }
+      } catch (error) {
+        console.error("Error obteniendo accountId:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccountIdAndFavorites();
+  }, []);
+
+  const fetchFavorites = async (id) => {
+  try {
+   
+    const favResponse = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/favorites/${id}`);
+    const favData = await favResponse.json();
+    
+    if (!favData.success || !favData.favorites || favData.favorites.length === 0) {
+      setSavedEvents([]);
+      return;
+    }
+
+  
+    const eventsResponse = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
+    const eventsData = await eventsResponse.json();
+    
+    if (!eventsData.success || !eventsData.events) {
+      setSavedEvents([]);
+      return;
+    }
+
+  
+    const favoriteIds = favData.favorites.map(fav => fav.eventId);
+    const favoriteEvents = eventsData.events.filter(event => 
+      favoriteIds.includes(event.id) 
+    );
+
+
+    const formattedEvents = favoriteEvents.map(event => ({
+      id: event.id,
+      title: event.title || "Evento sin título",
+      department: event.department || "Sin departamento",
+      date: event.date || "Fecha no especificada",
+      time: event.time || "Hora no especificada",
+      location: event.location || "Ubicación no especificada",
+      imageUrl: event.imageUrl || "https://via.placeholder.com/150"
+    }));
+
+    setSavedEvents(formattedEvents);
+  } catch (error) {
+    console.error("Error al obtener favoritos:", error);
+    setSavedEvents([]);
+  }
+};
+
   const getDepartmentColor = (dept) => {
     const colors = {
       'Sistemas computacionales': COLORS.yellow,
@@ -27,7 +92,15 @@ const Profile = ({ navigation }) => {
     };
     return colors[dept] || '#F0F0F0';
   };
-  
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Cargando...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
@@ -57,10 +130,10 @@ const Profile = ({ navigation }) => {
           </View>
           <View style={styles.profileTextContainer}>
             <Text style={styles.profileTitle}>Estudiante UABCS</Text>
-            <Text style={styles.profileUsername}>@dpadilla_22</Text>
+            <Text style={styles.profileUsername}>hola</Text>
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>5</Text>
+                <Text style={styles.statNumber}>{savedEvents.length}</Text>
                 <Text style={styles.statLabel}>Guardados</Text>
               </View>
             </View>
@@ -70,137 +143,103 @@ const Profile = ({ navigation }) => {
 
       <View style={styles.eventsSection}>
         <Text style={styles.sectionTitle}>
-          Eventos guardados (5)
+          Eventos guardados ({savedEvents.length})
         </Text>
 
         <ScrollView 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.eventCard}>
-            <Image source={require("../assets/code.jpg")} style={styles.eventImage} />
-            <View style={styles.eventContent}>
-              <View style={[styles.categoryTag, {backgroundColor: getDepartmentColor("Ciencias de la tierra")}]}>
-                <Text style={styles.categoryText}>Ciencias de la tierra</Text>
-              </View>
-              <Text style={styles.eventTitle}>Simulacro de campo</Text>
-              <View style={styles.eventDetails}>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>01 de mayo, 2025</Text>
-                </View>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>09:00 - 11:00</Text>
-                </View>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/location.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Departamento de ciencias de la ti...</Text>
-                </View>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.bookmarkButton}>
-              <Image 
-                source={require("../assets/bookmark.png")} 
-                style={[styles.bookmarkIcon, {tintColor: COLORS.accent}]} 
-              />
-            </TouchableOpacity>
-          </View>
+          {savedEvents.length === 0 ? (
+            <Text style={styles.noEventsText}>No tienes eventos guardados.</Text>
+          ) : (
+            savedEvents.map((event, index) => (
+              <View key={`saved-${index}`} style={styles.eventCard}>
+                <Image 
+                  source={{ uri: event.imageUrl }} 
+                  style={styles.eventImage} 
+                  defaultSource={require("../assets/splash-icon.png")} 
+                />
+                <View style={styles.eventContent}>
+                  <View style={[styles.categoryTag, { backgroundColor: getDepartmentColor(event.department) }]}>
+                    <Text style={styles.categoryText}>{event.department}</Text>
+                  </View>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <View style={styles.eventDetails}>
+                    <View style={styles.eventDetailRow}>
+                      <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
+                      <Text style={styles.detailText}>{event.date}</Text>
+                    </View>
+                    <View style={styles.eventDetailRow}>
+                      <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
+                      <Text style={styles.detailText}>{event.time}</Text>
+                    </View>
+                    <View style={styles.eventDetailRow}>
+                      <Image source={require("../assets/location.png")} style={styles.detailIcon} />
+                      <Text style={styles.detailText}>{event.location}</Text>
+                    </View>
+                  </View>
 
-          <View style={styles.eventCard}>
-            <Image source={require("../assets/code.jpg")} style={styles.eventImage} />
-            <View style={styles.eventContent}>
-              <View style={[styles.categoryTag, {backgroundColor: getDepartmentColor("Sistemas computacionales")}]}>
-                <Text style={styles.categoryText}>Sistemas computacionales</Text>
-              </View>
-              <Text style={styles.eventTitle}>Conferencia: Avances en IA</Text>
-              <View style={styles.eventDetails}>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>15 de mayo, 2025</Text>
-                </View>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>14:00 - 16:00</Text>
-                </View>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/location.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Auditorio principal</Text>
-                </View>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.bookmarkButton}>
-              <Image 
-                source={require("../assets/bookmark.png")} 
-                style={[styles.bookmarkIcon, {tintColor: COLORS.accent}]} 
-              />
-            </TouchableOpacity>
-          </View>
+                  <TouchableOpacity style={styles.bookmarkButton}>
+                    <Image 
+                      source={require("../assets/bookmark-filled.png")} 
+                      style={[styles.bookmarkIcon, { tintColor: COLORS.accent }]} 
+                    />
+                  </TouchableOpacity>
 
-          <View style={styles.eventCard}>
-            <Image source={require("../assets/code.jpg")} style={styles.eventImage} />
-            <View style={styles.eventContent}>
-              <View style={[styles.categoryTag, {backgroundColor: getDepartmentColor("Economía")}]}>
-                <Text style={styles.categoryText}>Economía</Text>
-              </View>
-              <Text style={styles.eventTitle}>Taller práctico de herramientas económicas</Text>
-              <View style={styles.eventDetails}>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>20 de mayo, 2025</Text>
-                </View>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>16:00 - 18:00</Text>
-                </View>
-                <View style={styles.eventDetailRow}>
-                  <Image source={require("../assets/location.png")} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Poliforo</Text>
+               
                 </View>
               </View>
-            </View>
-            <TouchableOpacity style={styles.bookmarkButton}>
-              <Image 
-                source={require("../assets/bookmark.png")} 
-                style={[styles.bookmarkIcon, {tintColor: COLORS.accent}]} 
-              />
-            </TouchableOpacity>
-          </View>
+            ))
+          )}
         </ScrollView>
+
+        <TouchableOpacity style={styles.secondaryButton}>
+  <Text style={styles.secondaryButtonText}>Asistir</Text>
+</TouchableOpacity>
+
       </View>
 
-       <View style={styles.bottomNav}>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]}
-                onPress={() => navigation.navigate("Home")}
-                >
-                <Image 
-                  source={require('../assets/home.png')} 
-                  style={[styles.navIcon, styles.homeIcon]} 
-                  />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]}
-                onPress={() => navigation.navigate("EventScreen")}
-              >
-                <Image 
-                  source={require("../assets/more.png")} 
-                  style={[styles.navIcon, styles.moreIcon]} 
-                  />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem,styles.activeNavItem]} 
-                >
-                <Image 
-                  source={require("../assets/profile.png")} 
-                  style={[styles.navIcon, styles.profileIcon]} 
-                  />
-              </TouchableOpacity>
-            </View>
+      <View style={styles.actionButtons}>
+         
+          
+          <TouchableOpacity style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Asistir</Text>
+          </TouchableOpacity>
+          
+         
+        </View>
+      <View style={styles.bottomNav}>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Image 
+            source={require('../assets/home.png')} 
+            style={[styles.navIcon, styles.homeIcon]} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]}
+          onPress={() => navigation.navigate("EventScreen")}
+        >
+          <Image 
+            source={require("../assets/more.png")} 
+            style={[styles.navIcon, styles.moreIcon]} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem, styles.activeNavItem]} 
+        >
+          <Image 
+            source={require("../assets/profile.png")} 
+            style={[styles.navIcon, styles.profileIcon]} 
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -371,6 +410,21 @@ const styles = StyleSheet.create({
   bookmarkIcon: {
     width: 24,
     height: 24,
+  },
+   secondaryButton: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.darkBlue,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    color: COLORS.darkBlue,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   bottomNav: {
     flexDirection: "row",

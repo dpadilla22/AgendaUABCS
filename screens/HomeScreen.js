@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, Animated } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, Animated, TextInput, Modal } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient'; 
 import EventCard from "../components/EventCard";
 import { ActivityIndicator } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_WIDTH = screenWidth - 32; 
@@ -57,15 +59,22 @@ const HomeScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState("Hoy");
   const [refreshing, setRefreshing] = useState(false);
   
+ 
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const carouselRef = useRef(null);
   const autoScrollTimer = useRef(null);
+  const searchInputRef = useRef(null);
 
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/events');
+      const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -79,7 +88,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/events');
+        const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
         const data = await response.json();
         
         setEvents(data.events || []);
@@ -114,6 +123,74 @@ const HomeScreen = ({ navigation }) => {
       }
     };
   }, [isAutoScrolling]);
+
+
+  const performSearch = (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    const queryLower = query.toLowerCase().trim();
+    
+
+    const results = events.filter(event => {
+      return (
+        event.title?.toLowerCase().includes(queryLower) ||
+        event.department?.toLowerCase().includes(queryLower) ||
+        event.location?.toLowerCase().includes(queryLower) ||
+        event.description?.toLowerCase().includes(queryLower)
+      );
+    });
+
+    setTimeout(() => {
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 300);
+  };
+
+
+  const handleSearchChange = (text) => {
+    setSearchQuery(text);
+    performSearch(text);
+  };
+
+
+  const openSearchModal = () => {
+    setSearchModalVisible(true);
+    setSearchQuery("");
+    setSearchResults([]);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
+  };
+
+
+  const closeSearchModal = () => {
+    setSearchModalVisible(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setIsSearching(false);
+  };
+
+
+ const navigateToEventDetail = async (event) => {
+  closeSearchModal();
+
+  const accountId = await AsyncStorage.getItem('accountId'); 
+  navigation.navigate('EventDetailScreen', {
+    eventId: event.id,
+    event: {
+      ...event,
+      time: getHour(event.date),
+      formattedDate: formatDate(event.date)
+    },
+    date: event.date,
+    time: getHour(event.date),
+    accountId,
+  });
+};
 
   const handleCarouselScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
@@ -152,6 +229,15 @@ const HomeScreen = ({ navigation }) => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
+    });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     });
   };
 
@@ -218,7 +304,7 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Agenda UABCS</Text>
 
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={styles.iconButton} onPress={openSearchModal}>
             <Image source={require("../assets/search.png")} style={styles.headerIcon} />
           </TouchableOpacity>
           <TouchableOpacity 
@@ -232,6 +318,133 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+
+
+      <Modal
+        visible={searchModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeSearchModal}
+      >
+        <SafeAreaView style={styles.searchModalContainer}>
+          <View style={styles.searchHeader}>
+            <TouchableOpacity style={styles.searchBackButton} onPress={closeSearchModal}>
+              <Image 
+                source={require("../assets/back-arrow.png")} 
+                style={styles.searchBackIcon} 
+              />
+            </TouchableOpacity>
+            <View style={styles.searchInputContainer}>
+              <Image 
+                source={require("../assets/search.png")} 
+                style={styles.searchInputIcon} 
+              />
+              <TextInput
+                ref={searchInputRef}
+                style={styles.searchInput}
+                placeholder="Buscar eventos, departamentos, ubicaciones..."
+                placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.clearSearchButton} 
+                  onPress={() => handleSearchChange("")}
+                >
+                  <Text style={styles.clearSearchText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <ScrollView style={styles.searchContent} showsVerticalScrollIndicator={false}>
+            {isSearching ? (
+              <View style={styles.searchLoadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.coral} />
+                <Text style={styles.searchLoadingText}>Buscando...</Text>
+              </View>
+            ) : searchQuery.length === 0 ? (
+              <View style={styles.searchEmptyContainer}>
+                <Image 
+                  source={require("../assets/search.png")} 
+                  style={styles.searchEmptyIcon} 
+                />
+                <Text style={styles.searchEmptyTitle}>Buscar Eventos</Text>
+                <Text style={styles.searchEmptyText}>
+                  Ingresa el nombre de un evento, departamento o ubicación para encontrar lo que buscas
+                </Text>
+              </View>
+            ) : searchResults.length === 0 ? (
+              <View style={styles.searchEmptyContainer}>
+                <Image 
+                  source={require("../assets/search.png")} 
+                  style={styles.searchEmptyIcon} 
+                />
+                <Text style={styles.searchEmptyTitle}>Sin resultados</Text>
+                <Text style={styles.searchEmptyText}>
+                  No se encontraron eventos que coincidan con "{searchQuery}"
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.searchResultsContainer}>
+                <Text style={styles.searchResultsTitle}>
+                  {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
+                </Text>
+                {searchResults.map((event, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.searchResultItem}
+                    onPress={() => navigateToEventDetail(event)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.searchResultImageContainer}>
+                      <Image
+                        source={{ uri: event.imageUrl }}
+                        style={styles.searchResultImage}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <View style={styles.searchResultContent}>
+                      <Text style={styles.searchResultTitle} numberOfLines={2}>
+                        {event.title}
+                      </Text>
+                      <View style={styles.searchResultInfo}>
+                        <View style={styles.searchResultInfoRow}>
+                          <Image 
+                            source={require("../assets/clock.png")} 
+                            style={styles.searchResultIcon} 
+                          />
+                          <Text style={styles.searchResultInfoText}>
+                            {getHour(event.date)} • {formatDate(event.date)}
+                          </Text>
+                        </View>
+                        <View style={styles.searchResultInfoRow}>
+                          <Image 
+                            source={require("../assets/location.png")} 
+                            style={styles.searchResultIcon} 
+                          />
+                          <Text style={styles.searchResultInfoText} numberOfLines={1}>
+                            {event.location}
+                          </Text>
+                        </View>
+                        <View style={styles.searchResultInfoRow}>
+                          <Text style={styles.searchResultDepartment}>
+                            {event.department}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
 
       <ScrollView
         style={styles.mainScrollView}
@@ -421,10 +634,172 @@ const styles = StyleSheet.create({
     tintColor: "#333",
   },
   
+   searchModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  searchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+    backgroundColor: '#fff',
+  },
+  searchBackButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  searchBackIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#333',
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.offWhite,
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    height: 45,
+  },
+  searchInputIcon: {
+    width: 18,
+    height: 18,
+    tintColor: '#999',
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    paddingVertical: 0,
+  },
+  clearSearchButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  clearSearchText: {
+    fontSize: 16,
+    color: '#999',
+    fontWeight: 'bold',
+  },
+  searchContent: {
+    flex: 1,
+  },
+  searchLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  searchLoadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  searchEmptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingTop: 100,
+  },
+  searchEmptyIcon: {
+    width: 60,
+    height: 60,
+    tintColor: COLORS.lightGray,
+    marginBottom: 24,
+  },
+  searchEmptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  searchEmptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  searchResultsContainer: {
+    padding: 16,
+  },
+  searchResultsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
+    height: 120,
+  },
+  searchResultImageContainer: {
+    width: 100,
+    height: '100%',
+  },
+  searchResultImage: {
+    width: '100%',
+    height: '100%',
+  },
+  searchResultContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  searchResultTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  searchResultInfo: {
+    gap: 4,
+  },
+  searchResultInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchResultIcon: {
+    width: 12,
+    height: 12,
+    tintColor: '#666',
+    marginRight: 8,
+  },
+  searchResultInfoText: {
+    fontSize: 12,
+    color: '#666',
+    flex: 1,
+  },
+  searchResultDepartment: {
+    fontSize: 12,
+    color: COLORS.darkBlue,
+    fontWeight: '600',
+    backgroundColor: COLORS.offWhite,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  
   mainScrollView: {
     flex: 1,
   },
-
 
   carouselSection: {
     marginTop: 20,
@@ -509,7 +884,7 @@ const styles = StyleSheet.create({
 
 
   tabSection: {
-    backgroundColor: '#66B2FF',
+    backgroundColor: '#FFD700',
     paddingVertical: 12,
     borderRadius: 25,
     marginHorizontal: 16,

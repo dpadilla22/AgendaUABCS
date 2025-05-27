@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions } from "react-native";
+import React, { useState ,useEffect} from "react";
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions ,Alert} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { Share } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -33,19 +34,31 @@ const UABCS_LOCATIONS = {
   },
   'Ciencias de la tierra': {
     latitude: 24.100913,
-    longitude: -110.315223,
+    longitude: -110.315220,
   },
   'Ciencias marinas y costeras': {
     latitude: 24.100913,
     longitude: -110.315223,
   },
+  'Ciencias sociales y jurídicas': {
+    latitude: 24.102294938445176,  
+    longitude: -110.31306796038446,
+  },
+  'Economía': {
+    latitude: 24.102294938445176,  
+    longitude: -110.31306796038446,
+  },
+  'Humanidades': {
+    latitude: 24.101220,  
+    longitude: -110.313528,
+  },
   'Ingeniería en pesquerías': {
     latitude: 24.098834,
     longitude: -110.315974,
   },
-  'Foro escénico UABCS': {
-    latitude: 24.102828,
-    longitude: -110.314879,
+  'Sistemas computacionales': {
+    latitude: 24.102736,
+    longitude: -110.316148,
   },
   'default': {
     latitude:24.102751,
@@ -56,6 +69,100 @@ const UABCS_LOCATIONS = {
 const EventDetailScreen = ({ navigation, route }) => {
   const { event } = route.params;
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [accountId, setAccountId] = useState(null);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const id = await AsyncStorage.getItem("accountId");
+        if (id) {
+          setAccountId(id);
+          await checkIfBookmarked(id, event.id);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+
+  const checkIfBookmarked = async (accountId, eventId) => {
+    try {
+      const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/favorites/${accountId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const isSaved = data.favorites.some(fav => fav.eventId == eventId);
+        setIsBookmarked(isSaved);
+      }
+    } catch (error) {
+      console.error("Error checking favorites:", error);
+    }
+  };
+
+  const addToFavorites = async () => {
+    try {
+      const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events/${event.id}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accountId }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setIsBookmarked(true);
+        Alert.alert("Éxito", "Evento guardado en favoritos");
+      } else {
+        Alert.alert("Error", result.message || "No se pudo guardar el evento");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Error", "Ocurrió un error al guardar");
+    }
+  };
+
+
+  const removeFromFavorites = async () => {
+    try {
+     
+      const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/${event.id}/favorite`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accountId }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setIsBookmarked(false);
+        Alert.alert("Éxito", "Evento removido de favoritos");
+      } else {
+        Alert.alert("Error", result.message || "No se pudo remover el evento");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Error", "Ocurrió un error al remover");
+    }
+  };
+
+
+  const toggleBookmark = async () => {
+    if (!accountId) {
+      Alert.alert("Inicia sesión", "Debes iniciar sesión para guardar eventos");
+      return;
+    }
+
+    if (isBookmarked) {
+      await removeFromFavorites();
+    } else {
+      await addToFavorites();
+    }
+  };
 
   const getDepartmentColor = (dept) => {
     const colors = {
@@ -109,15 +216,13 @@ const EventDetailScreen = ({ navigation, route }) => {
     return UABCS_LOCATIONS[location] || UABCS_LOCATIONS.default;
   };
 
-  const toggleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-  };
+  
 
   const coordinates = getLocationCoordinates(event.location);
 
-  return (
+ return (
     <SafeAreaView style={styles.container}>
-    
+      
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -131,26 +236,23 @@ const EventDetailScreen = ({ navigation, route }) => {
         <View style={styles.headerSpacer} />
       </View>
 
+    
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-      
+       
         <View style={styles.eventCard}>
           <View style={styles.eventImageContainer}>
             <Image 
               source={{ uri: event.imageUrl || 'https://via.placeholder.com/400x200' }} 
               style={styles.eventImage}
             />
-           
-           
           </View>
           
           <View style={styles.eventInfo}>
             <View style={styles.eventHeader}>
-              <View 
-                style={[
-                  styles.departmentTag, 
-                  { backgroundColor: getDepartmentColor(event.department) }
-                ]}
-              >
+              <View style={[
+                styles.departmentTag, 
+                { backgroundColor: getDepartmentColor(event.department) }
+              ]}>
                 <Text style={styles.departmentText}>{event.department}</Text>
               </View>
               
@@ -187,7 +289,7 @@ const EventDetailScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-
+      
         <View style={styles.mapContainer}>
           <MapView
             style={styles.map}
@@ -197,78 +299,60 @@ const EventDetailScreen = ({ navigation, route }) => {
               latitudeDelta: 0.005,
               longitudeDelta: 0.005,
             }}
-            showsUserLocation={true}
-            showsMyLocationButton={true}
-            mapType="standard"
           >
             <Marker
               coordinate={coordinates}
               title={event.title}
               description={event.location}
-              pinColor={COLORS.coral}
             >
               <View style={styles.customMarker}>
                 <Ionicons name="location" size={30} color={COLORS.coral} />
               </View>
             </Marker>
           </MapView>
-          
-        
-          <View style={styles.mapInfoOverlay}>
-            <View style={styles.mapInfoCard}>
-              <Ionicons name="location-outline" size={16} color="#666" />
-              <Text style={styles.mapInfoText}>{event.location}</Text>
-            </View>
-          </View>
         </View>
 
-       
+      
         {event.description && (
           <View style={styles.descriptionContainer}>
             <Text style={styles.descriptionTitle}>Descripción</Text>
             <Text style={styles.descriptionText}>{event.description}</Text>
           </View>
         )}
-
-    
-        <View style={styles.actionButtons}>
-         
-          
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Asistir</Text>
-          </TouchableOpacity>
-          
-         
-        </View>
       </ScrollView>
+
+     
       <View style={styles.bottomNav}>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]}
-              >
-                <Image 
-                  source={require('../assets/home.png')} 
-                  style={[styles.navIcon, styles.homeIcon]} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]}
-                onPress={() => navigation.navigate("EventScreen")}
-              >
-                <Image 
-                  source={require("../assets/more.png")} 
-                  style={[styles.navIcon, styles.moreIcon]} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]} 
-                onPress={() => navigation.navigate("Profile")}
-              >
-                <Image 
-                  source={require("../assets/profile.png")} 
-                  style={[styles.navIcon, styles.profileIcon]} 
-                />
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Image 
+            source={require('../assets/home.png')} 
+            style={[styles.navIcon, styles.homeIcon]} 
+          />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]}
+          onPress={() => navigation.navigate("EventScreen")}
+        >
+          <Image 
+            source={require("../assets/more.png")} 
+            style={[styles.navIcon, styles.moreIcon]} 
+          />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.bottomNavItem]} 
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Image 
+            source={require("../assets/profile.png")} 
+            style={[styles.navIcon, styles.profileIcon]} 
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };

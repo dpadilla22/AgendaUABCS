@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { StatusBar as RNStatusBar} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image, ActivityIndicator } from "react-native";
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const COLORS = {
   primary: "#003366",
@@ -32,49 +35,58 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/login', {  
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          identifierUser: username.trim(),
-          passwordUser: password
-        })
-      });
+  const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      identifierUser: username.trim(),
+      passwordUser: password
+    })
+  });
 
-      const data = await response.json();
+  const data = await response.json();
 
-      if (response.ok) {
-        Toast.show({
-          type: 'success',
-          text1: '¡Bienvenido!',
-          text2: `Hola de nuevo, ${data.user.name}`,
-        });
-        navigation.navigate('Home', { user: data.user });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Error de acceso',
-          text2: data.message || 'Credenciales incorrectas',
-        });
-      }
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error de conexión',
-        text2: 'No se pudo conectar al servidor',
-      });
-    } finally {
-      setLoading(false);
-    }
+  if (response.ok) {
+    console.log("Usuario recibido:", data.user); 
+    await AsyncStorage.setItem('accountId', data.user.idAccount.toString()); 
+    await AsyncStorage.setItem('userName', data.user.name);
+    console.log("ID guardado:", data.user.idAccount); 
+
+    Toast.show({
+      type: 'success',
+      text1: '¡Bienvenido!',
+      text2: `Hola de nuevo, ${data.user.name}`,
+    });
+
+    navigation.navigate('Home', { user: data.user });
+
+  } else {
+    Toast.show({
+      type: 'error',
+      text1: 'Error de acceso',
+      text2: data.message || 'Credenciales incorrectas',
+    });
+  }
+} catch (error) {
+  console.error("Error de conexión:", error);
+  Toast.show({
+    type: 'error',
+    text1: 'Error de conexión',
+    text2: 'No se pudo conectar al servidor',
+  });
+} finally {
+  setLoading(false);
+}
+
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor={COLORS.primary} />
-      
-     
+    <StatusBar style="light" />
+    <View style={{ height: RNStatusBar.currentHeight, backgroundColor: COLORS.primary }} />
+
       <View style={styles.imageSection}>
         <Image 
           source={require('../assets/uabcs.jpg')} 
@@ -83,7 +95,6 @@ const LoginScreen = ({ navigation }) => {
         />
       </View>
 
-      
       <View style={styles.formSection}>
         <View style={styles.formContainer}>
           

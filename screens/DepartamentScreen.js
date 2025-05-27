@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, Image, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator
-} from 'react-native';
+import {View, Text, Image, TouchableOpacity, StyleSheet,ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 const today = new Date();
@@ -32,7 +29,7 @@ const DepartamentScreen = ({ navigation, route }) => {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const response = await fetch('https://e215-2806-265-5402-ca4-5c06-71b8-d586-85cf.ngrok-free.app/events');
+        const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
         const data = await response.json();
         setEventos(data.events || []);
       } catch (error) {
@@ -144,7 +141,7 @@ const DepartamentScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={COLORS.accent} barStyle="light-content" />
+      
 
       {loading ? (
         <View style={styles.fullScreenLoading}>
@@ -154,7 +151,6 @@ const DepartamentScreen = ({ navigation, route }) => {
           resizeMode="contain"
           />
           <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Cargando eventos...</Text>
         </View>
       ) : (
         <>
@@ -410,6 +406,11 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: 30,
     alignItems: 'center',
+  },
+    loadingImage: {
+  width: 120,   
+  height: 120,
+  marginBottom: 20,
   },
   loadingText: {
     color: COLORS.textLight,

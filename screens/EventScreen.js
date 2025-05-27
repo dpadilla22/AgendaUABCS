@@ -35,7 +35,6 @@ const EventScreen = ({ navigation }) => {
     titulo: '',
     departamento: '',
     ubicacion: '',
-    descripcion: ''
   });
   
   const [selectedDepartment, setSelectedDepartment] = useState(null);
