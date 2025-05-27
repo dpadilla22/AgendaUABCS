@@ -14,39 +14,12 @@ app.use(bodyParser.json());
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server is running baby!");
-});
+});  
 
 
 
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// 								  	  		           Check Accounts
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-app.get("/Accounts", async (req, res) => {
-  let db;
-  try {
-    db = await connect();
-    const query = "SELECT * FROM Account";
-    const [rows] = await db.execute(query);
-    console.log(rows);
-
-    res.json({
-      data: rows,
-      status: 200,
-    });
-  } catch (err) {
-    console.error(err);
-  } finally {
-    if (db) db.end();
-  }
-});
-
-
-
-
-
+ 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		            Login User
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +90,33 @@ app.post("/login", async (req, res) => {
     if (db) await db.end();
   }
 });
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check Accounts
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/Accounts", async (req, res) => {
+  let db;
+  try {
+    db = await connect();
+    const query = "SELECT * FROM Account";
+    const [rows] = await db.execute(query);
+    console.log(rows);
+
+    res.json({
+      data: rows,
+      status: 200,
+    });  
+  } catch (err) {
+    console.error(err);
+  } finally {
+    if (db) db.end();
+  }  
+});  
 
 
 
@@ -303,6 +303,10 @@ app.post("/events/:id/favorite", async (req, res) => {
   }
 });
 
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		           Check favorites by account
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -322,6 +326,45 @@ app.get("/favorites/:accountId", async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching favorites:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Eliminate favorites by account
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.delete("/favorites/:accountId/:eventId", async (req, res) => {
+  let db;
+  const { accountId, eventId } = req.params;
+
+  try {
+    db = await connect();
+    const query = `DELETE FROM favorites WHERE accountId = ? AND eventId = ?`;
+    const [result] = await db.execute(query, [accountId, eventId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Favorite not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Favorite deleted successfully",
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error deleting favorite:", err);
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -461,6 +504,156 @@ app.get("/suggestions", async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching suggestions:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Create notification
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/createNotification", async (req, res) => {    
+  let db;
+  try {
+    const { accountId, eventId, message } = req.body;
+    if (!accountId || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "accountId and message are required",
+      });
+    }
+    db = await connect();
+    const query = `CALL SP_CREATE_NOTIFICATION('${accountId}', '${eventId}', '${message}')`;
+    await db.execute(query, [accountId, eventId || null, message]);
+
+    res.json({
+      success: true,
+      message: "Notification created successfully",
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Create comment
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/createComment", async (req, res) => {    
+  let db;
+  try {
+    const { titleComment, descriptionComment, accountId } = req.body;
+    if (!titleComment || !descriptionComment || !accountId) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+    db = await connect();
+    const query = `CALL SP_CREATE_COMMENT('${titleComment}', '${descriptionComment}', '${accountId}')`;
+    const [rows] = await db.execute(query);
+    console.log(rows);
+
+    res.json({
+      data: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Mark attendance
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/markAttendance", async (req, res) => {
+  let db;
+  try {
+    const { accountId, eventId } = req.body;
+    if (!accountId || !eventId) {
+      return res.status(400).json({
+        success: false,
+        message: "accountId and eventId are required",
+      });
+    }
+    db = await connect();
+    const query = `CALL SP_MARK_ATTENDANCE(?, ?)`;
+    await db.execute(query, [accountId, eventId]);
+
+    res.json({
+      success: true,
+      message: "Attendance marked successfully",
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Unmark attendance
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/unmarkAttendance", async (req, res) => {
+  let db;
+  try {
+    const { accountId, eventId } = req.body;
+    if (!accountId || !eventId) {
+      return res.status(400).json({
+        success: false,
+        message: "accountId and eventId are required",
+      });
+    }
+    db = await connect();
+    const query = `CALL SP_UNMARK_ATTENDANCE(?, ?)`;
+    await db.execute(query, [accountId, eventId]);
+
+    res.json({
+      success: true,
+      message: "Attendance unmarked successfully",
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({
       success: false,
       message: "Server error",

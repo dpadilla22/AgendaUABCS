@@ -238,6 +238,153 @@ END //
 DELIMITER ;
 
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
+-- 											CREATE NOTIFICATION
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DROP PROCEDURE IF EXISTS SP_CREATE_NOTIFICATION;
+DELIMITER //
+CREATE PROCEDURE SP_CREATE_NOTIFICATION(
+    IN p_accountId CHAR(6),
+    IN p_eventId INT,
+    IN p_message TEXT
+)
+BEGIN
+    DECLARE v_account_exists INT;
+    DECLARE v_event_exists INT;
+
+    SELECT COUNT(*) INTO v_account_exists
+    FROM Account
+    WHERE idAccount = p_accountId;
+
+    IF v_account_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'The specified account does not exist';
+    END IF;
+
+    IF p_eventId IS NOT NULL THEN
+        SELECT COUNT(*) INTO v_event_exists
+        FROM events
+        WHERE id = p_eventId;
+
+        IF v_event_exists = 0 THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'The specified event does not exist';
+        END IF;
+    END IF;
+
+    INSERT INTO notifications (accountId, eventId, message)
+    VALUES (p_accountId, p_eventId, p_message);
+END //
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+-- 											CREATE COMMENT
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DROP PROCEDURE IF EXISTS SP_CREATE_COMMENT;
+DELIMITER //
+CREATE PROCEDURE SP_CREATE_COMMENT(
+    IN p_titleComment VARCHAR(255),
+    IN p_descriptionComment TEXT,
+    IN p_accountId CHAR(6)
+)
+BEGIN
+    DECLARE v_account_exists INT;
+
+    SELECT COUNT(*) INTO v_account_exists
+    FROM Account
+    WHERE idAccount = p_accountId;
+
+    IF v_account_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'The specified account does not exist';
+    END IF;
+
+    INSERT INTO comments (titleComment, descriptionComment, accountId)
+    VALUES (p_titleComment, p_descriptionComment, p_accountId);
+END //
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+-- 											MARK ATTENDANCE
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DROP PROCEDURE IF EXISTS SP_MARK_ATTENDANCE;
+DELIMITER //
+CREATE PROCEDURE SP_MARK_ATTENDANCE(
+    IN p_accountId CHAR(6),
+    IN p_eventId INT
+)
+BEGIN
+    DECLARE v_account_exists INT;
+    DECLARE v_event_exists INT;
+    DECLARE v_already_marked INT;
+
+    -- Verificar si la cuenta existe
+    SELECT COUNT(*) INTO v_account_exists
+    FROM Account
+    WHERE idAccount = p_accountId;
+
+    IF v_account_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'The specified account does not exist';
+    END IF;
+
+    -- Verificar si el evento existe
+    SELECT COUNT(*) INTO v_event_exists
+    FROM events
+    WHERE id = p_eventId;
+
+    IF v_event_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'The specified event does not exist';
+    END IF;
+
+    -- Verificar si ya existe un registro de asistencia
+    SELECT COUNT(*) INTO v_already_marked
+    FROM attendance
+    WHERE accountId = p_accountId AND eventId = p_eventId;
+
+    IF v_already_marked > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'The attendance for this account and event has already been marked.';
+    END IF;
+
+    -- Registrar la asistencia
+    INSERT INTO attendance (accountId, eventId)
+    VALUES (p_accountId, p_eventId);
+END //
+
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+-- 											UNMARK ATTENDANCE
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DROP PROCEDURE IF EXISTS SP_UNMARK_ATTENDANCE;
+DELIMITER //
+CREATE PROCEDURE SP_UNMARK_ATTENDANCE(
+    IN p_accountId CHAR(6),
+    IN p_eventId INT
+)
+BEGIN
+    DECLARE v_exists INT;
+
+    SELECT COUNT(*) INTO v_exists
+    FROM attendance
+    WHERE accountId = p_accountId AND eventId = p_eventId;
+
+    IF v_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No attendance record found for the specified account and event.';
+    END IF;
+
+    DELETE FROM attendance
+    WHERE accountId = p_accountId AND eventId = p_eventId;
+END //
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////////////////////////////////////////
 -- 													LOGIN
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 
