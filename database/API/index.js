@@ -662,3 +662,35 @@ app.post("/unmarkAttendance", async (req, res) => {
     if (db) db.end();
   }
 });
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check attendance by account
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/attendance/:accountId", async (req, res) => {  
+  let db;
+  const accountId = req.params.accountId;
+  try {
+    db = await connect();
+    const query = `SELECT a.*, e.* FROM attendance a INNER JOIN events e ON a.eventId = e.id WHERE a.accountId = ?`;
+    const [rows] = await db.execute(query, [accountId]);
+    console.log(rows);
+    res.json({
+      success: true,
+      attendance: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching attendance:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
