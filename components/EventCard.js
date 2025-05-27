@@ -9,7 +9,7 @@ const EventCard = ({ title, department, date, time, location, imageUrl }) => {
  
 const getDepartmentColor = (dept) => {
   const colors = {
-    'Agronomia': '#32CD32',                          
+    'Agronomía': '#32CD32',                          
     'Ciencia animal y conservación del hábitat': '#8FBC8F',  
     'Ciencias de la tierra': '#20B2AA',                 
     'Ciencias marinas y costeras': '#1E90FF',          

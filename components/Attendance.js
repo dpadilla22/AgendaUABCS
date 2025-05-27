@@ -1,0 +1,125 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = 'https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app';
+
+export const markAttendance = async (eventId) => {
+  try {
+    const accountId = await AsyncStorage.getItem('accountId'); 
+    if (!accountId || !eventId) {
+      throw new Error("Faltan datos necesarios: accountId o eventId");
+    }
+
+    console.log('Marcando asistencia:', { accountId, eventId }); 
+
+    const response = await fetch(`${API_URL}/markAttendance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: JSON.stringify({ 
+        accountId: parseInt(accountId), 
+        eventId: parseInt(eventId) 
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Respuesta del servidor:', data); 
+    
+    return {
+      success: true,
+      message: data.message || 'Asistencia marcada correctamente',
+      data: data
+    };
+  } catch (error) {
+    console.error("Error al marcar asistencia:", error);
+    return {
+      success: false,
+      message: error.message || 'Error al marcar asistencia',
+      error: error
+    };
+  }
+};
+
+export const unmarkAttendance = async (eventId) => {
+  try {
+    const accountId = await AsyncStorage.getItem('accountId');
+    if (!accountId || !eventId) {
+      throw new Error("Faltan datos necesarios: accountId o eventId");
+    }
+
+    console.log('Desmarcando asistencia:', { accountId, eventId }); 
+
+    const response = await fetch(`${API_URL}/unmarkAttendance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: JSON.stringify({ 
+        accountId: parseInt(accountId),
+        eventId: parseInt(eventId) 
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Respuesta del servidor:', data); 
+    
+    return {
+      success: true,
+      message: data.message || 'Asistencia desmarcada correctamente',
+      data: data
+    };
+  } catch (error) {
+    console.error("Error al desmarcar asistencia:", error);
+    return {
+      success: false,
+      message: error.message || 'Error al desmarcar asistencia',
+      error: error
+    };
+  }
+};
+
+
+export const checkAttendanceStatus = async (eventId) => {
+  try {
+    const accountId = await AsyncStorage.getItem('accountId');
+    if (!accountId || !eventId) {
+      throw new Error("Faltan datos necesarios");
+    }
+
+    const response = await fetch(`${API_URL}/checkAttendance?accountId=${accountId}&eventId=${eventId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      isAttending: data.isAttending || false,
+      data: data
+    };
+  } catch (error) {
+    console.error("Error al verificar asistencia:", error);
+    return {
+      success: false,
+      isAttending: false,
+      error: error
+    };
+  }
+};

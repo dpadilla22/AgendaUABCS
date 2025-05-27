@@ -4,6 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import EventCard from "../components/EventCard";
 import { ActivityIndicator } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadAccountId } from './EventScreen';
+
 
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -74,7 +76,7 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
+      const response = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -88,7 +90,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
+        const response = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
         const data = await response.json();
         
         setEvents(data.events || []);
@@ -182,6 +184,7 @@ const HomeScreen = ({ navigation }) => {
   navigation.navigate('EventDetailScreen', {
     eventId: event.id,
     event: {
+        id: event.id, 
       ...event,
       time: getHour(event.date),
       formattedDate: formatDate(event.date)
@@ -558,14 +561,33 @@ const HomeScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.bottomNavItem]}
-          onPress={() => navigation.navigate("EventScreen")}
-        >
-          <Image 
-            source={require("../assets/more.png")} 
-            style={[styles.navIcon, styles.moreIcon]} 
-          />
-        </TouchableOpacity>
+  style={[styles.bottomNavItem]}
+  onPress={async () => {
+    console.log("Navegando a SuggestionScreen");
+
+    try {
+   
+      const id = await loadAccountId();
+      console.log("AccountId obtenido:", id);
+      
+      if (id) {
+      
+        navigation.navigate("EventScreen");
+      } else {
+        console.log("No se encontró accountId en AsyncStorage");
+        Alert.alert("Error", "No se pudo obtener la información del usuario. Por favor, inicia sesión nuevamente.");
+      }
+    } catch (error) {
+      console.log("Error al obtener accountId:", error);
+      Alert.alert("Error", "Ocurrió un error al obtener la información del usuario");
+    }
+  }}
+>
+  <Image 
+    source={require("../assets/more.png")} 
+    style={[styles.navIcon, styles.moreIcon]} 
+  />
+</TouchableOpacity>
         <TouchableOpacity 
           style={[styles.bottomNavItem]} 
           onPress={() => navigation.navigate("Profile")}

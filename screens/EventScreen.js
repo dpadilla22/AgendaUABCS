@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, TextInput, Alert, Platform, Animated, Dimensions } from "react-native";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { useState, useRef, useEffect } from "react"
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, TextInput, Alert, Animated, Platform } from "react-native"
+import DateTimePicker from "@react-native-community/datetimepicker"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const { width } = Dimensions.get('window');
+
+const API_BASE_URL = "https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app"
 
 const COLORS = {
   coral: "#FF7B6B",
@@ -16,118 +18,193 @@ const COLORS = {
   pink: "#FF6B9D",
   orange: "#FFA726",
   green: "#66BB6A",
-};
+}
 
 const DEPARTMENTS = [
-  { name: "Agronomía", color: COLORS.green },
-  { name: "Ciencia Animal y Conservación del Hábitat",  color: COLORS.orange },
-  { name: "Ciencias de la Tierra",  color: COLORS.coral },
-  { name: "Ciencias Marinas y Costeras",  color: COLORS.lightBlue },
-  { name: "Ciencias Sociales y Jurídicas", color: COLORS.purple },
-  { name: "Economía",  color: COLORS.yellow },
-  { name: "Humanidades",  color: COLORS.pink },
-  { name: "Ingeniería en Pesquerías",  color: COLORS.mint },
-  { name: "Sistemas Computacionales",  color: COLORS.darkBlue },
-];
+  { name: "Agronomía", color: COLORS.green, id: 1 },
+  { name: "Ciencia Animal y Conservación del Hábitat", color: COLORS.orange, id: 2 },
+  { name: "Ciencias de la Tierra", color: COLORS.coral, id: 3 },
+  { name: "Ciencias Marinas y Costeras", color: COLORS.lightBlue, id: 4 },
+  { name: "Ciencias Sociales y Jurídicas", color: COLORS.purple, id: 5 },
+  { name: "Economía", color: COLORS.yellow, id: 6 },
+  { name: "Humanidades", color: COLORS.pink, id: 7 },
+  { name: "Ingeniería en Pesquerías", color: COLORS.mint, id: 8 },
+  { name: "Sistemas Computacionales", color: COLORS.darkBlue, id: 9 },
+]
 
-const EventScreen = ({ navigation }) => {
-  const [formData, setFormData] = useState({
-    titulo: '',
-    departamento: '',
-    ubicacion: '',
-  });
+
+export const loadAccountId = async () => {
+  try {
+
+    let id = await AsyncStorage.getItem("accountId")
+    if (!id) {
+      id = await AsyncStorage.getItem("idAccount")
+    }
+    console.log("ID encontrado en AsyncStorage:", id)
   
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showDepartmentPicker, setShowDepartmentPicker] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    return id
+  } catch (error) {
+    console.error("Error cargando account ID:", error)
+    return null
+  }
+}
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+const SuggestionScreen = ({ navigation, route }) => {
+  const [formData, setFormData] = useState({
+    titulo: "",
+    departamento: "",
+    ubicacion: "",
+  })
 
+  const [selectedDepartment, setSelectedDepartment] = useState(null)
+  const [date, setDate] = useState(new Date())
+  const [time, setTime] = useState(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
+  const [showDepartmentPicker, setShowDepartmentPicker] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [accountId, setAccountId] = useState(null) 
+
+
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(50)).current
+  const scaleAnim = useRef(new Animated.Value(0.9)).current
+
+ 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+    const initializeScreen = async () => {
+    
+      const id = await loadAccountId()
+      if (id) {
+        setAccountId(id) 
+        console.log("Account ID inicializado:", id)
+      } else {
+        console.error("No se encontró accountId")
+        Alert.alert("Error", "No se pudo obtener la información del usuario. Por favor, inicia sesión nuevamente.")
+      }
+
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+
+    initializeScreen()
+  }, [])
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
-    }));
-  };
+      [field]: value,
+    }))
+  }
 
   const onDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
+    setShowDatePicker(false)
     if (selectedDate) {
-      setDate(selectedDate);
+      setDate(selectedDate)
     }
-  };
+  }
 
   const onTimeChange = (event, selectedTime) => {
-    setShowTimePicker(false);
+    setShowTimePicker(false)
     if (selectedTime) {
-      setTime(selectedTime);
+      setTime(selectedTime)
     }
-  };
+  }
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+    return date.toLocaleDateString("es-ES", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
 
   const formatTime = (time) => {
-    return time.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
+    return time.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+  }
+
+  const formatDateForAPI = (date) => {
+    return date.toISOString().split("T")[0] 
+  }
+
+  const formatTimeForAPI = (time) => {
+    return time.toTimeString().split(" ")[0] 
+  }
 
   const validateForm = () => {
     if (!formData.titulo.trim()) {
-      Alert.alert("Necesitamos un título para tu evento");
-      return false;
+      Alert.alert("Error", "Necesitamos un título para tu evento")
+      return false
     }
-    if (!formData.departamento.trim()) {
-      Alert.alert("¡Espera!", "¿De qué departamento es tu evento?");
-      return false;
+    if (!selectedDepartment) {
+      Alert.alert("¡Espera!", "¿De qué departamento es tu evento?")
+      return false
     }
     if (!formData.ubicacion.trim()) {
-      Alert.alert("¿Dónde se realizará tu evento?");
-      return false;
+      Alert.alert("Error", "¿Dónde se realizará tu evento?")
+      return false
     }
-    return true;
-  };
+    if (!accountId) {
+      Alert.alert("Error", "No se pudo obtener la información del usuario. Por favor, inicia sesión nuevamente.")
+      return false
+    }
+    return true
+  }
+
+  const createEventSuggestion = async (eventData) => {
+    try {
+      console.log("Enviando datos a la API:", eventData)
+      
+      const response = await fetch(`${API_BASE_URL}/createSuggestion`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true", 
+        },
+        body: JSON.stringify(eventData),
+      })
+
+      const result = await response.json()
+      console.log("Respuesta de la API:", result)
+
+      if (!response.ok) {
+        throw new Error(result.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      return result
+    } catch (error) {
+      console.error("Error creating event suggestion:", error)
+      throw error
+    }
+  }
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) return
 
-    setIsSubmitting(true);
-    
+    setIsSubmitting(true)
+
+
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.95,
@@ -139,35 +216,73 @@ const EventScreen = ({ navigation }) => {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
-    
+    ]).start()
+
     try {
       const eventData = {
-        ...formData,
-        fecha: date.toISOString(),
-        hora: time.toISOString(),
-        fechaCreacion: new Date().toISOString()
-      };
+        titleEventSuggestion: formData.titulo.trim(),
+        idDepartment: selectedDepartment.id,
+        dateEventSuggestion: formatDateForAPI(date),
+        timeEventSuggestion: formatTimeForAPI(time),
+        locationEventSuggestion: formData.ubicacion.trim(),
+        accountId: accountId,
+      }
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      console.log("Datos del evento que se enviarán:", {
+        titleEventSuggestion: formData.titulo.trim(),
+        idDepartment: selectedDepartment.id,
+        dateEventSuggestion: formatDateForAPI(date),
+        timeEventSuggestion: formatTimeForAPI(time),
+        locationEventSuggestion: formData.ubicacion.trim(),
+        accountId: accountId,
+      })
+
+      const result = await createEventSuggestion(eventData)
+
       Alert.alert(
-        "Envio exitoso", 
-        "Tu evento ha sido enviado",
+        "¡Éxito!", 
+        "Tu sugerencia de evento ha sido enviada exitosamente. Será revisada por nuestro equipo.", 
         [
           {
             text: "¡Genial!",
-            onPress: () => navigation.goBack()
-          }
+            onPress: () => {
+           
+              setFormData({
+                titulo: "",
+                departamento: "",
+                ubicacion: "",
+              })
+              setSelectedDepartment(null)
+              setDate(new Date())
+              setTime(new Date())
+
+              navigation.goBack()
+            },
+          },
         ]
-      );
-      
+      )
     } catch (error) {
-      Alert.alert("Algo salió mal. ¿Intentamos de nuevo?");
+      console.error("Error submitting event:", error)
+      Alert.alert(
+        "Error", 
+        error.message || "Algo salió mal al enviar tu sugerencia. ¿Intentamos de nuevo?", 
+        [
+          {
+            text: "OK",
+            style: "default",
+          },
+        ]
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
+
+  const handleDepartmentSelect = (dept) => {
+    handleInputChange("departamento", dept.name)
+    setSelectedDepartment(dept)
+    setShowDepartmentPicker(false)
+  }
 
   const DepartmentPicker = () => (
     <Animated.View style={[styles.pickerContainer, { opacity: fadeAnim }]}>
@@ -180,55 +295,45 @@ const EventScreen = ({ navigation }) => {
           <TouchableOpacity
             key={index}
             style={[styles.departmentItem, { borderLeftColor: dept.color }]}
-            onPress={() => {
-              handleInputChange('departamento', dept.name);
-              setSelectedDepartment(dept);
-              setShowDepartmentPicker(false);
-            }}
+            onPress={() => handleDepartmentSelect(dept)}
           >
             <View style={styles.departmentContent}>
-              <Text style={styles.departmentIcon}>{dept.icon}</Text>
               <Text style={styles.departmentText}>{dept.name}</Text>
             </View>
             <View style={[styles.departmentIndicator, { backgroundColor: dept.color }]} />
           </TouchableOpacity>
         ))}
       </ScrollView>
-      <TouchableOpacity
-        style={styles.pickerCloseButton}
-        onPress={() => setShowDepartmentPicker(false)}
-      >
+      <TouchableOpacity style={styles.pickerCloseButton} onPress={() => setShowDepartmentPicker(false)}>
         <Text style={styles.pickerCloseText}>Cancelar</Text>
       </TouchableOpacity>
     </Animated.View>
-  );
+  )
 
   return (
     <SafeAreaView style={styles.container}>
-     
       <View style={styles.simpleHeader}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Image source={require('../assets/back-arrow.png')} style={styles.backIcon} />
+          <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sugerir evento</Text>
+        <Text style={styles.headerTitle}>Sugerir Evento</Text>
       </View>
 
-      <Animated.ScrollView 
+      <Animated.ScrollView
         style={[styles.scrollContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            <Text style={styles.inputIcon}></Text>
+           
             <Text style={styles.label}>Título del Evento</Text>
           </View>
           <TextInput
             style={styles.textInput}
             placeholder="¿Cómo se llama tu evento?"
             value={formData.titulo}
-            onChangeText={(value) => handleInputChange('titulo', value)}
+            onChangeText={(value) => handleInputChange("titulo", value)}
             maxLength={100}
             placeholderTextColor="#999"
           />
@@ -237,10 +342,9 @@ const EventScreen = ({ navigation }) => {
           </View>
         </Animated.View>
 
-        
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            <Text style={styles.inputIcon}></Text>
+            
             <Text style={styles.label}>Departamento</Text>
           </View>
           <TouchableOpacity
@@ -248,64 +352,51 @@ const EventScreen = ({ navigation }) => {
             onPress={() => setShowDepartmentPicker(true)}
           >
             <View style={styles.selectContent}>
-              {selectedDepartment && (
-                <Text style={styles.selectedIcon}>{selectedDepartment.icon}</Text>
-              )}
               <Text style={[styles.selectText, !formData.departamento && styles.placeholderText]}>
                 {formData.departamento || "Toca para elegir departamento"}
               </Text>
             </View>
-            <Text style={styles.chevronIcon}></Text>
+            <Text style={styles.chevronIcon}>▼</Text>
           </TouchableOpacity>
         </Animated.View>
 
-      
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            <Text style={styles.inputIcon}></Text>
+            
             <Text style={styles.label}>Fecha del Evento</Text>
           </View>
-          <TouchableOpacity
-            style={styles.selectInput}
-            onPress={() => setShowDatePicker(true)}
-          >
+          <TouchableOpacity style={styles.selectInput} onPress={() => setShowDatePicker(true)}>
             <Text style={styles.selectText}>{formatDate(date)}</Text>
-            <Text style={styles.chevronIcon}></Text>
+            <Text style={styles.chevronIcon}>▼</Text>
           </TouchableOpacity>
         </Animated.View>
 
-       
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            <Text style={styles.inputIcon}></Text>
+            
             <Text style={styles.label}>Hora del Evento</Text>
           </View>
-          <TouchableOpacity
-            style={styles.selectInput}
-            onPress={() => setShowTimePicker(true)}
-          >
+          <TouchableOpacity style={styles.selectInput} onPress={() => setShowTimePicker(true)}>
             <Text style={styles.selectText}>{formatTime(time)}</Text>
-            <Text style={styles.chevronIcon}></Text>
+            <Text style={styles.chevronIcon}>▼</Text>
           </TouchableOpacity>
         </Animated.View>
 
-   
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            <Text style={styles.inputIcon}></Text>
+            
             <Text style={styles.label}>Ubicación</Text>
           </View>
           <TextInput
             style={styles.textInput}
             placeholder="Ej: Poliforo"
             value={formData.ubicacion}
-            onChangeText={(value) => handleInputChange('ubicacion', value)}
+            onChangeText={(value) => handleInputChange("ubicacion", value)}
             maxLength={100}
             placeholderTextColor="#999"
           />
         </Animated.View>
 
-       
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <TouchableOpacity
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
@@ -313,38 +404,35 @@ const EventScreen = ({ navigation }) => {
             disabled={isSubmitting}
           >
             <Text style={styles.submitButtonText}>
-              {isSubmitting ? "Enviando..." : "Crear Evento"}
+              {isSubmitting ? "Enviando..." : "Enviar Sugerencia"}
             </Text>
           </TouchableOpacity>
         </Animated.View>
 
         <Text style={styles.footerNote}>
-          Tu evento será revisado por nuestro equipo
+          Tu sugerencia será revisada por nuestro equipo antes de ser publicada
         </Text>
       </Animated.ScrollView>
 
-    
       {showDatePicker && (
         <DateTimePicker
           value={date}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={onDateChange}
           minimumDate={new Date()}
         />
       )}
 
-     
       {showTimePicker && (
         <DateTimePicker
           value={time}
           mode="time"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={onTimeChange}
         />
       )}
 
-    
       {showDepartmentPicker && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -352,46 +440,15 @@ const EventScreen = ({ navigation }) => {
           </View>
         </View>
       )}
-
-      <View style={styles.bottomNav}>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]}
-                onPress={() => navigation.navigate("Home")}
-              >
-                <Image 
-                  source={require('../assets/home.png')} 
-                  style={[styles.navIcon, styles.homeIcon]} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem, styles.activeNavItem]}
-                
-              >
-                <Image 
-                  source={require("../assets/more.png")} 
-                  style={[styles.navIcon, styles.moreIcon]} 
-                />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bottomNavItem]} 
-                onPress={() => navigation.navigate("Profile")}
-              >
-                <Image 
-                  source={require("../assets/profile.png")} 
-                  style={[styles.navIcon, styles.profileIcon]} 
-                />
-              </TouchableOpacity>
-            </View>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FF',
+    backgroundColor: "#F8F9FF",
   },
- 
   simpleHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -399,19 +456,20 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
   },
-   backButton: {
+  backButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: COLORS.gray,
+    backgroundColor: COLORS.lightGray,
   },
- backIcon: {
+  backIcon: {
     width: 20,
     height: 20,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.darkBlue,
+    marginLeft: 15,
   },
   scrollContainer: {
     flex: 1,
@@ -421,7 +479,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   inputCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
@@ -432,8 +490,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   inputHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   inputIcon: {
@@ -442,69 +500,61 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.darkBlue,
   },
   textInput: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#F8F9FF',
+    backgroundColor: "#F8F9FF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  textArea: {
-    height: 100,
-    paddingTop: 12,
+    borderColor: "#E0E0E0",
   },
   selectInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#F8F9FF',
+    backgroundColor: "#F8F9FF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
   },
   selectContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
-  },
-  selectedIcon: {
-    fontSize: 20,
-    marginRight: 10,
   },
   selectText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     flex: 1,
   },
   placeholderText: {
-    color: '#999',
+    color: "#999",
   },
   chevronIcon: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   inputFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: 8,
   },
   characterCount: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   submitButton: {
     backgroundColor: COLORS.darkBlue,
     borderRadius: 20,
     paddingVertical: 18,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
     shadowColor: COLORS.coral,
     shadowOffset: { width: 0, height: 4 },
@@ -513,80 +563,76 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   submitButtonDisabled: {
-    backgroundColor: '#999',
+    backgroundColor: "#999",
   },
   submitButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   footerNote: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginTop: 20,
     lineHeight: 20,
   },
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 25,
     margin: 20,
-    maxHeight: '80%',
-    width: '90%',
-    overflow: 'hidden',
+    maxHeight: "80%",
+    width: "90%",
+    overflow: "hidden",
   },
   pickerContainer: {
     padding: 20,
   },
   pickerHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   pickerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.darkBlue,
     marginBottom: 5,
   },
   pickerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   pickerScrollView: {
     maxHeight: 400,
   },
   departmentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 15,
     marginBottom: 10,
-    backgroundColor: '#F8F9FF',
+    backgroundColor: "#F8F9FF",
     borderRadius: 15,
     borderLeftWidth: 4,
   },
   departmentContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
-  },
-  departmentIcon: {
-    fontSize: 24,
-    marginRight: 15,
   },
   departmentText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     flex: 1,
   },
   departmentIndicator: {
@@ -597,51 +643,15 @@ const styles = StyleSheet.create({
   pickerCloseButton: {
     marginTop: 20,
     paddingVertical: 15,
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
     borderRadius: 15,
   },
   pickerCloseText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: COLORS.darkBlue,
-    height: 65,
-    justifyContent: "space-around",
-    alignItems: "center",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 8,
-  },
-  bottomNavItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-  },
-  activeNavItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 30,
-    marginHorizontal: 10,
-  },
-  navIcon: {
-    tintColor: "white",
-  },
-  moreIcon: {
-    width: 40,
-    height: 40,
-  },
-  homeIcon: {
-    width: 28,
-    height: 28,
-  },
-  profileIcon: {
-    width: 45,
-    height: 45,
-  },
-});
+})
 
-export default EventScreen;
+export default SuggestionScreen

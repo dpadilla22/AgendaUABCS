@@ -42,7 +42,7 @@ const Profile = ({ navigation }) => {
   const fetchFavorites = async (id) => {
   try {
    
-    const favResponse = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/favorites/${id}`);
+    const favResponse = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/favorites/${id}`);
     const favData = await favResponse.json();
     
     if (!favData.success || !favData.favorites || favData.favorites.length === 0) {
@@ -51,7 +51,7 @@ const Profile = ({ navigation }) => {
     }
 
   
-    const eventsResponse = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
+    const eventsResponse = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
     const eventsData = await eventsResponse.json();
     
     if (!eventsData.success || !eventsData.events) {
@@ -194,18 +194,9 @@ const Profile = ({ navigation }) => {
           )}
         </ScrollView>
 
-        <TouchableOpacity style={styles.secondaryButton}>
-  <Text style={styles.secondaryButtonText}>Asistir</Text>
-</TouchableOpacity>
-
       </View>
 
       <View style={styles.actionButtons}>
-         
-          
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Asistir</Text>
-          </TouchableOpacity>
           
          
         </View>

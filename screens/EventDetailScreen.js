@@ -4,6 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { markAttendance, unmarkAttendance, checkAttendanceStatus } from '../components/Attendance';
+
+
+
 
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -66,19 +70,72 @@ const UABCS_LOCATIONS = {
   }
 };
 
-const EventDetailScreen = ({ navigation, route }) => {
-  const { event } = route.params;
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [accountId, setAccountId] = useState(null);
 
+
+const EventDetailScreen = ({ navigation,route }) => {
+
+const { eventId, event, date, time } = route.params;
+
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isAttending, setIsAttending] = useState(false);
+  const [accountId, setAccountId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+
+
+  // Función para manejar marcar/desmarcar asistencia
+  const handleAttendanceToggle = async () => {
+    if (loading) return; // Evitar múltiples llamadas
+    
+    setLoading(true);
+    try {
+      let result;
+      if (isAttending) {
+        result = await unmarkAttendance(event.id);
+      } else {
+        result = await markAttendance(event.id);
+      }
+
+      if (result.success) {
+        setIsAttending(!isAttending);
+        Alert.alert(
+          isAttending ? '❌ Asistencia desmarcada' : '✅ Asistencia marcada',
+          result.message
+        );
+      } else {
+        Alert.alert('⚠️ Error', result.message);
+      }
+    } catch (err) {
+      console.error('Error en handleAttendanceToggle:', err);
+      Alert.alert('Error', 'No se pudo procesar la solicitud');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para verificar el estado inicial de asistencia
+  const checkInitialAttendanceStatus = async () => {
+    try {
+      const result = await checkAttendanceStatus(event.id);
+      if (result.success) {
+        setIsAttending(result.isAttending);
+      }
+    } catch (error) {
+      console.error('Error al verificar estado de asistencia:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log("event.id:", event.id);
+console.log("accountId:", id);
+
       try {
         const id = await AsyncStorage.getItem("accountId");
         if (id) {
           setAccountId(id);
           await checkIfBookmarked(id, event.id);
+          await checkInitialAttendanceStatus(); // Verificar estado de asistencia
         }
       } catch (error) {
         console.error("Error:", error);
@@ -87,10 +144,9 @@ const EventDetailScreen = ({ navigation, route }) => {
     fetchData();
   }, []);
 
-
   const checkIfBookmarked = async (accountId, eventId) => {
     try {
-      const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/favorites/${accountId}`);
+      const response = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/favorites/${accountId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -104,7 +160,7 @@ const EventDetailScreen = ({ navigation, route }) => {
 
   const addToFavorites = async () => {
     try {
-      const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events/${event.id}/favorite`, {
+      const response = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events/${event.id}/favorite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +185,7 @@ const EventDetailScreen = ({ navigation, route }) => {
   const removeFromFavorites = async () => {
     try {
      
-      const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/${event.id}/favorite`, {
+      const response = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/${event.id}/favorite`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -287,6 +343,8 @@ const EventDetailScreen = ({ navigation, route }) => {
               </View>
             </View>
           </View>
+
+          
         </View>
 
       
@@ -319,6 +377,13 @@ const EventDetailScreen = ({ navigation, route }) => {
             <Text style={styles.descriptionText}>{event.description}</Text>
           </View>
         )}
+  <TouchableOpacity 
+  style={styles.secondaryButton} 
+  onPress={handleAttendanceToggle}
+>
+  <Text style={styles.secondaryButtonText}>Asistir</Text>
+</TouchableOpacity>
+
       </ScrollView>
 
      
@@ -584,6 +649,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
+  },
+   secondaryButton: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.darkBlue,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    color: COLORS.darkBlue,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   activeNavItem: {
     backgroundColor: "rgba(255, 255, 255, 0.15)",

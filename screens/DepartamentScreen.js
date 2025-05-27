@@ -29,7 +29,7 @@ const DepartamentScreen = ({ navigation, route }) => {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const response = await fetch('https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events');
+        const response = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
         const data = await response.json();
         setEventos(data.events || []);
       } catch (error) {
