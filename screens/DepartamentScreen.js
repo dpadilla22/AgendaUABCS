@@ -42,6 +42,17 @@ const DepartamentScreen = ({ navigation, route }) => {
     fetchEventos();
   }, []);
 
+  useEffect(() => {
+  const fetchAccountId = async () => {
+    const id = await AsyncStorage.getItem('accountId');
+    setAccountId(id);
+    console.log("accountId en EventDetailScreen:", id);
+  };
+
+  fetchAccountId();
+}, []);
+
+
   const getMarkedDates = () => {
     const marked = {};
     const eventosDelDepartamento = eventos.filter(evento => evento.department === nombreDepartamento);
@@ -150,7 +161,6 @@ const DepartamentScreen = ({ navigation, route }) => {
           style={styles.loadingImage}
           resizeMode="contain"
           />
-          <ActivityIndicator size="large" color="#fff" />
         </View>
       ) : (
         <>

@@ -4,7 +4,7 @@ import { ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-const EventCard = ({ title, department, date, time, location, imageUrl }) => {
+const EventCard = ({ id,title, department, date, time, location, imageUrl,showBookmark = false }) => {
   const navigation = useNavigation();
  
 const getDepartmentColor = (dept) => {
@@ -38,6 +38,7 @@ const getDepartmentColor = (dept) => {
 
   const handlePress = () => {
     const eventData = {
+      id,
       title,
       department,
       date,
@@ -46,7 +47,10 @@ const getDepartmentColor = (dept) => {
       imageUrl
     };
     
-    navigation.navigate('EventDetailScreen', { event: eventData });
+      navigation.navigate('EventDetailScreen', { 
+      eventId: id,    
+      event: eventData
+    });
   };
   
   return (
@@ -85,9 +89,12 @@ const getDepartmentColor = (dept) => {
           </View>
         </View>
         
+        {showBookmark && (
         <TouchableOpacity style={styles.bookmarkButton}>
           <Ionicons name="bookmark-outline" size={22} color="#666" />
         </TouchableOpacity>
+)}
+
       </View>
     </TouchableOpacity>
   );

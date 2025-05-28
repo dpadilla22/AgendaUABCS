@@ -18,7 +18,7 @@ export const markAttendance = async (eventId) => {
         'ngrok-skip-browser-warning': 'true',
       },
       body: JSON.stringify({ 
-        accountId: parseInt(accountId), 
+        accountId: accountId, 
         eventId: parseInt(eventId) 
       }),
     });
@@ -61,7 +61,7 @@ export const unmarkAttendance = async (eventId) => {
         'ngrok-skip-browser-warning': 'true',
       },
       body: JSON.stringify({ 
-        accountId: parseInt(accountId),
+        accountId: accountId,
         eventId: parseInt(eventId) 
       }),
     });
@@ -83,42 +83,6 @@ export const unmarkAttendance = async (eventId) => {
     return {
       success: false,
       message: error.message || 'Error al desmarcar asistencia',
-      error: error
-    };
-  }
-};
-
-
-export const checkAttendanceStatus = async (eventId) => {
-  try {
-    const accountId = await AsyncStorage.getItem('accountId');
-    if (!accountId || !eventId) {
-      throw new Error("Faltan datos necesarios");
-    }
-
-    const response = await fetch(`${API_URL}/checkAttendance?accountId=${accountId}&eventId=${eventId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      isAttending: data.isAttending || false,
-      data: data
-    };
-  } catch (error) {
-    console.error("Error al verificar asistencia:", error);
-    return {
-      success: false,
-      isAttending: false,
       error: error
     };
   }

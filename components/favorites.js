@@ -1,55 +1,63 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Alert } from 'react-native'
+import { Alert } from "react-native";
 
+const API_BASE_URL = "https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app";
 
-export const loadAccountId = async () => {
+export const checkIfBookmarked = async (accountId, eventId, setIsBookmarked) => {
   try {
-    const id = await AsyncStorage.getItem("accountId")
-    return id
-  } catch (error) {
-    console.error("Error cargando account ID:", error)
-    return null
-  }
-}
+    const response = await fetch(`${API_BASE_URL}/favorites/${accountId}`);
+    const data = await response.json();
 
-export const fetchFavorites = async (accountId) => {
-  try {
-    const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/favorites/${accountId}`);
-    
-
-    const data = await response.json()
-    if (response.ok && data.success) {
-      return data.favorites
-    } else {
-      return []
+    if (data.success) {
+      const isSaved = data.favorites.some(fav => fav.eventId == eventId);
+      setIsBookmarked(isSaved);
     }
   } catch (error) {
-    console.error("Error al obtener favoritos:", error)
-    return []
+    console.error("Error checking favorites:", error);
   }
-}
+};
 
-export const addFavorite = async (accountId, eventId) => {
+export const addToFavorites = async (accountId, eventId, setIsBookmarked) => {
   try {
-   const response = await fetch(`https://4799-2806-265-5402-ca4-496d-78c0-9c18-a823.ngrok-free.app/events/${eventId}/favorite`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/favorite`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ accountId }),
-    })
-    const data = await response.json()
-    if (response.ok && data.success) {
-      return { success: true }
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      setIsBookmarked(true);
+      Alert.alert("Éxito", "Evento guardado en favoritos");
     } else {
-      return { success: false, message: data.message || "Error al agregar favorito" }
+      Alert.alert("Error", result.message || "No se pudo guardar el evento");
     }
   } catch (error) {
-    console.error("Error al agregar favorito:", error)
-    return { success: false, message: "Error de conexión" }
+    console.error("Error:", error);
+    Alert.alert("Error", "Ocurrió un error al guardar");
   }
-}
+};
 
-export const removeFavorite = async (accountId, eventId) => {
+export const removeFromFavorites = async (accountId, eventId, setIsBookmarked) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${eventId}/favorite`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ accountId }),
+    });
 
-  Alert.alert("Info", "Función de remover favorito pendiente de implementar")
-  return { success: false }
-}
+    const result = await response.json();
+    if (result.success) {
+      setIsBookmarked(false);
+      Alert.alert("Éxito", "Evento removido de favoritos");
+    } else {
+      Alert.alert("Error", result.message || "No se pudo remover el evento");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    Alert.alert("Error", "Ocurrió un error al remover");
+  }
+};

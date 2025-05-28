@@ -1,14 +1,10 @@
-import React, { useState ,useEffect} from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions ,Alert} from "react-native";
+import React, { useState, useEffect } from "react"; 
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Alert } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
-import { Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { markAttendance, unmarkAttendance, checkAttendanceStatus } from '../components/Attendance';
-
-
-
-
+import { markAttendance, unmarkAttendance } from '../components/Attendance';
+import { checkIfBookmarked, addToFavorites, removeFromFavorites } from '../components/Favorites'; 
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -20,8 +16,8 @@ const COLORS = {
   offWhite: "#F5F5F5",
   yellow: "#FFCC33",
   purple: "#9966FF",
+  attendingBlue: "#007bff",
 };
-
 
 const UABCS_LOCATIONS = {
   'Poliforo': {
@@ -70,24 +66,65 @@ const UABCS_LOCATIONS = {
   }
 };
 
-
-
-const EventDetailScreen = ({ navigation,route }) => {
-
-const { eventId, event, date, time } = route.params;
+const EventDetailScreen = ({ navigation, route }) => {
+  const { eventId, event, date, time } = route.params;
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isAttending, setIsAttending] = useState(false);
   const [accountId, setAccountId] = useState(null);
   const [loading, setLoading] = useState(false);
 
+ 
+  const checkAttendanceStatus = async (userId, eventId) => {
+    try {
+     
+      const attendanceKey = `attendance_${userId}_${eventId}`;
+      const attendanceStatus = await AsyncStorage.getItem(attendanceKey);
+      return attendanceStatus === 'true';
+    } catch (error) {
+      console.error('Error checking attendance status:', error);
+      return false;
+    }
+  };
 
 
-  // Función para manejar marcar/desmarcar asistencia
-  const handleAttendanceToggle = async () => {
-    if (loading) return; // Evitar múltiples llamadas
+  const saveAttendanceStatus = async (userId, eventId, status) => {
+    try {
+      const attendanceKey = `attendance_${userId}_${eventId}`;
+      await AsyncStorage.setItem(attendanceKey, status.toString());
+    } catch (error) {
+      console.error('Error saving attendance status:', error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const id = await AsyncStorage.getItem("accountId");
+        if (id) {
+          setAccountId(id);
+          await checkIfBookmarked(id, event.id, setIsBookmarked);
+          
     
+          const attendingStatus = await checkAttendanceStatus(id, event.id);
+          setIsAttending(attendingStatus);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleAttendanceToggle = async () => {
+    if (loading) return; 
+    if (!accountId) {
+      Alert.alert("Inicia sesión", "Debes iniciar sesión para marcar asistencia");
+      return;
+    }
+
     setLoading(true);
+
     try {
       let result;
       if (isAttending) {
@@ -97,126 +134,44 @@ const { eventId, event, date, time } = route.params;
       }
 
       if (result.success) {
-        setIsAttending(!isAttending);
+        const newAttendingStatus = !isAttending;
+        setIsAttending(newAttendingStatus);
+        
+    
+        await saveAttendanceStatus(accountId, event.id, newAttendingStatus);
+        
         Alert.alert(
-          isAttending ? '❌ Asistencia desmarcada' : '✅ Asistencia marcada',
+          newAttendingStatus ? 'Asistencia marcada' : 'Asistencia desmarcada',
           result.message
         );
       } else {
-        Alert.alert('⚠️ Error', result.message);
+        Alert.alert('Error', result.message);
       }
     } catch (err) {
       console.error('Error en handleAttendanceToggle:', err);
-      Alert.alert('Error', 'No se pudo procesar la solicitud');
+
+      if (err.message && err.message.includes('already been marked')) {
+        Alert.alert('Aviso', 'Ya has marcado tu asistencia para este evento.');
+   
+        setIsAttending(true);
+        await saveAttendanceStatus(accountId, event.id, true);
+      } else {
+        Alert.alert('Error', 'No se pudo procesar la solicitud');
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  // Función para verificar el estado inicial de asistencia
-  const checkInitialAttendanceStatus = async () => {
-    try {
-      const result = await checkAttendanceStatus(event.id);
-      if (result.success) {
-        setIsAttending(result.isAttending);
-      }
-    } catch (error) {
-      console.error('Error al verificar estado de asistencia:', error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log("event.id:", event.id);
-console.log("accountId:", id);
-
-      try {
-        const id = await AsyncStorage.getItem("accountId");
-        if (id) {
-          setAccountId(id);
-          await checkIfBookmarked(id, event.id);
-          await checkInitialAttendanceStatus(); // Verificar estado de asistencia
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const checkIfBookmarked = async (accountId, eventId) => {
-    try {
-      const response = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/favorites/${accountId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        const isSaved = data.favorites.some(fav => fav.eventId == eventId);
-        setIsBookmarked(isSaved);
-      }
-    } catch (error) {
-      console.error("Error checking favorites:", error);
-    }
-  };
-
-  const addToFavorites = async () => {
-    try {
-      const response = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events/${event.id}/favorite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ accountId }),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        setIsBookmarked(true);
-        Alert.alert("Éxito", "Evento guardado en favoritos");
-      } else {
-        Alert.alert("Error", result.message || "No se pudo guardar el evento");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      Alert.alert("Error", "Ocurrió un error al guardar");
-    }
-  };
-
-
-  const removeFromFavorites = async () => {
-    try {
-     
-      const response = await fetch(`https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/${event.id}/favorite`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ accountId }),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        setIsBookmarked(false);
-        Alert.alert("Éxito", "Evento removido de favoritos");
-      } else {
-        Alert.alert("Error", result.message || "No se pudo remover el evento");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      Alert.alert("Error", "Ocurrió un error al remover");
-    }
-  };
-
 
   const toggleBookmark = async () => {
     if (!accountId) {
       Alert.alert("Inicia sesión", "Debes iniciar sesión para guardar eventos");
       return;
     }
-
     if (isBookmarked) {
-      await removeFromFavorites();
+      await removeFromFavorites(accountId, event.id, setIsBookmarked);
     } else {
-      await addToFavorites();
+      await addToFavorites(accountId, event.id, setIsBookmarked);
     }
   };
 
@@ -229,13 +184,11 @@ console.log("accountId:", id);
       'Ciencias de la tierra': '#E0FFFF',
       'Humanidades': '#FFF7A3',
     };
-    
     return colors[dept] || '#F0F0F0'; 
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "Fecha no disponible";
-    
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('es-ES', {
@@ -251,34 +204,26 @@ console.log("accountId:", id);
 
   const formatTime = (timeString) => {
     if (!timeString) return "Horario no especificado";
-    
-  
     if (timeString.includes(':')) {
       const [hours, minutes] = timeString.split(':');
       const startHour = parseInt(hours);
       const endHour = startHour + 2; 
       return `${timeString} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
     }
-    
     return timeString;
   };
 
   const getLocationCoordinates = (locationName) => {
- 
     const location = Object.keys(UABCS_LOCATIONS).find(key => 
       locationName?.toLowerCase().includes(key.toLowerCase())
     );
-    
     return UABCS_LOCATIONS[location] || UABCS_LOCATIONS.default;
   };
 
-  
-
   const coordinates = getLocationCoordinates(event.location);
 
- return (
+  return (
     <SafeAreaView style={styles.container}>
-      
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -292,9 +237,7 @@ console.log("accountId:", id);
         <View style={styles.headerSpacer} />
       </View>
 
-    
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-       
         <View style={styles.eventCard}>
           <View style={styles.eventImageContainer}>
             <Image 
@@ -343,11 +286,8 @@ console.log("accountId:", id);
               </View>
             </View>
           </View>
-
-          
         </View>
 
-      
         <View style={styles.mapContainer}>
           <MapView
             style={styles.map}
@@ -363,61 +303,59 @@ console.log("accountId:", id);
               title={event.title}
               description={event.location}
             >
-              <View style={styles.customMarker}>
-                <Ionicons name="location" size={30} color={COLORS.coral} />
+              <View style={styles.marker}>
+                <Ionicons name="location-sharp" size={30} color={COLORS.yellow} />
               </View>
             </Marker>
           </MapView>
         </View>
 
-      
-        {event.description && (
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.descriptionTitle}>Descripción</Text>
-            <Text style={styles.descriptionText}>{event.description}</Text>
-          </View>
-        )}
-  <TouchableOpacity 
-  style={styles.secondaryButton} 
-  onPress={handleAttendanceToggle}
->
-  <Text style={styles.secondaryButtonText}>Asistir</Text>
-</TouchableOpacity>
+        <View style={styles.attendanceContainer}>
+          <TouchableOpacity
+            style={[
+              styles.attendanceButton, 
+              isAttending ? styles.attending : styles.notAttending
+            ]}
+            onPress={handleAttendanceToggle}
+            disabled={loading}
+          >
+            <Ionicons 
+              name={isAttending ? "checkmark-circle" : "person-add"} 
+              size={20} 
+              color="#fff" 
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.attendanceButtonText}>
+              {loading ? "Procesando..." : (isAttending ? "Asistiendo" : "Asistir")}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
       </ScrollView>
 
-     
       <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={[styles.bottomNavItem]}
-          onPress={() => navigation.navigate("Home")}
-        >
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
           <Image 
             source={require('../assets/home.png')} 
             style={[styles.navIcon, styles.homeIcon]} 
           />
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={[styles.bottomNavItem]}
-          onPress={() => navigation.navigate("EventScreen")}
-        >
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("EventScreen")}>
           <Image 
             source={require("../assets/more.png")} 
             style={[styles.navIcon, styles.moreIcon]} 
           />
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={[styles.bottomNavItem]} 
-          onPress={() => navigation.navigate("Profile")}
-        >
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
           <Image 
             source={require("../assets/profile.png")} 
             style={[styles.navIcon, styles.profileIcon]} 
           />
         </TouchableOpacity>
       </View>
+
     </SafeAreaView>
   );
 };
@@ -478,20 +416,6 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  flagContainer: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-    width: 30,
-    height: 20,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  flagIcon: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
   eventInfo: {
     padding: 20,
   },
@@ -534,140 +458,78 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  mapContainer: {
+  mapContainer: { 
+    height: 200, 
+    borderRadius: 10, 
+    overflow: 'hidden', 
     marginTop: 20,
-    height: 300,
-    borderRadius: 20,
-    overflow: 'hidden',
-    position: 'relative',
+    marginBottom: 20 
   },
-  map: {
-    width: '100%',
-    height: '100%',
+  map: { 
+    flex: 1 
   },
-  customMarker: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  marker: { 
+    backgroundColor: 'rgba(219, 241, 53, 0.2)', 
+    borderRadius: 100, 
+    padding: 5 
   },
-  mapInfoOverlay: {
-    position: 'absolute',
-    bottom: 15,
-    left: 15,
-    right: 15,
+  attendanceContainer: { 
+    marginBottom: 30, 
+    alignItems: 'center' 
   },
-  mapInfoCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+  attendanceButton: { 
+    paddingVertical: 15, 
+    paddingHorizontal: 40, 
+    borderRadius: 25, 
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 150,
   },
-  mapInfoText: {
+  attending: { 
+    backgroundColor: COLORS.attendingBlue 
+  },
+  notAttending: { 
+    backgroundColor: COLORS.lightGray 
+  },
+  attendanceButtonText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 16,
     marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
   },
-  descriptionContainer: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    marginTop: 20,
-  },
-  descriptionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  descriptionText: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-  },
-  actionButtons: {
-    marginTop: 30,
-    marginBottom: 30,
-    gap: 15,
-  },
-  primaryButton: {
-    backgroundColor: COLORS.darkBlue,
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.darkBlue,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: {
-    color: COLORS.darkBlue,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  tertiaryButton: {
-    backgroundColor: COLORS.coral,
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  tertiaryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonIcon: {
+    marginRight: 4,
   },
   bottomNav: {
     flexDirection: "row",
     backgroundColor: COLORS.darkBlue,
-    height: 65,
+    height: 70,
     justifyContent: "space-around",
     alignItems: "center",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 8,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    paddingBottom: 10,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   bottomNavItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    height: "100%",
-  },
-   secondaryButton: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.darkBlue,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: {
-    color: COLORS.darkBlue,
-    fontSize: 16,
-    fontWeight: 'bold',
+    height: "80%",
+    borderRadius: 20,
   },
   activeNavItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 30,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     marginHorizontal: 10,
   },
   navIcon: {

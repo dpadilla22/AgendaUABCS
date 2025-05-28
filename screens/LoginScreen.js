@@ -51,7 +51,8 @@ const LoginScreen = ({ navigation }) => {
   if (response.ok) {
     console.log("Usuario recibido:", data.user); 
     await AsyncStorage.setItem('accountId', data.user.idAccount.toString()); 
-    await AsyncStorage.setItem('userName', data.user.name);
+   
+
     console.log("ID guardado:", data.user.idAccount); 
 
     Toast.show({

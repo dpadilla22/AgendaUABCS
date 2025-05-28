@@ -280,17 +280,18 @@ const HomeScreen = ({ navigation }) => {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <Image
-          source={require("../assets/agendaLogo.png")}
-          style={{ width: 120, height: 120, marginBottom: 20 }}
-          resizeMode="contain"
-        />
-        <ActivityIndicator size="large" color={COLORS.coral} />
-      </View>
-    );
-  }
+  return (
+    <View style={styles.loaderContainer}>
+      <View style={styles.fullScreenLoading}></View>
+      <Image
+        source={require("../assets/agendaLogo.png")}
+        style={{ width: 120, height: 120, marginBottom: 20 }}
+        resizeMode="contain"
+      />
+    </View>
+  );
+}
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -536,68 +537,56 @@ const HomeScreen = ({ navigation }) => {
               const time = getHour(event.date);
               return (
                 <EventCard
-                  key={index}
-                  title={event.title}
-                  department={event.department}
-                  date={event.date}
-                  time={time}
-                  location={event.location}
-                  imageUrl={event.imageUrl}
-                />
+                key={index}
+                id={event.id} 
+                title={event.title}
+                department={event.department}
+                date={event.date}
+                time={time}
+                location={event.location}
+                imageUrl={event.imageUrl}
+                showBookmark={false}
+              />
               );
             })
           )}
         </View>
       </ScrollView>
 
-   
       <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={[styles.bottomNavItem, activeTab === "Hoy" && styles.activeNavItem]}
-        >
-          <Image 
-            source={require('../assets/home.png')} 
-            style={[styles.navIcon, styles.homeIcon]} 
-          />
+        <TouchableOpacity style={[styles.bottomNavItem, styles.activeNavItem]} activeOpacity={0.7}>
+          <View style={styles.navIconContainer}>
+            <Image
+              source={require("../assets/home.png")}
+              style={[styles.navIcon, styles.homeIcon, styles.activeNavIcon]}
+            />
+            
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity 
-  style={[styles.bottomNavItem]}
-  onPress={async () => {
-    console.log("Navegando a SuggestionScreen");
 
-    try {
-   
-      const id = await loadAccountId();
-      console.log("AccountId obtenido:", id);
-      
-      if (id) {
-      
-        navigation.navigate("EventScreen");
-      } else {
-        console.log("No se encontró accountId en AsyncStorage");
-        Alert.alert("Error", "No se pudo obtener la información del usuario. Por favor, inicia sesión nuevamente.");
-      }
-    } catch (error) {
-      console.log("Error al obtener accountId:", error);
-      Alert.alert("Error", "Ocurrió un error al obtener la información del usuario");
-    }
-  }}
->
-  <Image 
-    source={require("../assets/more.png")} 
-    style={[styles.navIcon, styles.moreIcon]} 
-  />
-</TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.bottomNavItem]} 
-          onPress={() => navigation.navigate("Profile")}
+        <TouchableOpacity
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("EventScreen")}
+          activeOpacity={0.7}
         >
-          <Image 
-            source={require("../assets/profile.png")} 
-            style={[styles.navIcon, styles.profileIcon]} 
-          />
+          <View style={styles.navIconContainer}>
+            <Image source={require("../assets/more.png")} style={[styles.navIcon, styles.moreIcon]} />
+           
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navIconContainer}>
+            <Image source={require("../assets/profile.png")} style={[styles.navIcon, styles.profileIcon]} />
+           
+          </View>
         </TouchableOpacity>
       </View>
+   
     </SafeAreaView>
   );
 };
@@ -906,7 +895,7 @@ const styles = StyleSheet.create({
 
 
   tabSection: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#f4e153',
     paddingVertical: 12,
     borderRadius: 25,
     marginHorizontal: 16,
@@ -958,48 +947,61 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
   },
-  
-
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: COLORS.darkBlue,
-    height: 70,
-    justifyContent: "space-around",
+    bottomNav: { 
+    flexDirection: "row", 
+    justifyContent: "space-around", 
+    paddingVertical: 9, 
+    borderTopWidth: 3, 
+    borderColor: "#ddd", 
+    backgroundColor: "#1271af",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
+  },
+  bottomNavItem: { 
     alignItems: "center",
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingBottom: 10,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    padding: 7
   },
-  bottomNavItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "80%",
-    borderRadius: 20,
-  },
-  activeNavItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 10,
-  },
-  navIcon: {
-    tintColor: "white",
-  },
-  moreIcon: {
-    width: 40,
-    height: 40,
-  },
-  homeIcon: {
-    width: 28,
-    height: 28,
+  navIcon: { 
+    width: 24, 
+    height: 24 
   },
   profileIcon: {
-    width: 45,
+    width: 45, 
     height: 45,
+    tintColor: "#fff",
+  },
+  homeIcon: { 
+    width: 28, 
+    height: 28, 
+  },
+  moreIcon: { 
+    width: 40, 
+    height: 40, 
+    tintColor: "#fff"
+  },
+  activeNavItem: { 
+    borderBottomWidth: 2, 
+    borderColor: '#f0e342',
+  },
+  navIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navLabel: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: "500",
+  },
+  activeNavLabel: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  activeNavIcon: {
+    tintColor: "#fff",
   },
   loaderContainer: {
     flex: 1,
@@ -1007,6 +1009,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.offWhite,
   },
+   fullScreenLoading: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: '#3ca6ec', 
+  zIndex: -1, 
+},
+loaderContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+}
 });
 
 export default HomeScreen;
