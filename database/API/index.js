@@ -14,12 +14,12 @@ app.use(bodyParser.json());
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server is running baby!");
-});  
+});
 
 
 
 
- 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		            Login User
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,13 +110,13 @@ app.get("/Accounts", async (req, res) => {
     res.json({
       data: rows,
       status: 200,
-    });  
+    });
   } catch (err) {
     console.error(err);
   } finally {
     if (db) db.end();
-  }  
-});  
+  }
+});
 
 
 
@@ -264,7 +264,6 @@ app.get("/events/:id", async (req, res) => {
 
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		           Add event to favorites
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -338,6 +337,7 @@ app.get("/favorites/:accountId", async (req, res) => {
 
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		           Eliminate favorites by account
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -382,7 +382,7 @@ app.delete("/favorites/:accountId/:eventId", async (req, res) => {
 // 								  	  		           Create department
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.post("/createDepartment", async (req, res) => {    
+app.post("/createDepartment", async (req, res) => {
   let db;
   try {
     const { nameDepartment } = req.body;
@@ -420,11 +420,25 @@ app.post("/createDepartment", async (req, res) => {
 // 								  	  		           Create suggestions
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.post("/createSuggestion", async (req, res) => {    
+app.post("/createSuggestion", async (req, res) => {
   let db;
   try {
-    const { titleEventSuggestion, idDepartment, dateEventSuggestion, timeEventSuggestion, locationEventSuggestion, accountId } = req.body;
-    if (!titleEventSuggestion || !idDepartment || !dateEventSuggestion || !timeEventSuggestion || !locationEventSuggestion || !accountId) {
+    const {
+      titleEventSuggestion,
+      idDepartment,
+      dateEventSuggestion,
+      timeEventSuggestion,
+      locationEventSuggestion,
+      accountId,
+    } = req.body;
+    if (
+      !titleEventSuggestion ||
+      !idDepartment ||
+      !dateEventSuggestion ||
+      !timeEventSuggestion ||
+      !locationEventSuggestion ||
+      !accountId
+    ) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -485,6 +499,7 @@ app.get("/departments", async (req, res) => {
 
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		           Check suggestions
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -521,7 +536,7 @@ app.get("/suggestions", async (req, res) => {
 // 								  	  		           Create notification
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.post("/createNotification", async (req, res) => {    
+app.post("/createNotification", async (req, res) => {
   let db;
   try {
     const { accountId, eventId, message } = req.body;
@@ -559,7 +574,7 @@ app.post("/createNotification", async (req, res) => {
 // 								  	  		           Create comment
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.post("/createComment", async (req, res) => {    
+app.post("/createComment", async (req, res) => {
   let db;
   try {
     const { titleComment, descriptionComment, accountId } = req.body;
@@ -588,6 +603,7 @@ app.post("/createComment", async (req, res) => {
     if (db) db.end();
   }
 });
+
 
 
 
@@ -625,6 +641,7 @@ app.post("/markAttendance", async (req, res) => {
     if (db) db.end();
   }
 });
+
 
 
 
@@ -671,7 +688,7 @@ app.post("/unmarkAttendance", async (req, res) => {
 // 								  	  		           Check attendance by account
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.get("/attendance/:accountId", async (req, res) => {  
+app.get("/attendance/:accountId", async (req, res) => {
   let db;
   const accountId = req.params.accountId;
   try {
@@ -686,6 +703,70 @@ app.get("/attendance/:accountId", async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching attendance:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check comments by account
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/comments/:accountId", async (req, res) => {
+  let db;
+  const accountId = req.params.accountId;
+  try {
+    db = await connect();
+    const query = `SELECT * FROM comments WHERE accountId = ?`;
+    const [rows] = await db.execute(query, [accountId]);
+    console.log(rows);
+    res.json({
+      success: true,
+      comments: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching comments:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check notification
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/notifications/:accountId", async (req, res) => {
+  let db;
+  const accountId = req.params.accountId;
+  try {
+    db = await connect();
+    const query = `SELECT * FROM notifications WHERE accountId = ?`;
+    const [rows] = await db.execute(query, [accountId]);
+    console.log(rows);
+    res.json({
+      success: true,
+      notifications: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
     res.status(500).json({
       success: false,
       message: "Server error",
