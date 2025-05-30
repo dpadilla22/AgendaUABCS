@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app';
+const API_URL = 'https://feae-200-92-221-53.ngrok-free.app';
 
 export const markAttendance = async (eventId) => {
   try {
@@ -9,7 +9,7 @@ export const markAttendance = async (eventId) => {
       throw new Error("Faltan datos necesarios: accountId o eventId");
     }
 
-    console.log('Marcando asistencia:', { accountId, eventId }); 
+ 
 
     const response = await fetch(`${API_URL}/markAttendance`, {
       method: 'POST',
@@ -28,7 +28,7 @@ export const markAttendance = async (eventId) => {
     }
 
     const data = await response.json();
-    console.log('Respuesta del servidor:', data); 
+    
     
     return {
       success: true,
@@ -52,7 +52,7 @@ export const unmarkAttendance = async (eventId) => {
       throw new Error("Faltan datos necesarios: accountId o eventId");
     }
 
-    console.log('Desmarcando asistencia:', { accountId, eventId }); 
+   
 
     const response = await fetch(`${API_URL}/unmarkAttendance`, {
       method: 'POST',
@@ -71,7 +71,7 @@ export const unmarkAttendance = async (eventId) => {
     }
 
     const data = await response.json();
-    console.log('Respuesta del servidor:', data); 
+   
     
     return {
       success: true,
@@ -79,7 +79,7 @@ export const unmarkAttendance = async (eventId) => {
       data: data
     };
   } catch (error) {
-    console.error("Error al desmarcar asistencia:", error);
+   
     return {
       success: false,
       message: error.message || 'Error al desmarcar asistencia',

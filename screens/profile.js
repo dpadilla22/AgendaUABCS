@@ -13,7 +13,13 @@ const COLORS = {
   red: "#FFE4E1",
   gray: "#F5F5F5",
   textDark: "#333333",
-  textLight: "#666666"
+  textLight: "#666666",
+  primary: "#2563eb",
+  secondary: "#3b82f6",
+  cardBg: "#ffffff",
+  shadowColor: "#000",
+  gradientStart: "#2563eb",
+  gradientEnd: "#60a5fa"
 };
 
 const Profile = ({ navigation }) => {
@@ -23,6 +29,25 @@ const Profile = ({ navigation }) => {
   const [attendanceEvents, setAttendanceEvents] = useState([]);
   const [userEmail, setUserEmail] = useState('');
   const [activeTab, setActiveTab] = useState('favorites'); 
+
+  const getHour = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
+  const formatDate = (dateString) => {
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    const date = new Date(`${year}-${month}-${day}T12:00:00`);
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
 
   useEffect(() => {
     const getEmail = async () => {
@@ -61,9 +86,8 @@ const Profile = ({ navigation }) => {
 
   const fetchFavoritesAndAttendance = async (id) => {
     try {
-   
       const eventsResponse = await fetch(
-        'https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events',
+        'https://feae-200-92-221-53.ngrok-free.app/events',
         {
           method: 'GET',
           headers: {
@@ -79,9 +103,8 @@ const Profile = ({ navigation }) => {
       
       const eventsData = await eventsResponse.json();
 
-   
       const favResponse = await fetch(
-        `https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/favorites/${id}`,
+        `https://feae-200-92-221-53.ngrok-free.app/favorites/${id}`,
         {
           method: 'GET',
           headers: {
@@ -97,9 +120,8 @@ const Profile = ({ navigation }) => {
       
       const favData = await favResponse.json();
 
-   
       const attendanceResponse = await fetch(
-        `https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/attendance/${id}`,
+        `https://feae-200-92-221-53.ngrok-free.app/attendance/${id}`,
         {
           method: 'GET',
           headers: {
@@ -120,32 +142,47 @@ const Profile = ({ navigation }) => {
         const favoriteIds = favData.favorites.map(fav => fav.eventId);
         const favoriteEvents = eventsData.events.filter(event => favoriteIds.includes(event.id));
 
-        formattedFavorites = favoriteEvents.map(event => ({
-          id: event.id,
-          title: event.title || "Evento sin título",
-          department: event.department || "Sin departamento",
-          date: event.date || "Fecha no especificada",
-          time: event.time || "Hora no especificada",
-          location: event.location || "Ubicación no especificada",
-          imageUrl: event.imageUrl || "https://via.placeholder.com/150"
-        }));
+        formattedFavorites = favoriteEvents.map(event => {
+          let rawDateTime = event.date;
+
+          if (rawDateTime.includes('T:')) {
+            rawDateTime = rawDateTime.replace('T:', 'T');
+          }
+
+          return {
+            id: event.id,
+            title: event.title || "Evento sin título",
+            department: event.department || "Sin departamento",
+            date: formatDate(rawDateTime),
+            time: getHour(rawDateTime),
+            location: event.location || "Ubicación no especificada",
+            imageUrl: event.imageUrl || "https://via.placeholder.com/150"
+          };
+        });
       }
 
-     
       let formattedAttendance = [];
       if (attendanceData.success && attendanceData.attendance && attendanceData.attendance.length > 0 && eventsData.success && eventsData.events) {
         const attendanceIds = attendanceData.attendance.map(att => att.eventId);
         const attendedEvents = eventsData.events.filter(event => attendanceIds.includes(event.id));
 
-        formattedAttendance = attendedEvents.map(event => ({
-          id: event.id,
-          title: event.title || "Evento sin título",
-          department: event.department || "Sin departamento",
-          date: event.date || "Fecha no especificada",
-          time: event.time || "Hora no especificada",
-          location: event.location || "Ubicación no especificada",
-          imageUrl: event.imageUrl || "https://via.placeholder.com/150"
-        }));
+        formattedAttendance = attendedEvents.map(event => {
+          let rawDateTime = event.date;
+
+          if (rawDateTime.includes('T:')) {
+            rawDateTime = rawDateTime.replace('T:', 'T');
+          }
+
+          return {
+            id: event.id,
+            title: event.title || "Evento sin título",
+            department: event.department || "Sin departamento",
+            date: formatDate(rawDateTime),
+            time: getHour(rawDateTime),
+            location: event.location || "Ubicación no especificada",
+            imageUrl: event.imageUrl || "https://via.placeholder.com/150"
+          };
+        });
       }
 
       setSavedEvents(formattedFavorites);
@@ -160,45 +197,64 @@ const Profile = ({ navigation }) => {
 
   const getDepartmentColor = (dept) => {
     const colors = {
-      'Sistemas computacionales': COLORS.yellow,
-      'Economía': COLORS.orange,
-      'Ciencias de la tierra': COLORS.green,
-      'Agronomía': COLORS.red,
+      'Sistemas computacionales': '#FF6B6B',
+      'Economía': '#4ECDC4',
+      'Ciencias de la tierra': '#45B7D1',
+      'Agronomía': '#96CEB4',
     };
-    return colors[dept] || '#F0F0F0';
+    return colors[dept] || '#A8E6CF';
   };
 
   const renderEventCard = (event) => (
     <View key={event.id} style={styles.eventCard}>
-      <Image 
-        source={{ uri: event.imageUrl }} 
-        style={styles.eventImage}
-        defaultSource={require("../assets/adaptive-icon.png")}
-      />
+      <View style={styles.eventImageContainer}>
+        <Image 
+          source={{ uri: event.imageUrl }} 
+          style={styles.eventImage}
+          defaultSource={require("../assets/adaptive-icon.png")}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.4)']}
+          style={styles.imageOverlay}
+        />
+      </View>
+      
       <View style={styles.eventContent}>
-        <View style={[styles.categoryTag, { backgroundColor: getDepartmentColor(event.department) }]}>
-          <Text style={styles.categoryText}>{event.department}</Text>
+        <View style={styles.eventHeader}>
+          <View style={[styles.categoryTag, { backgroundColor: getDepartmentColor(event.department) }]}>
+            <Text style={styles.categoryText}>{event.department}</Text>
+          </View>
+          {activeTab === 'favorites' && (
+            <TouchableOpacity style={styles.bookmarkButton} activeOpacity={0.7}>
+              <View style={styles.bookmarkContainer}>
+                <Image source={require("../assets/bookmark-filled.png")} style={styles.bookmarkIcon} />
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
+        
         <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+        
         <View style={styles.eventDetails}>
           <View style={styles.eventDetailRow}>
-            <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
+            <View style={styles.iconContainer}>
+              <Image source={require("../assets/calendar.png")} style={styles.detailIcon} />
+            </View>
             <Text style={styles.detailText} numberOfLines={1}>{event.date}</Text>
           </View>
           <View style={styles.eventDetailRow}>
-            <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
+            <View style={styles.iconContainer}>
+              <Image source={require("../assets/clock.png")} style={styles.detailIcon} />
+            </View>
             <Text style={styles.detailText} numberOfLines={1}>{event.time}</Text>
           </View>
           <View style={styles.eventDetailRow}>
-            <Image source={require("../assets/location.png")} style={styles.detailIcon} />
+            <View style={styles.iconContainer}>
+              <Image source={require("../assets/location.png")} style={styles.detailIcon} />
+            </View>
             <Text style={styles.detailText} numberOfLines={1}>{event.location}</Text>
           </View>
         </View>
-        {activeTab === 'favorites' && (
-          <TouchableOpacity style={styles.bookmarkButton} activeOpacity={0.7}>
-            <Image source={require("../assets/bookmark-filled.png")} style={styles.bookmarkIcon} />
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -210,27 +266,28 @@ const Profile = ({ navigation }) => {
       console.error(`Error navegando a ${screenName}:`, error);
     }
   };
+
   const getCurrentEvents = () => {
-  return activeTab === 'favorites' ? savedEvents : attendanceEvents;
-};
+    return activeTab === 'favorites' ? savedEvents : attendanceEvents;
+  };
 
-   if (loading) {
-     return (
-       <View style={styles.loaderContainer}>
-          <View style={styles.fullScreenLoading}></View>
-          <Image
-            source={require("../assets/agendaLogo.png")}
-            style={{ width: 120, height: 120, marginBottom: 20 }}
-            resizeMode="contain"
-          />
-        </View>
-      );
-    }
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <View style={styles.fullScreenLoading}></View>
+        <Image
+          source={require("../assets/agendaLogo.png")}
+          style={{ width: 120, height: 120, marginBottom: 20 }}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+
 
       <View style={styles.header}>
         <TouchableOpacity 
@@ -244,71 +301,116 @@ const Profile = ({ navigation }) => {
         <View style={{ width: 40 }} />
       </View>
 
-      <LinearGradient colors={[COLORS.lightBlue, COLORS.accent]} style={styles.profileSection}>
-        <View style={styles.profileContent}>
-          <View style={styles.profileImageContainer}>
-            <Image source={require("../assets/student.png")} style={styles.profileImage} />
-          </View>
-          <View style={styles.profileTextContainer}>
-            <Text style={styles.profileTitle}>Estudiante UABCS</Text>
-            <Text style={styles.profileEmail}>{userEmail || 'Email no disponible'}</Text>
+ 
+      <ScrollView 
+        style={styles.mainScrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.mainScrollContent}
+      >
+
+        <View style={styles.profileWrapper}>
+          <LinearGradient 
+            colors={[COLORS.gradientStart, COLORS.gradientEnd]} 
+            style={styles.profileSection}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.profileContent}>
+              <View style={styles.profileImageWrapper}>
+                <View style={styles.profileImageContainer}>
+                  <Image source={require("../assets/student.png")} style={styles.profileImage} />
+                </View>
+                <View style={styles.onlineIndicator} />
+              </View>
+              
+              <View style={styles.profileTextContainer}>
+                <Text style={styles.profileTitle}>Estudiante UABCS</Text>
+                <Text style={styles.profileEmail}>{userEmail || 'Email no disponible'}</Text>
+              </View>
+            </View>
 
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{savedEvents.length}</Text>
+                <View style={styles.statCircle}>
+                  <Text style={styles.statNumber}>{savedEvents.length}</Text>
+                </View>
                 <Text style={styles.statLabel}>Favoritos</Text>
               </View>
+              <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{attendanceEvents.length}</Text>
+                <View style={styles.statCircle}>
+                  <Text style={styles.statNumber}>{attendanceEvents.length}</Text>
+                </View>
                 <Text style={styles.statLabel}>Asistidos</Text>
               </View>
             </View>
+          </LinearGradient>
+        </View>
+
+       
+        <View style={styles.eventsSection}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+              onPress={() => setActiveTab('favorites')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={activeTab === 'favorites' ? [COLORS.gradientStart, COLORS.gradientEnd] : ['transparent', 'transparent']}
+                style={styles.tabGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
+                   Guardados ({savedEvents.length})
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'attended' && styles.activeTab]}
+              onPress={() => setActiveTab('attended')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={activeTab === 'attended' ? [COLORS.gradientStart, COLORS.gradientEnd] : ['transparent', 'transparent']}
+                style={styles.tabGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
+                   Asistidos ({attendanceEvents.length})
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.eventsContent}>
+            {getCurrentEvents().length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <View style={styles.emptyStateCircle}>
+                  <Text style={styles.emptyStateEmoji}>
+                    {activeTab === 'favorites' ? '💔' : '📅'}
+                  </Text>
+                </View>
+                <Text style={styles.emptyStateTitle}>
+                  {activeTab === 'favorites' ? '¡Aún no tienes favoritos!' : '¡Aún no has asistido!'}
+                </Text>
+                <Text style={styles.emptyStateSubtitle}>
+                  {activeTab === 'favorites' 
+                    ? 'Marca tus eventos favoritos para verlos aquí' 
+                    : 'Los eventos a los que asistas aparecerán aquí'
+                  }
+                </Text>
+              </View>
+            ) : (
+              getCurrentEvents().map((event) => renderEventCard(event))
+            )}
           </View>
         </View>
-      </LinearGradient>
+      </ScrollView>
 
-      <View style={styles.eventsSection}>
-        {/* Pestañas */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
-            onPress={() => setActiveTab('favorites')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
-              Guardados ({savedEvents.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'attended' && styles.activeTab]}
-            onPress={() => setActiveTab('attended')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
-              Asistidos ({attendanceEvents.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Contenido de las pestañas */}
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-          style={styles.scrollView}
-        >
-          {getCurrentEvents().length === 0 ? (
-            <Text style={styles.noEventsText}>
-              {activeTab === 'favorites' 
-                ? 'No tienes eventos guardados.' 
-                : 'No has asistido a ningún evento aún.'
-              }
-            </Text>
-          ) : (
-            getCurrentEvents().map((event) => renderEventCard(event))
-          )}
-        </ScrollView>
-      </View>
-
+  
       <View style={styles.bottomNav}>
         <TouchableOpacity 
           style={styles.bottomNavItem} 
@@ -335,17 +437,10 @@ const Profile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: "#fff" 
+    backgroundColor: "#f8fafc" 
   },
-  loadingContainer: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center" 
-  },
-  loadingText: {
-    fontSize: 16,
-    color: COLORS.textDark
-  },
+  
+
   header: { 
     flexDirection: "row", 
     alignItems: "center", 
@@ -366,196 +461,308 @@ const styles = StyleSheet.create({
     width: 24, 
     height: 24, 
     tintColor: "#000", 
-    paddingTop:20,
+    paddingTop: 20,
   },
   headerTitle: { 
     fontSize: 20, 
     fontWeight: "bold", 
     color: "#000", 
-    paddingTop:30,
+    paddingTop: 30,
+  },
+
+  profileWrapper: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   profileSection: { 
-    padding: 16,
-    marginHorizontal: 16,
-    marginTop: 10,
-    borderRadius: 12
+    borderRadius: 20,
+    padding: 24,
+    elevation: 8,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   profileContent: { 
     flexDirection: "row", 
-    alignItems: "center" 
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  profileImageWrapper: {
+    position: 'relative',
+    marginRight: 20,
   },
   profileImageContainer: { 
-    marginRight: 16 
+    borderRadius: 50,
+    padding: 4,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   profileImage: { 
     width: 80, 
     height: 80, 
     borderRadius: 40,
-    borderWidth: 3,
-    borderColor: "#fff"
+    backgroundColor: '#fff',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#4ade80',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   profileTextContainer: { 
     flex: 1 
   },
   profileTitle: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#fff" 
+    fontSize: 22, 
+    fontWeight: "800", 
+    color: "#fff",
+    marginBottom: 4,
   },
   profileEmail: { 
-    fontSize: 14, 
-    color: "#eee",
-    marginTop: 4
+    fontSize: 15, 
+    color: "rgba(255,255,255,0.9)",
+    fontWeight: "500",
   },
   statsContainer: { 
     flexDirection: "row", 
-    marginTop: 12 
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingVertical: 16,
   },
   statItem: { 
-    marginRight: 20 
+    alignItems: "center",
+    flex: 1,
+  },
+  statCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   statNumber: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
+    fontSize: 20, 
+    fontWeight: "900", 
     color: "#fff" 
   },
   statLabel: { 
-    fontSize: 12, 
-    color: "#eee" 
+    fontSize: 13, 
+    color: "rgba(255,255,255,0.9)",
+    fontWeight: "600",
   },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+
+
+  mainScrollView: {
+    flex: 1,
+  },
+  mainScrollContent: {
+    paddingBottom: 20,
+  },
+
+
   eventsSection: { 
-    flex: 1, 
-    paddingHorizontal: 16, 
-    paddingTop: 16 
+    paddingHorizontal: 20, 
+    paddingTop: 24,
+    paddingBottom: 20,
   },
   tabContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
-    backgroundColor: COLORS.gray,
-    borderRadius: 8,
-    padding: 4
+    marginBottom: 20,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 16,
+    padding: 4,
+    elevation: 2,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: 'center'
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  activeTab: {
-    backgroundColor: '#fff',
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
+  tabGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderRadius: 12,
   },
   tabText: {
     fontSize: 14,
     color: COLORS.textLight,
-    fontWeight: '500'
+    fontWeight: '600'
   },
   activeTabText: {
-    color: COLORS.accent,
-    fontWeight: 'bold'
+    color: '#fff',
+    fontWeight: '800'
   },
-  sectionTitle: { 
-    fontSize: 16, 
-    fontWeight: "bold", 
-    marginBottom: 12,
-    color: COLORS.textDark
-  },
-  scrollView: {
-    flex: 1
-  },
-  scrollContent: { 
-    paddingBottom: 20 
-  },
-  noEventsText: { 
-    textAlign: "center", 
-    marginTop: 40, 
-    color: "#888",
-    fontSize: 16
+
+ 
+  eventsContent: {
+    gap: 12, 
   },
   eventCard: { 
-    flexDirection: "row", 
-    marginBottom: 12, 
-    backgroundColor: "#fff", 
-    borderRadius: 12, 
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    padding: 12
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16, 
+    marginBottom: 12,
+    elevation: 4, 
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowRadius: 6,
+    overflow: 'hidden',
+  },
+  eventImageContainer: {
+    position: 'relative',
+    height: 80, 
   },
   eventImage: { 
-    width: 100, 
-    height: 100, 
-    borderRadius: 8, 
-    marginRight: 12,
+    width: '100%', 
+    height: 80, 
     backgroundColor: COLORS.gray
   },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40, 
+  },
   eventContent: { 
-    flex: 1,
-    position: 'relative'
+    padding: 14, 
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8, 
   },
   categoryTag: { 
-    alignSelf: "flex-start", 
-    borderRadius: 6, 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    marginBottom: 6 
+    borderRadius: 16, 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    elevation: 2,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   categoryText: { 
-    fontSize: 12, 
+    fontSize: 11,
     color: "#333",
-    fontWeight: "500"
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   eventTitle: { 
-    fontSize: 14, 
-    fontWeight: "bold", 
-    color: "#333", 
-    marginBottom: 8,
-    lineHeight: 18
+    fontSize: 16, 
+    fontWeight: "800", 
+    color: COLORS.textDark, 
+    marginBottom: 12,
+    lineHeight: 20,
   },
   eventDetails: { 
-    marginTop: 4 
+    gap: 8, 
   },
   eventDetailRow: { 
     flexDirection: "row", 
-    alignItems: "center", 
-    marginBottom: 4 
+    alignItems: "center",
+  },
+  iconContainer: {
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10, 
   },
   detailIcon: { 
     width: 14, 
     height: 14, 
-    marginRight: 6,
-    tintColor: COLORS.textLight
+    tintColor: COLORS.gradientStart
   },
   detailText: { 
-    fontSize: 12, 
-    color: "#666",
-    flex: 1
+    fontSize: 13, 
+    color: COLORS.textLight,
+    flex: 1,
+    fontWeight: '500',
   },
   bookmarkButton: { 
-    position: "absolute", 
-    top: 4, 
-    right: 4,
-    padding: 4
+    padding: 4,
+  },
+  bookmarkContainer: {
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   bookmarkIcon: { 
-    width: 20, 
-    height: 20,
-    tintColor: COLORS.accent
+    width: 16, 
+    height: 16, 
+    tintColor: COLORS.gradientStart
   },
+
+
+  emptyStateContainer: {
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 40,
+  },
+  emptyStateCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyStateEmoji: {
+    fontSize: 40,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.textDark,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyStateSubtitle: {
+    fontSize: 16,
+    color: COLORS.textLight,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+ 
   bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
     paddingVertical: 9, 
     borderTopWidth: 3, 
     borderColor: "#ddd", 
-    backgroundColor: "#1271af",
+    backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -566,49 +773,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 7
   },
-  navIcon: { 
-    width: 24, 
-    height: 24 
-  },
   profileIcon: {
     width: 45, 
     height: 45,
-    tintColor: "#fff",
+    tintColor: "#131311",
   },
   homeIcon: { 
     width: 28, 
     height: 28, 
-    tintColor: "#fff"
+    tintColor: "#131311",
   },
   moreIcon: { 
     width: 40, 
     height: 40, 
-    tintColor: "#fff"
+    tintColor: "#131311",
   },
   activeNavItem: { 
     borderBottomWidth: 2, 
     borderColor: '#f0e342',
   },
-   loaderContainer: {
+
+
+  loaderContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.offWhite,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fullScreenLoading: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: '#3ca6ec', 
-  zIndex: -1, 
-},
-loaderContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-}
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#3ca6ec', 
+    zIndex: -1, 
+  },
 });
 
 export default Profile;

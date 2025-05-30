@@ -76,7 +76,7 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
+      const response = await fetch('https://feae-200-92-221-53.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -90,7 +90,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
+        const response = await fetch('https://feae-200-92-221-53.ngrok-free.app/events');
         const data = await response.json();
         
         setEvents(data.events || []);
@@ -558,7 +558,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.navIconContainer}>
             <Image
               source={require("../assets/home.png")}
-              style={[styles.navIcon, styles.homeIcon, styles.activeNavIcon]}
+              style={[styles.navIcon, styles.homeIcon, styles.homeIcon]}
             />
             
           </View>
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9, 
     borderTopWidth: 3, 
     borderColor: "#ddd", 
-    backgroundColor: "#1271af",
+    backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -966,21 +966,23 @@ const styles = StyleSheet.create({
   },
   navIcon: { 
     width: 24, 
-    height: 24 
+    height: 24,
+    tintColor: "#131311",
   },
   profileIcon: {
     width: 45, 
     height: 45,
-    tintColor: "#fff",
+    tintColor: "#131311",
   },
   homeIcon: { 
     width: 28, 
     height: 28, 
+    tintColor: "#131311",
   },
   moreIcon: { 
     width: 40, 
     height: 40, 
-    tintColor: "#fff"
+    tintColor: "#131311",
   },
   activeNavItem: { 
     borderBottomWidth: 2, 

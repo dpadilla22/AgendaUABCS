@@ -8,10 +8,11 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import Profile from './screens/profile';
 import DepartamentScreen from './screens/DepartamentScreen';
-import Notificaciones from './screens/notificaction';
+import Notificaciones from './screens/NotificationScreen';
 import LocationScreen from './screens/LocationScreen';
 import EventScreen from './screens/EventScreen';
 import EventDetailScreen from './screens/EventDetailScreen';
+
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();

@@ -4,7 +4,7 @@ import DateTimePicker from "@react-native-community/datetimepicker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 
-const API_BASE_URL = "https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app"
+const API_BASE_URL = "https://feae-200-92-221-53.ngrok-free.app"
 
 const COLORS = {
   coral: "#FF7B6B",
@@ -174,7 +174,7 @@ const SuggestionScreen = ({ navigation, route }) => {
 
   const createEventSuggestion = async (eventData) => {
     try {
-      console.log("Enviando datos a la API:", eventData)
+      // console.log("Enviando datos a la API:", eventData)
       
       const response = await fetch(`${API_BASE_URL}/createSuggestion`, {
         method: "POST",
@@ -186,7 +186,7 @@ const SuggestionScreen = ({ navigation, route }) => {
       })
 
       const result = await response.json()
-      console.log("Respuesta de la API:", result)
+      // console.log("Respuesta de la API:", result)
 
       if (!response.ok) {
         throw new Error(result.message || `Error ${response.status}: ${response.statusText}`)
@@ -440,6 +440,31 @@ const SuggestionScreen = ({ navigation, route }) => {
           </View>
         </View>
       )}
+
+
+       <View style={styles.bottomNav}>
+              <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
+                <Image 
+                  source={require('../assets/home.png')} 
+                  style={[styles.navIcon, styles.homeIcon]} 
+                />
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={[styles.bottomNavItem, styles.activeNavItem]} activeOpacity={0.7}>
+             
+                <Image 
+                  source={require("../assets/more.png")} 
+                  style={[styles.navIcon, styles.moreIcon]} 
+                />
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
+                <Image 
+                  source={require("../assets/profile.png")} 
+                  style={[styles.navIcon, styles.profileIcon]} 
+                />
+              </TouchableOpacity>
+            </View>
     </SafeAreaView>
   )
 }
@@ -470,6 +495,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.darkBlue,
     marginLeft: 15,
+    alignItems: "center",
   },
   scrollContainer: {
     flex: 1,
@@ -651,6 +677,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
+  },
+     bottomNav: { 
+    flexDirection: "row", 
+    justifyContent: "space-around", 
+    paddingVertical: 9, 
+    borderTopWidth: 3, 
+    borderColor: "#ddd", 
+    backgroundColor: "#fcfbf8",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
+  },
+  bottomNavItem: { 
+    alignItems: "center",
+    padding: 7
+  },
+  navIcon: { 
+    width: 24, 
+    height: 24,
+    tintColor: "#131311",
+  },
+  profileIcon: {
+    width: 45, 
+    height: 45,
+    tintColor: "#131311",
+  },
+  homeIcon: { 
+    width: 28, 
+    height: 28, 
+    tintColor: "#131311",
+  },
+  moreIcon: { 
+    width: 40, 
+    height: 40, 
+    tintColor: "#131311",
+  },
+
+  activeNavItem: { 
+    borderBottomWidth: 2, 
+    borderColor: '#f0e342',
   },
 })
 

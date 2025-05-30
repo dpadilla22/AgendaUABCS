@@ -29,7 +29,7 @@ const DepartamentScreen = ({ navigation, route }) => {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const response = await fetch('https://c492-2806-265-5402-ca4-bdc6-786b-c72a-17ee.ngrok-free.app/events');
+        const response = await fetch('https://feae-200-92-221-53.ngrok-free.app/events');
         const data = await response.json();
         setEventos(data.events || []);
       } catch (error) {
@@ -46,7 +46,7 @@ const DepartamentScreen = ({ navigation, route }) => {
   const fetchAccountId = async () => {
     const id = await AsyncStorage.getItem('accountId');
     setAccountId(id);
-    console.log("accountId en EventDetailScreen:", id);
+    // console.log("accountId en EventDetailScreen:", id);
   };
 
   fetchAccountId();
@@ -450,38 +450,47 @@ const styles = StyleSheet.create({
   },
   
 
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: COLORS.darkBlue,
-    height: 65,
-    justifyContent: "space-around",
-    alignItems: "center",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 8,
+    bottomNav: { 
+    flexDirection: "row", 
+    justifyContent: "space-around", 
+    paddingVertical: 9, 
+    borderTopWidth: 3, 
+    borderColor: "#ddd", 
+    backgroundColor: "#fcfbf8",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
   },
-  bottomNavItem: {
-    flex: 1,
+  bottomNavItem: { 
     alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
+    padding: 7
   },
-  navIcon: {
-    width: 24,
+  navIcon: { 
+    width: 24, 
     height: 24,
-    tintColor: "white",
-  },
-  homeIcon: {
-    width: 28,
-    height: 28,
+    tintColor: "#131311",
   },
   profileIcon: {
-    width: 45,
+    width: 45, 
     height: 45,
+    tintColor: "#131311",
   },
-  moreIcon: {
-    width: 40,
-    height: 40,
+  homeIcon: { 
+    width: 28, 
+    height: 28, 
+    tintColor: "#131311",
+  },
+  moreIcon: { 
+    width: 40, 
+    height: 40, 
+    tintColor: "#131311",
+  },
+
+  activeNavItem: { 
+    borderBottomWidth: 2, 
+    borderColor: '#f0e342',
   },
   fullScreenLoading: {
     flex: 1,

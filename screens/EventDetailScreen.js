@@ -150,7 +150,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     } catch (err) {
       console.error('Error en handleAttendanceToggle:', err);
 
-      if (err.message && err.message.includes('already been marked')) {
+      if (err.message && err.message.includes('Asitencia ya marcada')) {
         Alert.alert('Aviso', 'Ya has marcado tu asistencia para este evento.');
    
         setIsAttending(true);
@@ -489,6 +489,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor:"#0c568c",
     minWidth: 150,
   },
   attending: { 
@@ -506,46 +507,47 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 4,
   },
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: COLORS.darkBlue,
-    height: 70,
-    justifyContent: "space-around",
+    bottomNav: { 
+    flexDirection: "row", 
+    justifyContent: "space-around", 
+    paddingVertical: 9, 
+    borderTopWidth: 3, 
+    borderColor: "#ddd", 
+    backgroundColor: "#fcfbf8",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
+  },
+  bottomNavItem: { 
     alignItems: "center",
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingBottom: 10,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    padding: 7
   },
-  bottomNavItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "80%",
-    borderRadius: 20,
-  },
-  activeNavItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 10,
-  },
-  navIcon: {
-    tintColor: "white",
-  },
-  moreIcon: {
-    width: 40,
-    height: 40,
-  },
-  homeIcon: {
-    width: 28,
-    height: 28,
+  navIcon: { 
+    width: 24, 
+    height: 24,
+    tintColor: "#131311",
   },
   profileIcon: {
-    width: 45,
+    width: 45, 
     height: 45,
+    tintColor: "#131311",
+  },
+  homeIcon: { 
+    width: 28, 
+    height: 28, 
+    tintColor: "#131311",
+  },
+  moreIcon: { 
+    width: 40, 
+    height: 40, 
+    tintColor: "#131311",
+  },
+
+  activeNavItem: { 
+    borderBottomWidth: 2, 
+    borderColor: '#f0e342',
   },
 });
 
