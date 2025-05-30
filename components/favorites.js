@@ -1,6 +1,6 @@
 import { Alert } from "react-native";
 
-const API_BASE_URL = "https://feae-200-92-221-53.ngrok-free.app";
+const API_BASE_URL = "https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app";
 
 export const checkIfBookmarked = async (accountId, eventId, setIsBookmarked) => {
   try {
@@ -41,23 +41,24 @@ export const addToFavorites = async (accountId, eventId, setIsBookmarked) => {
 
 export const removeFromFavorites = async (accountId, eventId, setIsBookmarked) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${eventId}/favorite`, {
+    const response = await fetch(`${API_BASE_URL}/favorites/${accountId}/${eventId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ accountId }),
     });
 
     const result = await response.json();
-    if (result.success) {
+    console.log("DELETE result:", result);
+    
+    if (response.ok && result.success) {
       setIsBookmarked(false);
-      Alert.alert("Éxito", "Evento removido de favoritos");
+      Alert.alert("Éxito", "Evento eliminado de favoritos");
     } else {
-      Alert.alert("Error", result.message || "No se pudo remover el evento");
+      Alert.alert("Error", result.message || "No se pudo eliminar el evento");
     }
   } catch (error) {
-    console.error("Error:", error);
-    Alert.alert("Error", "Ocurrió un error al remover");
+    console.error("Error al eliminar de favoritos:", error.message);
+    Alert.alert("Error", "Ocurrió un error al eliminar");
   }
 };

@@ -87,7 +87,7 @@ const Profile = ({ navigation }) => {
   const fetchFavoritesAndAttendance = async (id) => {
     try {
       const eventsResponse = await fetch(
-        'https://feae-200-92-221-53.ngrok-free.app/events',
+        'https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/events',
         {
           method: 'GET',
           headers: {
@@ -104,7 +104,7 @@ const Profile = ({ navigation }) => {
       const eventsData = await eventsResponse.json();
 
       const favResponse = await fetch(
-        `https://feae-200-92-221-53.ngrok-free.app/favorites/${id}`,
+        `https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/favorites/${id}`,
         {
           method: 'GET',
           headers: {
@@ -121,7 +121,7 @@ const Profile = ({ navigation }) => {
       const favData = await favResponse.json();
 
       const attendanceResponse = await fetch(
-        `https://feae-200-92-221-53.ngrok-free.app/attendance/${id}`,
+        `https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/attendance/${id}`,
         {
           method: 'GET',
           headers: {
@@ -288,7 +288,7 @@ const Profile = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
-
+   
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -301,7 +301,6 @@ const Profile = ({ navigation }) => {
         <View style={{ width: 40 }} />
       </View>
 
- 
       <ScrollView 
         style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
@@ -347,7 +346,6 @@ const Profile = ({ navigation }) => {
           </LinearGradient>
         </View>
 
-       
         <View style={styles.eventsSection}>
           <View style={styles.tabContainer}>
             <TouchableOpacity
@@ -379,12 +377,13 @@ const Profile = ({ navigation }) => {
                 end={{ x: 1, y: 0 }}
               >
                 <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
-                   Asistidos ({attendanceEvents.length})
+                  Asistidos ({attendanceEvents.length})
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
 
+      
           <View style={styles.eventsContent}>
             {getCurrentEvents().length === 0 ? (
               <View style={styles.emptyStateContainer}>
@@ -469,6 +468,7 @@ const styles = StyleSheet.create({
     color: "#000", 
     paddingTop: 30,
   },
+
 
   profileWrapper: {
     paddingHorizontal: 20,
@@ -612,27 +612,28 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
 
- 
+
   eventsContent: {
-    gap: 12, 
+    gap: 16,
   },
   eventCard: { 
     backgroundColor: COLORS.cardBg,
-    borderRadius: 16, 
-    marginBottom: 12,
-    elevation: 4, 
+    borderRadius: 20, 
+    marginBottom: 16,
+    elevation: 6,
     shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     overflow: 'hidden',
   },
   eventImageContainer: {
     position: 'relative',
-    height: 80, 
+    height: 140,
   },
   eventImage: { 
     width: '100%', 
-    height: 80, 
+    height: 140,
     backgroundColor: COLORS.gray
   },
   imageOverlay: {
@@ -640,21 +641,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 40, 
+    height: 60,
   },
   eventContent: { 
-    padding: 14, 
+    padding: 20,
   },
   eventHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8, 
+    marginBottom: 12,
   },
   categoryTag: { 
-    borderRadius: 16, 
-    paddingHorizontal: 12, 
-    paddingVertical: 6, 
+    borderRadius: 20, 
+    paddingHorizontal: 16, 
+    paddingVertical: 8,
     elevation: 2,
     shadowColor: COLORS.shadowColor,
     shadowOffset: { width: 0, height: 1 },
@@ -662,41 +663,41 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   categoryText: { 
-    fontSize: 11,
+    fontSize: 12, 
     color: "#333",
     fontWeight: "700",
     letterSpacing: 0.5,
   },
   eventTitle: { 
-    fontSize: 16, 
+    fontSize: 18, 
     fontWeight: "800", 
     color: COLORS.textDark, 
-    marginBottom: 12,
-    lineHeight: 20,
+    marginBottom: 16,
+    lineHeight: 24,
   },
   eventDetails: { 
-    gap: 8, 
+    gap: 12,
   },
   eventDetailRow: { 
     flexDirection: "row", 
     alignItems: "center",
   },
   iconContainer: {
-    width: 28, 
-    height: 28, 
-    borderRadius: 14, 
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10, 
+    marginRight: 12,
   },
   detailIcon: { 
-    width: 14, 
-    height: 14, 
+    width: 16, 
+    height: 16,
     tintColor: COLORS.gradientStart
   },
   detailText: { 
-    fontSize: 13, 
+    fontSize: 14, 
     color: COLORS.textLight,
     flex: 1,
     fontWeight: '500',
@@ -705,9 +706,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   bookmarkContainer: {
-    width: 32, 
-    height: 32, 
-    borderRadius: 16, 
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -718,8 +719,8 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   bookmarkIcon: { 
-    width: 16, 
-    height: 16, 
+    width: 18, 
+    height: 18,
     tintColor: COLORS.gradientStart
   },
 
@@ -755,7 +756,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
- 
+
   bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 

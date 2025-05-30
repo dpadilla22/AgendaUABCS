@@ -33,7 +33,7 @@ const LoginScreen = ({ navigation }) => {
   const buttonScale = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
-  
+   
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -84,7 +84,7 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss();
 
     try {
-      const response = await fetch('https://feae-200-92-221-53.ngrok-free.app/login', {
+      const response = await fetch('https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -108,7 +108,7 @@ const LoginScreen = ({ navigation }) => {
           text2: `Alumno, ${data.user.name}`,
         });
 
-      
+
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 0,
@@ -152,7 +152,7 @@ const LoginScreen = ({ navigation }) => {
           <StatusBar style="light" />
           <View style={{ height: RNStatusBar.currentHeight, backgroundColor: COLORS.primary }} />
 
-    
+        
           <Animated.View 
             style={[
               styles.imageSection,
@@ -163,7 +163,7 @@ const LoginScreen = ({ navigation }) => {
             ]}
           >
             {<Image 
-              source={require('../assets/uabcs.jpg')}
+              source={require('../assets/agendaLogo.png')}
               style={styles.logo} 
               resizeMode="contain" 
             /> }
@@ -173,6 +173,7 @@ const LoginScreen = ({ navigation }) => {
             <View style={styles.decorativeCircle2} />
           </Animated.View>
 
+         
           <Animated.View 
             style={[
               styles.formSection,
@@ -232,7 +233,7 @@ const LoginScreen = ({ navigation }) => {
                 </View>
               </View>
 
-             
+           
               <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
                 <TouchableOpacity 
                   style={[
@@ -257,13 +258,15 @@ const LoginScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </Animated.View>
 
-              
+            
               <TouchableOpacity style={styles.helpContainer}>
                 <Text style={styles.helpText}>¿Problemas para ingresar?</Text>
               </TouchableOpacity>
               
-           
-              
+              <View style={styles.securityContainer}>
+                <Ionicons name="shield-checkmark-outline" size={16} color={COLORS.darkGray} />
+                <Text style={styles.securityText}>Conexión segura</Text>
+              </View>
             </View>
           </Animated.View>
         </SafeAreaView>

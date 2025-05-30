@@ -76,7 +76,7 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://feae-200-92-221-53.ngrok-free.app/events');
+      const response = await fetch('https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -90,7 +90,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://feae-200-92-221-53.ngrok-free.app/events');
+        const response = await fetch('https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/events');
         const data = await response.json();
         
         setEvents(data.events || []);

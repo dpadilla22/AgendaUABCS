@@ -489,7 +489,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor:"#0c568c",
     minWidth: 150,
   },
   attending: { 
