@@ -87,7 +87,7 @@ const Profile = ({ navigation }) => {
   const fetchFavoritesAndAttendance = async (id) => {
     try {
       const eventsResponse = await fetch(
-        'https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/events',
+        'https://b141-200-92-221-53.ngrok-free.app/events',
         {
           method: 'GET',
           headers: {
@@ -104,7 +104,7 @@ const Profile = ({ navigation }) => {
       const eventsData = await eventsResponse.json();
 
       const favResponse = await fetch(
-        `https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/favorites/${id}`,
+        `https://b141-200-92-221-53.ngrok-free.app/favorites/${id}`,
         {
           method: 'GET',
           headers: {
@@ -121,7 +121,7 @@ const Profile = ({ navigation }) => {
       const favData = await favResponse.json();
 
       const attendanceResponse = await fetch(
-        `https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/attendance/${id}`,
+        `https://b141-200-92-221-53.ngrok-free.app/attendance/${id}`,
         {
           method: 'GET',
           headers: {

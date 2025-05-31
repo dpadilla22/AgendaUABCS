@@ -84,7 +84,7 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss();
 
     try {
-      const response = await fetch('https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app/login', {
+      const response = await fetch('https://b141-200-92-221-53.ngrok-free.app/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
