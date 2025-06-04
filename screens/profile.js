@@ -354,7 +354,7 @@ const getDepartmentColor = (dept) => {
 
      <View style={styles.bottomNav}>
              <TouchableOpacity style={styles.bottomNavItem} 
-             onPress={() => navigation.navigate("HomeScreen")}
+             onPress={() => navigation.navigate("Home")}
              activeOpacity={0.7}>
                <View style={styles.navIconContainer}>
                  <Image

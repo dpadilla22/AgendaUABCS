@@ -8,22 +8,20 @@ const EventCard = ({ id,title, department, date, time, location, imageUrl,showBo
   const navigation = useNavigation();
  
 const getDepartmentColor = (dept) => {
-  const colors = {
-    'Agronomía': '#32CD32',                          
-    'Ciencia animal y conservación del hábitat': '#8FBC8F',  
-    'Ciencias de la tierra': '#20B2AA',                 
-    'Ciencias marinas y costeras': '#1E90FF',          
-    'Ciencias sociales y jurídicas': '#6495ED',        
-    'Economía': '#FF8C00',                            
-    'Humanidades': '#FF69B4',                           
-    'Ingeniería en pesquerías': '#4682B4',            
-    'Sistemas computacionales': '#FFD700',            
+    const colors = {
+      'Sistemas computacionales': '#3B82F6', 
+      'Economía': '#F59E0B', 
+      'Ciencias Sociales y jurídicas': '#06B6D4', 
+      'Agronomia': '#10B981', 
+      'Ciencias de la tierra': '#8B5CF6',
+      'Humanidades': '#F97316',
+      'Ingeniería en pesquerías': '#EF4444',
+      'Ciencias marinas y costeras': '#34D399',
+      'Ciencia animal y conservación del hábitat': '#FBBF24',
+    };
+    return colors[dept] || '#6B7280'; 
   };
-  return colors[dept] || '#CCCCCC';  
-};
 
-
-  
   const formatDate = (dateString) => {
     if (!dateString) return "Fecha no disponible";
     

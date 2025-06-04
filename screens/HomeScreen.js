@@ -25,6 +25,7 @@ const COLORS = {
   warning: "#FFC107",
   error: "#DC3545",
   purple: "#9966FF",
+  cream: "#F5F5DC",
 };
 
 const carouselData = [
@@ -1059,7 +1060,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#3ca6ec', 
+    backgroundColor: COLORS.cream, 
     zIndex: -1, 
   },
 });

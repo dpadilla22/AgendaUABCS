@@ -241,12 +241,18 @@ const getDepartmentColor = (dept) => {
       
         <SafeAreaView style={styles.headerContainer}>
           <View style={styles.headerNav}>
-            <TouchableOpacity 
-              style={styles.headerButton} 
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="chevron-back" size={24} color={COLORS.textLight} />
-            </TouchableOpacity>
+           <TouchableOpacity 
+            style={styles.headerButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <Image
+              source={require('../assets/back-arrow.png')}
+              style={styles.headerIcon}
+            />
+              <View style={styles.circleDecoration} />
+          </TouchableOpacity>
+
+
             
             <Text style={styles.headerTitle}>Detalles del Evento</Text>
             
@@ -430,14 +436,27 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 15,
   },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+ headerButton: {
+  padding: 8,
+},
+
+headerIcon: {
+  width: 24,
+  height: 24,
+  resizeMode: 'contain',
+},
+circleDecoration: {
+  width: 35,
+  height: 35,
+  borderRadius: 20,
+  backgroundColor: COLORS.lightGray, 
+  position: 'absolute',
+  bottom: -4, 
+  left: '50%',
+  transform: [{ translateX: 5 }],
+},
+
+
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
