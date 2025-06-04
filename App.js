@@ -12,6 +12,7 @@ import Notificaciones from './screens/NotificationScreen';
 import LocationScreen from './screens/LocationScreen';
 import EventScreen from './screens/EventScreen';
 import EventDetailScreen from './screens/EventDetailScreen';
+import CommentsScreen from './screens/commentsScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -84,6 +85,7 @@ function DrawerNavigator() {
       />
 
       <Drawer.Screen name="Cerrar sesión" component={WelcomeScreen} />
+      <Drawer.Screen name="Comentarios" component={CommentsScreen} />
     </Drawer.Navigator>
   );
 }

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://b141-200-92-221-53.ngrok-free.app';
+const API_URL = 'https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app';
 
 export const markAttendance = async (eventId) => {
   try {

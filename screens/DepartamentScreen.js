@@ -17,7 +17,8 @@ const COLORS = {
   textDark: "#333333",
   textLight: "#666666",
   white: "#FFFFFF",
-  lightGray: "#E0E0E0"
+  lightGray: "#E0E0E0",
+   cream: "#F5F5DC", 
 };
 
 const DepartamentScreen = ({ navigation, route }) => {
@@ -29,7 +30,7 @@ const DepartamentScreen = ({ navigation, route }) => {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const response = await fetch('https://b141-200-92-221-53.ngrok-free.app/events');
+        const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events');
         const data = await response.json();
         setEventos(data.events || []);
       } catch (error) {
@@ -60,7 +61,7 @@ const DepartamentScreen = ({ navigation, route }) => {
       const eventDate = evento.date.split('T')[0];
       marked[eventDate] = {
         marked: true,
-        dotColor: COLORS.yellow,
+        dotColor: COLORS.darkBlue,
         activeOpacity: 0.8
       };
     });
@@ -183,19 +184,19 @@ const DepartamentScreen = ({ navigation, route }) => {
                 onDayPress={day => setSelectedDate(day.dateString)}
                 markedDates={getMarkedDates()}
                 theme={{
-                  backgroundColor: COLORS.lightBlue,
-                  calendarBackground: COLORS.lightBlue,
-                  textSectionTitleColor: '#fff',
-                  selectedDayBackgroundColor: COLORS.accent,
-                  selectedDayTextColor: '#fff',
-                  todayTextColor: COLORS.yellow,
-                  dayTextColor: '#fff',
-                  textDisabledColor: 'rgba(255, 255, 255, 0.5)',
-                  arrowColor: '#fff',
-                  monthTextColor: '#fff',
-                  dotColor: COLORS.yellow,
-                  selectedDotColor: '#fff',
-                }}
+                backgroundColor: COLORS.cream,
+                calendarBackground: COLORS.cream,
+                textSectionTitleColor: COLORS.textDark,
+                selectedDayBackgroundColor: COLORS.accent,
+                selectedDayTextColor: '#fff',
+                todayTextColor: COLORS.accent,
+                dayTextColor: COLORS.textDark,
+                textDisabledColor: 'rgba(51, 51, 51, 0.5)',
+                arrowColor: COLORS.textDark,
+                monthTextColor: COLORS.textDark,
+                dotColor: COLORS.darkBlue,
+                selectedDotColor: '#fff',
+              }}
                 style={{ borderRadius: 20, padding: 10 }}
               />
             </View>
@@ -233,27 +234,37 @@ const DepartamentScreen = ({ navigation, route }) => {
           </ScrollView>
 
           <View style={styles.bottomNav}>
-  <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
-    <Image 
-      source={require('../assets/home.png')} 
-      style={[styles.navIcon, styles.homeIcon]} 
-    />
-  </TouchableOpacity>
-  
-  <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("EventScreen")}>
-    <Image 
-      source={require("../assets/more.png")} 
-      style={[styles.navIcon, styles.moreIcon]} 
-    />
-  </TouchableOpacity>
-  
-  <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
-    <Image 
-      source={require("../assets/profile.png")} 
-      style={[styles.navIcon, styles.profileIcon]} 
-    />
-  </TouchableOpacity>
-</View>
+                      <TouchableOpacity style={styles.bottomNavItem} 
+                      onPress={() => navigation.navigate("Home")}
+                      activeOpacity={0.7}>
+                        <View style={styles.navIconContainer}>
+                          <Image
+                            source={require("../assets/home.png")}
+                            style={styles.navIcon}
+                          />
+                        </View>
+                      </TouchableOpacity>
+              
+                      <TouchableOpacity
+                        style={styles.bottomNavItem}
+                        onPress={() => navigation.navigate("EventScreen")}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.navIconContainer}>
+                          <Image source={require("../assets/more.png")} style={styles.navIcon} />
+                        </View>
+                      </TouchableOpacity>
+              
+                      <TouchableOpacity
+                        style={styles.bottomNavItem}
+                        onPress={() => navigation.navigate("Profile")}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.navIconContainer}>
+                          <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+                        </View>
+                      </TouchableOpacity>
+                    </View>
 
         </>
       )}
@@ -263,7 +274,7 @@ const DepartamentScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.lightBlue,
   },
   header: {
     flexDirection: "row",
@@ -272,6 +283,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
+  },
+  headerTittle:{
+    color: COLORS.textDark,
   },
   backButton: {
     padding: 8,
@@ -283,7 +297,7 @@ const styles = StyleSheet.create({
     height: 20,
   },
   headerTitle: {
-    color: "#fff",
+    color: COLORS.textDark,
     fontSize: 18,
     fontWeight: "600",
   },
@@ -294,14 +308,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   calendarContainer: {
-    backgroundColor: COLORS.lightBlue,
+    backgroundColor: COLORS.cream,
     borderRadius: 20,
     margin: 15,
     marginBottom: 0,
     padding: 20,
   },
   eventsContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     marginTop: 15,
@@ -450,7 +464,7 @@ const styles = StyleSheet.create({
   },
   
 
-    bottomNav: { 
+  bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
     paddingVertical: 9, 
@@ -463,31 +477,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4
   },
-  bottomNavItem: { 
+   bottomNavItem: { 
     alignItems: "center",
-    padding: 7
+    padding: 8,
+    flex: 1,
+  },
+  navIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 32, 
+    width: 32,  
   },
   navIcon: { 
-    width: 24, 
-    height: 24,
-    tintColor: "#131311",
+    width: 25, 
+    height: 25,
+    tintColor: COLORS.darkGray,
   },
-  profileIcon: {
-    width: 45, 
-    height: 45,
-    tintColor: "#131311",
-  },
-  homeIcon: { 
-    width: 28, 
-    height: 28, 
-    tintColor: "#131311",
-  },
-  moreIcon: { 
-    width: 40, 
-    height: 40, 
-    tintColor: "#131311",
-  },
-
   activeNavItem: { 
     borderBottomWidth: 2, 
     borderColor: '#f0e342',
@@ -496,7 +501,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: COLORS.cream,
   },
 });
 

@@ -4,7 +4,7 @@ import DateTimePicker from "@react-native-community/datetimepicker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 
-const API_BASE_URL = "https://8ec1-2806-265-5402-ca4-c0d8-265e-fd0a-d454.ngrok-free.app"
+const API_BASE_URL = "https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app"
 
 const COLORS = {
   coral: "#FF7B6B",
@@ -18,6 +18,7 @@ const COLORS = {
   pink: "#FF6B9D",
   orange: "#FFA726",
   green: "#66BB6A",
+  cream: "#F5F5DC", 
 }
 
 const DEPARTMENTS = [
@@ -174,7 +175,7 @@ const SuggestionScreen = ({ navigation, route }) => {
 
   const createEventSuggestion = async (eventData) => {
     try {
-      // console.log("Enviando datos a la API:", eventData)
+      
       
       const response = await fetch(`${API_BASE_URL}/createSuggestion`, {
         method: "POST",
@@ -186,7 +187,7 @@ const SuggestionScreen = ({ navigation, route }) => {
       })
 
       const result = await response.json()
-      // console.log("Respuesta de la API:", result)
+
 
       if (!response.ok) {
         throw new Error(result.message || `Error ${response.status}: ${response.statusText}`)
@@ -284,6 +285,21 @@ const SuggestionScreen = ({ navigation, route }) => {
     setShowDepartmentPicker(false)
   }
 
+  const getDepartmentColor = (deptName) => {
+    const colors = {
+      'Sistemas Computacionales': '#3B82F6', 
+      'Economía': '#F59E0B', 
+      'Ciencias Sociales y Jurídicas': '#06B6D4', 
+      'Agronomía': '#10B981', 
+      'Ciencias de la Tierra': '#8B5CF6',
+      'Humanidades': '#F97316',
+      'Ingeniería en Pesquerías': '#EF4444',
+      'Ciencias Marinas y Costeras': '#34D399',
+      'Ciencia Animal y Conservación del Hábitat': '#FBBF24',
+    };
+    return colors[deptName] || '#6B7280'; 
+  };
+
   const DepartmentPicker = () => (
     <Animated.View style={[styles.pickerContainer, { opacity: fadeAnim }]}>
       <View style={styles.pickerHeader}>
@@ -294,13 +310,24 @@ const SuggestionScreen = ({ navigation, route }) => {
         {DEPARTMENTS.map((dept, index) => (
           <TouchableOpacity
             key={index}
-            style={[styles.departmentItem, { borderLeftColor: dept.color }]}
+            style={[
+              styles.departmentItem, 
+              { 
+                borderLeftColor: getDepartmentColor(dept.name),
+                shadowColor: getDepartmentColor(dept.name)
+              }
+            ]}
             onPress={() => handleDepartmentSelect(dept)}
           >
             <View style={styles.departmentContent}>
+              <View style={[styles.departmentIcon, { backgroundColor: getDepartmentColor(dept.name) }]}>
+                <Text style={styles.departmentIconText}>
+                  {dept.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
               <Text style={styles.departmentText}>{dept.name}</Text>
             </View>
-            <View style={[styles.departmentIndicator, { backgroundColor: dept.color }]} />
+            <View style={[styles.departmentIndicator, { backgroundColor: getDepartmentColor(dept.name) }]} />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -316,7 +343,10 @@ const SuggestionScreen = ({ navigation, route }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sugerir Evento</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Sugerir Evento</Text>
+         
+        </View>
       </View>
 
       <Animated.ScrollView
@@ -327,7 +357,10 @@ const SuggestionScreen = ({ navigation, route }) => {
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
            
-            <Text style={styles.label}>Título del Evento</Text>
+            <View>
+              <Text style={styles.label}>Título del Evento</Text>
+              <Text style={styles.sublabel}>Dale un nombre atractivo a tu evento</Text>
+            </View>
           </View>
           <TextInput
             style={styles.textInput}
@@ -344,14 +377,33 @@ const SuggestionScreen = ({ navigation, route }) => {
 
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            
-            <Text style={styles.label}>Departamento</Text>
+            <View>
+              <Text style={styles.label}>Departamento</Text>
+              <Text style={styles.sublabel}>¿A qué área académica pertenece?</Text>
+            </View>
           </View>
           <TouchableOpacity
-            style={[styles.selectInput, selectedDepartment && { borderColor: selectedDepartment.color }]}
+            style={[
+              styles.selectInput, 
+              selectedDepartment && { 
+                borderColor: getDepartmentColor(selectedDepartment.name),
+                shadowColor: getDepartmentColor(selectedDepartment.name),
+                shadowOpacity: 0.2,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 4,
+                elevation: 3
+              }
+            ]}
             onPress={() => setShowDepartmentPicker(true)}
           >
             <View style={styles.selectContent}>
+              {selectedDepartment && (
+                <View style={[styles.selectedDeptIcon, { backgroundColor: getDepartmentColor(selectedDepartment.name) }]}>
+                  <Text style={styles.selectedDeptIconText}>
+                    {selectedDepartment.name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
               <Text style={[styles.selectText, !formData.departamento && styles.placeholderText]}>
                 {formData.departamento || "Toca para elegir departamento"}
               </Text>
@@ -363,7 +415,10 @@ const SuggestionScreen = ({ navigation, route }) => {
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
             
-            <Text style={styles.label}>Fecha del Evento</Text>
+            <View>
+              <Text style={styles.label}>Fecha del Evento</Text>
+              <Text style={styles.sublabel}>¿Cuándo será tu evento?</Text>
+            </View>
           </View>
           <TouchableOpacity style={styles.selectInput} onPress={() => setShowDatePicker(true)}>
             <Text style={styles.selectText}>{formatDate(date)}</Text>
@@ -373,8 +428,11 @@ const SuggestionScreen = ({ navigation, route }) => {
 
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            
-            <Text style={styles.label}>Hora del Evento</Text>
+           
+            <View>
+              <Text style={styles.label}>Hora del Evento</Text>
+              <Text style={styles.sublabel}>¿A qué hora comenzará?</Text>
+            </View>
           </View>
           <TouchableOpacity style={styles.selectInput} onPress={() => setShowTimePicker(true)}>
             <Text style={styles.selectText}>{formatTime(time)}</Text>
@@ -384,8 +442,11 @@ const SuggestionScreen = ({ navigation, route }) => {
 
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
-            
-            <Text style={styles.label}>Ubicación</Text>
+           
+            <View>
+              <Text style={styles.label}>Ubicación</Text>
+              <Text style={styles.sublabel}>¿Dónde se realizará?</Text>
+            </View>
           </View>
           <TextInput
             style={styles.textInput}
@@ -403,15 +464,20 @@ const SuggestionScreen = ({ navigation, route }) => {
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? "Enviando..." : "Enviar Sugerencia"}
-            </Text>
+            <View style={styles.submitButtonContent}>
+              
+              <Text style={styles.submitButtonText}>
+                {isSubmitting ? "Enviando..." : "Enviar Sugerencia"}
+              </Text>
+            </View>
           </TouchableOpacity>
         </Animated.View>
 
-        <Text style={styles.footerNote}>
-          Tu sugerencia será revisada por nuestro equipo antes de ser publicada
-        </Text>
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerNote}>
+            Tu sugerencia será revisada por nuestro equipo antes de ser publicada
+          </Text>
+        </View>
       </Animated.ScrollView>
 
       {showDatePicker && (
@@ -441,30 +507,37 @@ const SuggestionScreen = ({ navigation, route }) => {
         </View>
       )}
 
-
-       <View style={styles.bottomNav}>
-              <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")}>
-                <Image 
-                  source={require('../assets/home.png')} 
-                  style={[styles.navIcon, styles.homeIcon]} 
-                />
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={[styles.bottomNavItem, styles.activeNavItem]} activeOpacity={0.7}>
-             
-                <Image 
-                  source={require("../assets/more.png")} 
-                  style={[styles.navIcon, styles.moreIcon]} 
-                />
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Profile")}>
-                <Image 
-                  source={require("../assets/profile.png")} 
-                  style={[styles.navIcon, styles.profileIcon]} 
-                />
-              </TouchableOpacity>
-            </View>
+      <View style={styles.bottomNav}>
+                    <TouchableOpacity style={styles.bottomNavItem} 
+                    onPress={() => navigation.navigate("Home")}
+                    activeOpacity={0.7}>
+                      <View style={styles.navIconContainer}>
+                        <Image
+                          source={require("../assets/home.png")}
+                          style={styles.navIcon}
+                        />
+                      </View>
+                    </TouchableOpacity>
+            
+                    <TouchableOpacity
+                      style={[styles.bottomNavItem, styles.activeNavItem]}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.navIconContainer}>
+                        <Image source={require("../assets/more.png")} style={styles.navIcon} />
+                      </View>
+                    </TouchableOpacity>
+            
+                    <TouchableOpacity
+                      style={styles.bottomNavItem}
+                      onPress={() => navigation.navigate("Profile")}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.navIconContainer}>
+                        <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+                      </View>
+                    </TouchableOpacity>
+                  </View>
     </SafeAreaView>
   )
 }
@@ -479,30 +552,54 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 40,
-    paddingBottom: 20,
+    paddingBottom: 15,
+    backgroundColor: COLORS.cream,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.lightGray,
+    padding: 10,
+    borderRadius: 25,
+    backgroundColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   backIcon: {
     width: 20,
     height: 20,
+    tintColor: "#333",
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: "center",
+    marginRight: 30, 
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: COLORS.darkBlue,
-    marginLeft: 15,
-    alignItems: "center",
+    color: "#000000", 
+    textAlign: "center",
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#000000", 
+    textAlign: "center",
+    marginTop: 2,
+    opacity: 0.7,
   },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 100,
   },
   inputCard: {
     backgroundColor: "white",
@@ -510,62 +607,96 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
   },
   inputHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 15,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f8f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
   inputIcon: {
-    fontSize: 24,
-    marginRight: 10,
+    fontSize: 20,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.darkBlue,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000000", 
+    marginBottom: 2,
+  },
+  sublabel: {
+    fontSize: 12,
+    color: "#000000", 
+    opacity: 0.6,
   },
   textInput: {
     fontSize: 16,
     color: "#333",
-    paddingVertical: 12,
+    paddingVertical: 15,
     paddingHorizontal: 16,
-    backgroundColor: "#F8F9FF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    backgroundColor: "#f8f9ff",
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#e8eaff",
+    minHeight: 50,
   },
   selectInput: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: 15,
     paddingHorizontal: 16,
-    backgroundColor: "#F8F9FF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    backgroundColor: "#f8f9ff",
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#e8eaff",
+    minHeight: 50,
   },
   selectContent: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
   },
+  selectedDeptIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  selectedDeptIconText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
   selectText: {
     fontSize: 16,
     color: "#333",
     flex: 1,
+    fontWeight: "500",
   },
   placeholderText: {
     color: "#999",
+    fontWeight: "normal",
   },
   chevronIcon: {
     fontSize: 16,
     color: "#666",
+    fontWeight: "bold",
   },
   inputFooter: {
     flexDirection: "row",
@@ -575,33 +706,50 @@ const styles = StyleSheet.create({
   characterCount: {
     fontSize: 12,
     color: "#666",
+    fontWeight: "500",
   },
   submitButton: {
-    backgroundColor: COLORS.darkBlue,
+    backgroundColor: COLORS.cream,
     borderRadius: 20,
     paddingVertical: 18,
     alignItems: "center",
     marginTop: 20,
-    shadowColor: COLORS.coral,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: "#4f46e5",
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 12,
+    elevation: 8,
   },
   submitButtonDisabled: {
     backgroundColor: "#999",
+    shadowColor: "#999",
+  },
+  submitButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  submitButtonIcon: {
+    fontSize: 20,
+    marginRight: 8,
   },
   submitButtonText: {
-    color: "white",
+    color: "#000000",
     fontSize: 18,
     fontWeight: "bold",
   },
+  footerContainer: {
+    backgroundColor: "white",
+    borderRadius: 15,
+    padding: 20,
+    marginTop: 20,
+    alignItems: "center",
+  },
   footerNote: {
     fontSize: 14,
-    color: "#666",
+    color: "#000000", 
     textAlign: "center",
-    marginTop: 20,
     lineHeight: 20,
+    opacity: 0.7,
   },
   modalOverlay: {
     position: "absolute",
@@ -609,7 +757,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -622,21 +770,22 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   pickerContainer: {
-    padding: 20,
+    padding: 25,
   },
   pickerHeader: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 25,
   },
   pickerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    color: COLORS.darkBlue,
-    marginBottom: 5,
+    color: "#000000", 
+    marginBottom: 8,
   },
   pickerSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#000000", 
+    opacity: 0.7,
   },
   pickerScrollView: {
     maxHeight: 400,
@@ -644,41 +793,59 @@ const styles = StyleSheet.create({
   departmentItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    marginBottom: 10,
-    backgroundColor: "#F8F9FF",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    backgroundColor: "#f8f9ff",
     borderRadius: 15,
-    borderLeftWidth: 4,
+    borderLeftWidth: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   departmentContent: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
   },
+  departmentIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 15,
+  },
+  departmentIconText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
   departmentText: {
     fontSize: 16,
-    color: "#333",
+    color: "#000000", 
     flex: 1,
+    fontWeight: "500",
   },
   departmentIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   pickerCloseButton: {
     marginTop: 20,
     paddingVertical: 15,
     alignItems: "center",
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#f0f0f0",
     borderRadius: 15,
   },
   pickerCloseText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#000000", 
   },
-     bottomNav: { 
+  bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
     paddingVertical: 9, 
@@ -691,35 +858,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4
   },
-  bottomNavItem: { 
+   bottomNavItem: { 
     alignItems: "center",
-    padding: 7
+    padding: 8,
+    flex: 1,
+  },
+  navIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 32, 
+    width: 32,  
   },
   navIcon: { 
-    width: 24, 
-    height: 24,
-    tintColor: "#131311",
+    width: 25, 
+    height: 25,
+    tintColor: COLORS.darkGray,
   },
-  profileIcon: {
-    width: 45, 
-    height: 45,
-    tintColor: "#131311",
-  },
-  homeIcon: { 
-    width: 28, 
-    height: 28, 
-    tintColor: "#131311",
-  },
-  moreIcon: { 
-    width: 40, 
-    height: 40, 
-    tintColor: "#131311",
-  },
-
   activeNavItem: { 
     borderBottomWidth: 2, 
     borderColor: '#f0e342',
-  },
+  }
 })
 
 export default SuggestionScreen

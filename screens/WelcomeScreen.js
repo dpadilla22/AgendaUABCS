@@ -90,9 +90,7 @@ const WelcomeScreen = ({ navigation }) => {
           ]}
         >
           <Text style={styles.welcomeTitle}>¡Bienvenido!</Text>
-          <Text style={styles.welcomeSubtitle}>
-            Organiza tu tiempo de manera inteligente
-          </Text>
+         
         </Animated.View>
 
  
@@ -152,11 +150,11 @@ const WelcomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2D6FA4',
+    backgroundColor: '#efdcbd',
   },
   topSection: {
     height: '50%',
-    backgroundColor: '#f4e153',
+    backgroundColor: '#efdcbd',
     position: 'relative',
   },
   gradientOverlay: {
@@ -224,7 +222,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   button: {
-    backgroundColor: '#003366',
+    backgroundColor: '#F5F5DC',
     paddingVertical: 18,
     paddingHorizontal: 60,
     borderRadius: 25,
@@ -249,7 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonText: {
-    color: 'white',
+    color: '#003366',
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
@@ -267,7 +265,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
   },
   dotActive: {
-    backgroundColor: '#f4e153',
+    backgroundColor: '#efdcbd',
     width: 24,
     borderRadius: 12,
   },

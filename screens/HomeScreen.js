@@ -6,19 +6,24 @@ import { ActivityIndicator } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadAccountId } from './EventScreen';
 
-
-
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_WIDTH = screenWidth - 32; 
 const CAROUSEL_HEIGHT = 220; 
 
+
 const COLORS = {
-  coral: "#FF7B6B",
-  darkBlue: "#003366",
-  lightBlue: "#7BBFFF",
-  lightGray: "#D9D9D9",
-  offWhite: "#F5F5F5",
-  yellow: "#FFCC33",
+
+  primaryBlue: "#1B3A5C",     
+  secondaryBlue: "#4A7BA7",    
+  gold: "#D4AF37",             
+  lightGold: "#F5E6A3",        
+  warmWhite: "#FFFFFF",      
+  lightGray: "#E5E5E5",    
+  mediumGray: "#999999",       
+  darkGray: "#333333",        
+  success: "#28A745",
+  warning: "#FFC107",
+  error: "#DC3545",
   purple: "#9966FF",
 };
 
@@ -61,7 +66,6 @@ const HomeScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState("Hoy");
   const [refreshing, setRefreshing] = useState(false);
   
- 
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -76,7 +80,7 @@ const HomeScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://b141-200-92-221-53.ngrok-free.app/events');
+      const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -90,7 +94,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://b141-200-92-221-53.ngrok-free.app/events');
+        const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events');
         const data = await response.json();
         
         setEvents(data.events || []);
@@ -126,7 +130,6 @@ const HomeScreen = ({ navigation }) => {
     };
   }, [isAutoScrolling]);
 
-
   const performSearch = (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -136,7 +139,6 @@ const HomeScreen = ({ navigation }) => {
     setIsSearching(true);
     const queryLower = query.toLowerCase().trim();
     
-
     const results = events.filter(event => {
       return (
         event.title?.toLowerCase().includes(queryLower) ||
@@ -152,12 +154,10 @@ const HomeScreen = ({ navigation }) => {
     }, 300);
   };
 
-
   const handleSearchChange = (text) => {
     setSearchQuery(text);
     performSearch(text);
   };
-
 
   const openSearchModal = () => {
     setSearchModalVisible(true);
@@ -168,7 +168,6 @@ const HomeScreen = ({ navigation }) => {
     }, 100);
   };
 
-
   const closeSearchModal = () => {
     setSearchModalVisible(false);
     setSearchQuery("");
@@ -176,24 +175,23 @@ const HomeScreen = ({ navigation }) => {
     setIsSearching(false);
   };
 
+  const navigateToEventDetail = async (event) => {
+    closeSearchModal();
 
- const navigateToEventDetail = async (event) => {
-  closeSearchModal();
-
-  const accountId = await AsyncStorage.getItem('accountId'); 
-  navigation.navigate('EventDetailScreen', {
-    eventId: event.id,
-    event: {
+    const accountId = await AsyncStorage.getItem('accountId'); 
+    navigation.navigate('EventDetailScreen', {
+      eventId: event.id,
+      event: {
         id: event.id, 
-      ...event,
+        ...event,
+        time: getHour(event.date),
+        formattedDate: formatDate(event.date)
+      },
+      date: event.date,
       time: getHour(event.date),
-      formattedDate: formatDate(event.date)
-    },
-    date: event.date,
-    time: getHour(event.date),
-    accountId,
-  });
-};
+      accountId,
+    });
+  };
 
   const handleCarouselScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
@@ -279,19 +277,48 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  if (loading) {
-  return (
-    <View style={styles.loaderContainer}>
-      <View style={styles.fullScreenLoading}></View>
-      <Image
-        source={require("../assets/agendaLogo.png")}
-        style={{ width: 120, height: 120, marginBottom: 20 }}
-        resizeMode="contain"
-      />
-    </View>
-  );
-}
+  const getEmptyStateMessage = () => {
+    switch (activeTab) {
+      case "Hoy":
+        return "No hay eventos programados para hoy";
+      case "Esta semana":
+        return "No hay eventos programados para esta semana";
+      case "Este mes":
+        return "No hay eventos programados para este mes";
+      default:
+        return "No hay eventos disponibles";
+    }
+  };
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <View style={styles.fullScreenLoading}></View>
+        <Image
+          source={require("../assets/agendaLogo.png")}
+          style={{ width: 120, height: 120, marginBottom: 20 }}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
+
+const getDepartmentColor = (dept) => {
+    const colors = {
+      'Sistemas computacionales': '#3B82F6', 
+      'Economía': '#F59E0B', 
+      'Ciencias Sociales y jurídicas': '#06B6D4', 
+      'Agronomia': '#10B981', 
+      'Ciencias de la tierra': '#8B5CF6',
+      'Humanidades': '#F97316',
+      'Ingeniería en pesquerías': '#EF4444',
+      'Ciencias marinas y costeras': '#34D399',
+      'Ciencia animal y conservación del hábitat': '#FBBF24',
+    };
+    return colors[dept] || '#6B7280'; 
+  };
+
+  const filteredEvents = getFilteredEvents();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -322,7 +349,6 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-
 
       <Modal
         visible={searchModalVisible}
@@ -368,7 +394,7 @@ const HomeScreen = ({ navigation }) => {
           <ScrollView style={styles.searchContent} showsVerticalScrollIndicator={false}>
             {isSearching ? (
               <View style={styles.searchLoadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.coral} />
+                <ActivityIndicator size="large" color={COLORS.gold} />
                 <Text style={styles.searchLoadingText}>Buscando...</Text>
               </View>
             ) : searchQuery.length === 0 ? (
@@ -477,7 +503,7 @@ const HomeScreen = ({ navigation }) => {
               <View key={item.id} style={styles.carouselSlide}>
                 <Image source={item.image} style={styles.carouselImage} />
                 <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
+                  colors={['transparent', 'rgba(27,58,92,0.3)', 'rgba(27,58,92,0.8)']}
                   style={styles.carouselOverlay}
                 >
                   <View style={styles.carouselTextContainer}>
@@ -489,7 +515,6 @@ const HomeScreen = ({ navigation }) => {
             ))}
           </ScrollView>
 
-      
           <View style={styles.dotsContainer}>
             {carouselData.map((_, index) => (
               <TouchableOpacity
@@ -531,22 +556,42 @@ const HomeScreen = ({ navigation }) => {
        
         <View style={styles.eventsContent}>
           {events.length === 0 ? (
-            <Text style={styles.noEventsText}>No hay eventos disponibles.</Text>
+            <View style={styles.emptyStateContainer}>
+              <Image 
+                source={require("../assets/agendaLogo.png")} 
+                style={styles.emptyStateIcon} 
+              />
+              <Text style={styles.emptyStateTitle}>No hay eventos disponibles</Text>
+              <Text style={styles.emptyStateText}>
+                Actualmente no hay eventos programados. ¡Mantente atento para futuras actividades!
+              </Text>
+            </View>
+          ) : filteredEvents.length === 0 ? (
+            <View style={styles.emptyStateContainer}>
+              <Image 
+                source={require("../assets/agendaLogo.png")} 
+                style={styles.emptyStateIcon} 
+              />
+              <Text style={styles.emptyStateTitle}>{getEmptyStateMessage()}</Text>
+              <Text style={styles.emptyStateText}>
+                Prueba seleccionando otro período de tiempo o revisa más tarde.
+              </Text>
+            </View>
           ) : (
-            getFilteredEvents().map((event, index) => {
+            filteredEvents.map((event, index) => {
               const time = getHour(event.date);
               return (
                 <EventCard
-                key={index}
-                id={event.id} 
-                title={event.title}
-                department={event.department}
-                date={event.date}
-                time={time}
-                location={event.location}
-                imageUrl={event.imageUrl}
-                showBookmark={false}
-              />
+                  key={index}
+                  id={event.id} 
+                  title={event.title}
+                  department={event.department}
+                  date={event.date}
+                  time={time}
+                  location={event.location}
+                  imageUrl={event.imageUrl}
+                  showBookmark={false}
+                />
               );
             })
           )}
@@ -558,9 +603,8 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.navIconContainer}>
             <Image
               source={require("../assets/home.png")}
-              style={[styles.navIcon, styles.homeIcon, styles.homeIcon]}
+              style={styles.navIcon}
             />
-            
           </View>
         </TouchableOpacity>
 
@@ -570,8 +614,7 @@ const HomeScreen = ({ navigation }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/more.png")} style={[styles.navIcon, styles.moreIcon]} />
-           
+            <Image source={require("../assets/more.png")} style={styles.navIcon} />
           </View>
         </TouchableOpacity>
 
@@ -581,8 +624,7 @@ const HomeScreen = ({ navigation }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/profile.png")} style={[styles.navIcon, styles.profileIcon]} />
-           
+            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
           </View>
         </TouchableOpacity>
       </View>
@@ -594,18 +636,17 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: COLORS.warmWhite, 
   },
   whiteHeader: {
-    backgroundColor: "white",
+    backgroundColor: COLORS.cream, 
     paddingTop: 40,
     paddingBottom: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+  
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -623,13 +664,13 @@ const styles = StyleSheet.create({
   menuLine: {
     height: 3,
     width: "100%",
-    backgroundColor: "#333",
+    backgroundColor: COLORS.primaryBlue,
     borderRadius: 5,
   },
   headerTitle: {
-    color: "#333",
+    color: COLORS.primaryBlue,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   headerIcons: {
     flexDirection: "row",
@@ -642,12 +683,12 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 22,
     height: 22,
-    tintColor: "#333",
+    tintColor: COLORS.primaryBlue,
   },
   
-   searchModalContainer: {
+  searchModalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.warmWhite,
   },
   searchHeader: {
     flexDirection: 'row',
@@ -656,7 +697,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.warmWhite,
   },
   searchBackButton: {
     padding: 8,
@@ -665,27 +706,29 @@ const styles = StyleSheet.create({
   searchBackIcon: {
     width: 20,
     height: 20,
-    tintColor: '#333',
+    tintColor: COLORS.primaryBlue,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: COLORS.cream,
     borderRadius: 25,
     paddingHorizontal: 16,
     height: 45,
+    borderWidth: 1,
+    borderColor: COLORS.lightGold,
   },
   searchInputIcon: {
     width: 18,
     height: 18,
-    tintColor: '#999',
+    tintColor: COLORS.mediumGray,
     marginRight: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: COLORS.darkGray,
     paddingVertical: 0,
   },
   clearSearchButton: {
@@ -694,7 +737,7 @@ const styles = StyleSheet.create({
   },
   clearSearchText: {
     fontSize: 16,
-    color: '#999',
+    color: COLORS.mediumGray,
     fontWeight: 'bold',
   },
   searchContent: {
@@ -709,7 +752,7 @@ const styles = StyleSheet.create({
   searchLoadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORS.mediumGray,
   },
   searchEmptyContainer: {
     flex: 1,
@@ -727,13 +770,13 @@ const styles = StyleSheet.create({
   searchEmptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primaryBlue,
     marginBottom: 12,
     textAlign: 'center',
   },
   searchEmptyText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORS.mediumGray,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -743,12 +786,12 @@ const styles = StyleSheet.create({
   searchResultsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primaryBlue,
     marginBottom: 16,
   },
   searchResultItem: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.warmWhite,
     borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
@@ -758,6 +801,8 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: 'hidden',
     height: 120,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
   },
   searchResultImageContainer: {
     width: 100,
@@ -775,7 +820,7 @@ const styles = StyleSheet.create({
   searchResultTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primaryBlue,
     lineHeight: 20,
     marginBottom: 8,
   },
@@ -789,19 +834,19 @@ const styles = StyleSheet.create({
   searchResultIcon: {
     width: 12,
     height: 12,
-    tintColor: '#666',
+    tintColor: COLORS.mediumGray,
     marginRight: 8,
   },
   searchResultInfoText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.mediumGray,
     flex: 1,
   },
   searchResultDepartment: {
     fontSize: 12,
-    color: COLORS.darkBlue,
+    color: COLORS.primaryBlue,
     fontWeight: '600',
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: COLORS.lightGold,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -885,7 +930,7 @@ const styles = StyleSheet.create({
     transition: 'all 0.3s ease',
   },
   activeDot: {
-    backgroundColor: COLORS.darkBlue,
+    backgroundColor: COLORS.primaryBlue,
     width: 24,
   },
   inactiveDot: {
@@ -893,9 +938,8 @@ const styles = StyleSheet.create({
     width: 8,
   },
 
-
   tabSection: {
-    backgroundColor: '#f4e153',
+    backgroundColor: COLORS.secondaryBlue,
     paddingVertical: 12,
     borderRadius: 25,
     marginHorizontal: 16,
@@ -940,20 +984,42 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     marginTop: 10,
   },
-  noEventsText: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-    color: '#666',
-    fontStyle: 'italic',
+  
+
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
   },
-    bottomNav: { 
+  emptyStateIcon: {
+    width: 80,
+    height: 80,
+    opacity: 0.3,
+    marginBottom: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.primaryBlue,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: COLORS.mediumGray,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  
+
+  bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
-    paddingVertical: 9, 
-    borderTopWidth: 3, 
-    borderColor: "#ddd", 
-    backgroundColor: "#fcfbf8",
+    paddingVertical: 12, 
+    borderTopWidth: 1, 
+    borderColor: COLORS.lightGray, 
+    backgroundColor: COLORS.warmWhite,
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -962,69 +1028,40 @@ const styles = StyleSheet.create({
   },
   bottomNavItem: { 
     alignItems: "center",
-    padding: 7
-  },
-  navIcon: { 
-    width: 24, 
-    height: 24,
-    tintColor: "#131311",
-  },
-  profileIcon: {
-    width: 45, 
-    height: 45,
-    tintColor: "#131311",
-  },
-  homeIcon: { 
-    width: 28, 
-    height: 28, 
-    tintColor: "#131311",
-  },
-  moreIcon: { 
-    width: 40, 
-    height: 40, 
-    tintColor: "#131311",
-  },
-  activeNavItem: { 
-    borderBottomWidth: 2, 
-    borderColor: '#f0e342',
+    padding: 8,
+    flex: 1,
   },
   navIconContainer: {
     alignItems: "center",
     justifyContent: "center",
+    height: 32, 
+    width: 32,  
   },
-  navLabel: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: "500",
+  navIcon: { 
+    width: 25, 
+    height: 25,
+    tintColor: COLORS.darkGray,
   },
-  activeNavLabel: {
-    color: "#fff",
-    fontWeight: "600",
+  activeNavItem: { 
+    borderBottomWidth: 2, 
+    borderColor: COLORS.gold,
   },
-  activeNavIcon: {
-    tintColor: "#fff",
-  },
+  
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: COLORS.cream,
   },
-   fullScreenLoading: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: '#3ca6ec', 
-  zIndex: -1, 
-},
-loaderContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-}
+  fullScreenLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#3ca6ec', 
+    zIndex: -1, 
+  },
 });
 
 export default HomeScreen;

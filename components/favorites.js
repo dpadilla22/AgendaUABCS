@@ -1,6 +1,6 @@
 import { Alert } from "react-native";
 
-const API_BASE_URL = "https://b141-200-92-221-53.ngrok-free.app";
+const API_BASE_URL = "https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app";
 
 export const checkIfBookmarked = async (accountId, eventId, setIsBookmarked) => {
   try {
