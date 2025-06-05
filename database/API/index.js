@@ -749,6 +749,37 @@ app.get("/comments/:accountId", async (req, res) => {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// 								  	  		           Check all comments
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/comments", async (req, res) => {
+  let db;
+  try {
+    db = await connect();
+    const query = `SELECT * FROM comments`;
+    const [rows] = await db.execute(query);
+    console.log(rows);
+    res.json({
+      success: true,
+      comments: rows,
+      status: 200,
+    });
+  } catch (err) {
+    console.error("Error fetching comments:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  } finally {
+    if (db) db.end();
+  }
+});
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // 								  	  		           Check notification
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
