@@ -756,9 +756,17 @@ app.get("/comments", async (req, res) => {
   let db;
   try {
     db = await connect();
-    const query = `SELECT * FROM comments`;
+    const query = `
+      SELECT 
+        c.idComment,
+        c.titleComment,
+        c.descriptionComment,
+        c.dateComment,
+        a.nameUser
+      FROM comments c
+      INNER JOIN Account a ON c.accountId = a.idAccount
+    `;
     const [rows] = await db.execute(query);
-    console.log(rows);
     res.json({
       success: true,
       comments: rows,
