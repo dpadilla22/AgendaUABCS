@@ -84,8 +84,28 @@ function DrawerNavigator() {
         initialParams={{ nombreDepartamento: 'Sistemas computacionales' }}
       />
 
-      <Drawer.Screen name="Cerrar sesión" component={WelcomeScreen} />
-      <Drawer.Screen name="Comentarios" component={CommentsScreen} />
+      <Drawer.Screen 
+        name="Comentarios" 
+        component={CommentsScreen}
+        options={{
+          drawerItemStyle: { 
+            marginBottom: 'auto'
+          }
+        }}
+      />
+      
+      <Drawer.Screen 
+        name="Cerrar sesión" 
+        component={WelcomeScreen}
+        options={{
+          drawerItemStyle: { 
+            marginTop: 'auto', 
+            borderTopWidth: 1,
+            borderTopColor: '#E0E0E0',
+            paddingTop: 120
+          }
+        }}
+      />
     </Drawer.Navigator>
   );
 }

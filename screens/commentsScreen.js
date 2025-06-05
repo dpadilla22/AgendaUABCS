@@ -35,59 +35,75 @@ const CommentsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState('');
+  const [currentAccountId, setCurrentAccountId] = useState('');
 
-  const formatTimeAgo = (dateString) => {
+
+  const formatDateTime = (dateString) => {
+   
+    if (!dateString) {
+      return 'Fecha no disponible';
+    }
+    
     const date = new Date(dateString);
+    
+ 
+    if (isNaN(date.getTime())) {
+      console.log('Fecha inválida:', dateString);
+      return 'Fecha inválida';
+    }
+    
     const now = new Date();
     const diffTime = Math.abs(now - date);
-    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.floor(diffDays / 7);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
     
-    if (diffHours < 24) {
+ 
+    if (diffMinutes < 1) {
+      return 'Ahora mismo';
+    } else if (diffMinutes < 60) {
+      return `Hace ${diffMinutes} ${diffMinutes === 1 ? 'minuto' : 'minutos'}`;
+    } else if (diffHours < 24) {
       return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-    } else {
+    } else if (diffDays < 7) {
       return `Hace ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
+    } else if (diffWeeks < 4) {
+      return `Hace ${diffWeeks} ${diffWeeks === 1 ? 'semana' : 'semanas'}`;
+    } else if (diffMonths < 12) {
+      return `Hace ${diffMonths} ${diffMonths === 1 ? 'mes' : 'meses'}`;
+    } else {
+      return `Hace ${diffYears} ${diffYears === 1 ? 'año' : 'años'}`;
     }
   };
 
   const fetchComments = async () => {
-  try {
-    const accountId = await AsyncStorage.getItem("accountId");
-    if (!accountId) {
+    try {
+      const response = await fetch(`https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/comments`);
+      const data = await response.json();
+
+      if (data.success && data.comments) {
+      
+        if (data.comments.length > 0) {
+          console.log("Primer comentario:", data.comments[0]);
+          console.log("Campos disponibles:", Object.keys(data.comments[0]));
+        }
+        
+        setComments(data.comments || []);
+      } else {
+        setComments([]);
+      }
+    } catch (error) {
+      console.error("Error al obtener comentarios:", error);
+      setComments([]);
+    } finally {
       setLoading(false);
       setRefreshing(false);
-      return;
     }
-
-    const response = await fetch(`https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/comments/${accountId}`);
-    const data = await response.json();
-
-    if (data.success && data.comments) {
-    
-      console.log("Datos de comentarios recibidos:", data.comments);
-      if (data.comments.length > 0) {
-        console.log("Primer comentario:", data.comments[0]);
-        console.log("Campos de fecha disponibles:", {
-          dateCreated: data.comments[0].dateCreated,
-          created_at: data.comments[0].created_at,
-          date: data.comments[0].date,
-          timestamp: data.comments[0].timestamp,
-          allKeys: Object.keys(data.comments[0])
-        });
-      }
-      
-      setComments(data.comments || []);
-    } else {
-      setComments([]);
-    }
-  } catch (error) {
-    console.error("Error al obtener comentarios:", error);
-    setComments([]);
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-};
+  };
 
   const submitComment = async () => {
     if (!commentText.trim()) {
@@ -97,7 +113,7 @@ const CommentsScreen = () => {
 
     setIsSubmitting(true);
     try {
-      const accountId = await AsyncStorage.getItem("accountId");
+      const accountId = await AsyncStorage.getItem("accountId") || await AsyncStorage.getItem("idAccount");
       if (!accountId) {
         Alert.alert("Error", "No se pudo obtener la información de la cuenta");
         return;
@@ -111,7 +127,8 @@ const CommentsScreen = () => {
         body: JSON.stringify({
           titleComment: "Comentario de usuario",
           descriptionComment: commentText.trim(),
-          accountId: accountId
+          accountId: accountId,
+          idAccount: accountId 
         }),
       });
 
@@ -143,8 +160,57 @@ const CommentsScreen = () => {
   };
 
   useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const email = await AsyncStorage.getItem('userName');
+        const accountId = await AsyncStorage.getItem('accountId');
+        if (email) {
+          setCurrentUserEmail(email);
+        }
+        if (accountId) {
+          setCurrentAccountId(accountId);
+        }
+      } catch (error) {
+        console.error('Error al cargar datos del usuario:', error);
+      }
+    };
+    
+    loadUserData();
     fetchComments();
   }, []);
+
+
+  const getUserIdentifier = (comment) => {
+
+    const commentAccountId = (comment.idAccount || comment.accountId || comment.id)?.toString();
+    
+  
+    if (currentUserEmail && commentAccountId && currentAccountId && commentAccountId === currentAccountId) {
+      return currentUserEmail;
+    }
+    
+   
+    if (comment.user) {
+      if (comment.user.email) return comment.user.email;
+      if (comment.user.name) return comment.user.name;
+      if (comment.user.username) return comment.user.username;
+    }
+    
+
+    if (comment.email) return comment.email;
+    if (comment.userEmail) return comment.userEmail;
+    if (comment.user_email) return comment.user_email;
+    if (comment.name) return comment.name;
+    if (comment.username) return comment.username;
+    if (comment.user_name) return comment.user_name;
+    
+   
+    if (comment.idAccount) return `Usuario ${comment.idAccount}`;
+    if (comment.accountId) return `Usuario ${comment.accountId}`;
+    if (comment.id) return `Usuario ${comment.id}`;
+    
+    return 'Usuario Anónimo';
+  };
 
   const renderCommentItem = ({ item, index }) => {
     return (
@@ -157,7 +223,8 @@ const CommentsScreen = () => {
             />
           </View>
           <View style={styles.commentContent}>
-            <Text style={styles.timeText}>{formatTimeAgo(item.dateCreated || item.created_at)}</Text>
+            <Text style={styles.userNameText}>{getUserIdentifier(item)}</Text>
+            <Text style={styles.timeText}>{formatDateTime(item.dateComment || item.dateCreated || item.created_at)}</Text>
             <Text style={styles.commentText}>{item.descriptionComment || item.description}</Text>
           </View>
         </View>
@@ -415,10 +482,16 @@ const styles = StyleSheet.create({
   commentContent: {
     flex: 1,
   },
+  userNameText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
   timeText: {
     fontSize: 12,
     color: COLORS.textLight,
-    fontWeight: '500',
+    fontWeight: '400',
     marginBottom: 8,
   },
   commentText: {

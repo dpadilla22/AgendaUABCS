@@ -304,19 +304,19 @@ const HomeScreen = ({ navigation }) => {
     );
   }
 
-const getDepartmentColor = (dept) => {
+ const getDepartmentColor = (dept) => {
     const colors = {
-      'Sistemas computacionales': '#3B82F6', 
-      'Economía': '#F59E0B', 
-      'Ciencias Sociales y jurídicas': '#06B6D4', 
-      'Agronomia': '#10B981', 
-      'Ciencias de la tierra': '#8B5CF6',
-      'Humanidades': '#F97316',
-      'Ingeniería en pesquerías': '#EF4444',
-      'Ciencias marinas y costeras': '#34D399',
-      'Ciencia animal y conservación del hábitat': '#FBBF24',
+      'Sistemas computacionales': '#4a6eff', 
+      'Economía': '#ffb16c', 
+      'Ciencias Sociales y jurídicas': '#97795e', 
+      'Agronomia': '#f9f285', 
+      'Ciencias de la tierra': '#1fd514',
+      'Humanidades': '#a980f2',
+      'Ingeniería en pesquerías': '#fb6d51',
+      'Ciencias marinas y costeras': '#a8ecff',
+      'Ciencia animal y conservación del hábitat': '#f7b2f0',
     };
-    return colors[dept] || '#6B7280'; 
+    return colors[dept] || '#6b7280'; 
   };
 
   const filteredEvents = getFilteredEvents();

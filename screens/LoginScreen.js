@@ -60,6 +60,7 @@ const LoginScreen = ({ navigation }) => {
       if (response.ok) {
         console.log("Usuario recibido:", data.user); 
         await AsyncStorage.setItem('accountId', data.user.idAccount.toString()); 
+        await AsyncStorage.setItem('userName', data.user.email);
         console.log("ID guardado:", data.user.idAccount); 
 
         Toast.show({
@@ -97,19 +98,18 @@ const LoginScreen = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
           <StatusBar style="light" />
           
-          {/* Sección del logo - ahora con fondo blanco */}
+         
           <View style={styles.imageSection}>
             <Image 
-              source={require('../assets/uabcs.jpg')}
+              source={require('../assets/no.jpg')}
               style={styles.logo} 
               resizeMode="contain" 
             />
           </View>
 
-          {/* Formulario */}
           <View style={styles.formSection}>
             <View style={styles.formContainer}>
-              {/* Campo Usuario */}
+            
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Usuario</Text>
                 <View style={styles.inputWrapper}>
@@ -127,7 +127,6 @@ const LoginScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Campo Contraseña */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Contraseña</Text>
                 <View style={styles.inputWrapper}>
@@ -155,7 +154,7 @@ const LoginScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Botón de Login */}
+           
               <TouchableOpacity 
                 style={[
                   styles.loginButton, 
@@ -198,7 +197,7 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   logo: {
-    width: 450,
+    width: 550,
     height: 400,
   },
   formSection: {

@@ -21,7 +21,13 @@ const COLORS = {
   gradientStart: "#f59e0b",
   gradientEnd: "#fbbf24",
   profileBg: "#f8fafc",
-  cream: "#F5F5DC", 
+  cream: "#F5F5DC",
+  deepBlue: "#1e3a8a",
+  softBlue: "#dbeafe",
+  warmGray: "#f9fafb",
+  accentOrange: "#fb923c",
+  lightPurple: "#e0e7ff",
+  darkGray: "#374151",
 };
 
 const Profile = ({ navigation }) => {
@@ -54,11 +60,17 @@ const Profile = ({ navigation }) => {
   useEffect(() => {
     const getEmail = async () => {
       try {
-        const userData = await AsyncStorage.getItem('user');
-        if (userData) {
-          const user = JSON.parse(userData);
-          setUserEmail(user.email || '');
+        let email = await AsyncStorage.getItem('userName');
+        
+        if (!email) {
+          const userData = await AsyncStorage.getItem('user');
+          if (userData) {
+            const user = JSON.parse(userData);
+            email = user.email;
+          }
         }
+        
+        setUserEmail(email || '');
       } catch (error) {
         console.error("Error obteniendo email:", error);
       }
@@ -197,53 +209,71 @@ const Profile = ({ navigation }) => {
     }
   };
 
-const getDepartmentColor = (dept) => {
+  const getDepartmentColor = (dept) => {
     const colors = {
-      'Sistemas computacionales': '#3B82F6', 
-      'Economía': '#F59E0B', 
-      'Ciencias Sociales y jurídicas': '#06B6D4', 
-      'Agronomia': '#10B981', 
-      'Ciencias de la tierra': '#8B5CF6',
-      'Humanidades': '#F97316',
-      'Ingeniería en pesquerías': '#EF4444',
-      'Ciencias marinas y costeras': '#34D399',
-      'Ciencia animal y conservación del hábitat': '#FBBF24',
+      'Sistemas computacionales': '#4a6eff', 
+      'Economía': '#ffb16c', 
+      'Ciencias Sociales y jurídicas': '#97795e', 
+      'Agronomia': '#f9f285', 
+      'Ciencias de la tierra': '#1fd514',
+      'Humanidades': '#a980f2',
+      'Ingeniería en pesquerías': '#fb6d51',
+      'Ciencias marinas y costeras': '#a8ecff',
+      'Ciencia animal y conservación del hábitat': '#f7b2f0',
     };
-    return colors[dept] || '#6B7280'; 
+    return colors[dept] || '#6b7280'; 
   };
 
   const renderEventCard = (event) => (
     <View key={event.id} style={styles.eventCard}>
-      <View style={styles.eventRow}>
-        <Image 
-          source={{ uri: event.imageUrl }} 
-          style={styles.eventImage}
-          defaultSource={require("../assets/adaptive-icon.png")}
-        />
+      <LinearGradient
+        colors={['#ffffff', '#f8fafc']}
+        style={styles.cardGradient}
+      >
+        <View style={styles.eventHeader}>
+          <View style={[styles.categoryBadge, { backgroundColor: getDepartmentColor(event.department) }]}>
+            <Text style={styles.categoryBadgeText}>{event.department}</Text>
+          </View>
+        </View>
         
-        <View style={styles.eventInfo}>
-          <View style={[styles.categoryTag, { backgroundColor: getDepartmentColor(event.department) }]}>
-            <Text style={styles.categoryText}>{event.department}</Text>
+        <View style={styles.eventContent}>
+          <View style={styles.eventImageContainer}>
+            <Image 
+              source={{ uri: event.imageUrl }} 
+              style={styles.eventImage}
+              defaultSource={require("../assets/adaptive-icon.png")}
+            />
+            <View style={styles.imageOverlay} />
           </View>
           
-          <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
-          
-          <View style={styles.eventMeta}>
-            <View style={styles.metaRow}>
-              <Image source={require("../assets/calendar.png")} style={styles.metaIcon} />
-              <Text style={styles.metaText}>{event.date}</Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Image source={require("../assets/clock.png")} style={styles.metaIcon} />
-              <Text style={styles.metaText}>{event.time}</Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Image source={require("../assets/location.png")} style={styles.metaIcon} />
-              <Text style={styles.metaText} numberOfLines={1}>{event.location}</Text>
+          <View style={styles.eventDetails}>
+            <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+            
+            <View style={styles.eventMetaContainer}>
+              <View style={styles.metaItem}>
+                <View style={styles.metaIconContainer}>
+                  <Image source={require("../assets/calendar.png")} style={styles.metaIcon} />
+                </View>
+                <Text style={styles.metaText}>{event.date}</Text>
+              </View>
+              
+              <View style={styles.metaItem}>
+                <View style={styles.metaIconContainer}>
+                  <Image source={require("../assets/clock.png")} style={styles.metaIcon} />
+                </View>
+                <Text style={styles.metaText}>{event.time}</Text>
+              </View>
+              
+              <View style={styles.metaItem}>
+                <View style={styles.metaIconContainer}>
+                  <Image source={require("../assets/location.png")} style={styles.metaIcon} />
+                </View>
+                <Text style={styles.metaText} numberOfLines={1}>{event.location}</Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
+      </LinearGradient>
     </View>
   );
 
@@ -276,7 +306,6 @@ const getDepartmentColor = (dept) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={COLORS.lightBlue} barStyle="dark-content" />
 
-    
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -289,101 +318,135 @@ const getDepartmentColor = (dept) => {
         <View style={{ width: 40 }} />
       </View>
 
-   
-      <View style={styles.profileSection}>
-        <View style={styles.profileImageContainer}>
-          <Image source={require("../assets/student.png")} style={styles.profileImage} />
-        </View>
-        
-        <Text style={styles.profileTitle}>Estudiante UABCS</Text>
-        <Text style={styles.profileEmail}>{userEmail || 'dpadilla_22'}</Text>
-      </View>
-
-     
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
-          onPress={() => setActiveTab('favorites')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
-            Eventos guardados ({savedEvents.length})
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'attended' && styles.activeTab]}
-          onPress={() => setActiveTab('attended')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
-            Eventos asistidos ({attendanceEvents.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-   
       <ScrollView 
-        style={styles.eventsContainer}
+        style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.eventsContent}
+        contentContainerStyle={styles.scrollContent}
       >
-        {getCurrentEvents().length === 0 ? (
-          <View style={styles.emptyStateContainer}>
-            <View style={styles.emptyStateCircle}>
-               <Image
-              source={require("../assets/calendar.png")}
-              style={styles.noEventsImage}
-              resizeMode="contain"
-            />
+        <LinearGradient
+          colors={[COLORS.lightBlue, COLORS.lightBlue]}
+          style={styles.profileSection}
+        >
+          <View style={styles.profileCard}>
+            <View style={styles.profileImageContainer}>
+              <Image source={require("../assets/student.png")} style={styles.profileImage} />
             </View>
-            <Text style={styles.emptyStateTitle}>
-              {activeTab === 'favorites' ? '¡Aún no tienes favoritos!' : '¡Aún no has asistido!'}
-            </Text>
-            <Text style={styles.emptyStateSubtitle}>
-              {activeTab === 'favorites' 
-                ? 'Marca tus eventos favoritos para verlos aquí' 
-                : 'Los eventos a los que asistas aparecerán aquí'
-              }
-            </Text>
+            
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileTitle}>Estudiante UABCS</Text>
+              <Text style={styles.profileEmail}>{userEmail || 'Usuario'}</Text>
+              <View style={styles.profileStats}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{savedEvents.length}</Text>
+                  <Text style={styles.statLabel}>Favoritos</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{attendanceEvents.length}</Text>
+                  <Text style={styles.statLabel}>Asistidos</Text>
+                </View>
+              </View>
+            </View>
           </View>
-        ) : (
-          getCurrentEvents().map((event) => renderEventCard(event))
-        )}
+        </LinearGradient>
+
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+            onPress={() => setActiveTab('favorites')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.tabContent}>
+              <Image 
+                source={require("../assets/calendar.png")} 
+                style={[styles.tabCalendar, activeTab === 'favorites' && styles.activeTabIcon]} 
+              />
+              <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
+                Guardados
+              </Text>
+            </View>
+            {activeTab === 'favorites' && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'attended' && styles.activeTab]}
+            onPress={() => setActiveTab('attended')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.tabContent}>
+              <Image 
+                source={require("../assets/clock.png")} 
+                style={[styles.tabIcon, activeTab === 'attended' && styles.activeTabIcon]} 
+              />
+              <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
+                Asistidos
+              </Text>
+            </View>
+            {activeTab === 'attended' && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.eventsContainer}>
+          {getCurrentEvents().length === 0 ? (
+            <View style={styles.emptyStateContainer}>
+              <LinearGradient
+                colors={[COLORS.softBlue, COLORS.lightPurple]}
+                style={styles.emptyStateCircle}
+              >
+                <Image
+                  source={require("../assets/calendar.png")}
+                  style={styles.noEventsImage}
+                  resizeMode="contain"
+                />
+              </LinearGradient>
+              <Text style={styles.emptyStateTitle}>
+                {activeTab === 'favorites' ? '¡Aún no tienes favoritos!' : '¡Aún no has asistido!'}
+              </Text>
+              <Text style={styles.emptyStateSubtitle}>
+                {activeTab === 'favorites' 
+                  ? 'Marca tus eventos favoritos para verlos aquí' 
+                  : 'Los eventos a los que asistas aparecerán aquí'
+                }
+              </Text>
+            </View>
+          ) : (
+            getCurrentEvents().map((event) => renderEventCard(event))
+          )}
+        </View>
       </ScrollView>
 
-     <View style={styles.bottomNav}>
-             <TouchableOpacity style={styles.bottomNavItem} 
-             onPress={() => navigation.navigate("Home")}
-             activeOpacity={0.7}>
-               <View style={styles.navIconContainer}>
-                 <Image
-                   source={require("../assets/home.png")}
-                   style={styles.navIcon}
-                 />
-               </View>
-             </TouchableOpacity>
-     
-             <TouchableOpacity
-               style={styles.bottomNavItem}
-               onPress={() => navigation.navigate("EventScreen")}
-               activeOpacity={0.7}
-             >
-               <View style={styles.navIconContainer}>
-                 <Image source={require("../assets/more.png")} style={styles.navIcon} />
-               </View>
-             </TouchableOpacity>
-     
-             <TouchableOpacity
-               style={styles.bottomNavItem}
-               onPress={() => navigation.navigate("Profile")}
-               activeOpacity={0.7}
-             >
-               <View style={[styles.navIconContainer,styles.activeNavItem]}>
-                 <Image source={require("../assets/profile.png")} style={styles.navIcon} />
-               </View>
-             </TouchableOpacity>
-            </View>
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.bottomNavItem} 
+          onPress={() => navigation.navigate("Home")}
+          activeOpacity={0.7}>
+          <View style={styles.navIconContainer}>
+            <Image
+              source={require("../assets/home.png")}
+              style={styles.navIcon}
+            />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("EventScreen")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navIconContainer}>
+            <Image source={require("../assets/more.png")} style={styles.navIcon} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.navIconContainer, styles.activeNavItem]}>
+            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+          </View>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -391,10 +454,9 @@ const getDepartmentColor = (dept) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: "#ffffff", 
+    backgroundColor: COLORS.warmGray, 
   },
   
-
   header: { 
     flexDirection: "row", 
     alignItems: "center", 
@@ -418,166 +480,244 @@ const styles = StyleSheet.create({
     fontWeight: "700", 
     color: "#333"
   },
+  tabCalendar: {
+    width: 30,
+    height: 30,
+    marginRight: 5,
+    },
 
+  mainScrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
 
- profileSection: {
-  alignItems: 'center',
-  paddingVertical: 20,
-  paddingHorizontal: 20,
-  backgroundColor: COLORS.lightBlue,
-  borderRadius: 20, 
-  margin: 15, 
-  elevation: 5, 
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-},
-
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
+  profileSection: {
+    marginHorizontal: 20,
+    marginTop: 15,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 16,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  profileCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 1,
+  },
+  profileImageContainer: {
+    marginRight: 16,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  profileInfo: {
+    flex: 1,
   },
   profileTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 5,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 4,
   },
   profileEmail: {
-    fontSize: 15,
-    color: '#4b5563',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
+    marginBottom: 12,
   },
-
+  profileStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  statItem: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '600',
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
 
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f9fafb',
-    marginHorizontal: 10,
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
-    elevation: 2,
+    elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 3,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
+    position: 'relative',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
-  activeTab: {
-    backgroundColor: COLORS.cream,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  tabIcon: {
+    width: 16,
+    height: 16, 
+    marginTop:8,
+    marginRight: 8,
+    tintColor: COLORS.textLight,
+  },
+  activeTabIcon: {
+    tintColor: COLORS.deepBlue,
   },
   tabText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: COLORS.textLight,
     fontWeight: '600',
-    textAlign: 'center',
+    marginTop:5,
   },
   activeTabText: {
-    color: '#1f2937',
+    color: COLORS.deepBlue,
     fontWeight: '700',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: COLORS.accentOrange,
+    borderRadius: 1,
   },
 
- 
   eventsContainer: {
-    flex: 1,
     paddingHorizontal: 20,
   },
-  eventsContent: {
-    paddingBottom: 20,
-  },
   eventCard: {
-    backgroundColor: '#ffffff',
+    marginBottom: 12,
     borderRadius: 12,
-    marginBottom: 16,
-    padding: 16,
-    elevation: 2,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    overflow: 'hidden',
   },
-  eventRow: {
+  cardGradient: {
+    padding: 0,
+  },
+  eventHeader: {
+    padding: 12,
+    paddingBottom: 0,
+  },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 1,
+  },
+  categoryBadgeText: {
+    fontSize: 10,
+    color: '#ffffff',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  eventContent: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    padding: 12,
+    paddingTop: 8,
+  },
+  eventImageContainer: {
+    position: 'relative',
+    marginRight: 12,
   },
   eventImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
+    width: 60,
+    height: 60,
+    borderRadius: 10,
     backgroundColor: '#f3f4f6',
-    marginRight: 16,
   },
-  eventInfo: {
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 252, 252, 0.05)',
+  },
+  eventDetails: {
     flex: 1,
-  },
-  categoryTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 8,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: '#ffffff',
-    fontWeight: '600',
+    justifyContent: 'space-between',
   },
   eventTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#1f2937',
+    color: COLORS.textDark,
     marginBottom: 8,
     lineHeight: 20,
   },
-  eventMeta: {
-    marginBottom: 8,
+  eventMetaContainer: {
+    gap: 6,
   },
-  metaRow: {
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+  },
+  metaIconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.softBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
   metaIcon: {
-    width: 14,
-    height: 14,
-    marginRight: 8,
-    tintColor: '#6b7280',
+    width: 15,
+    height: 15,
+    tintColor: COLORS.primary,
   },
   metaText: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '500',
+    fontSize: 12,
+    color: COLORS.textLight,
+    fontWeight: '600',
     flex: 1,
   },
-
 
   emptyStateContainer: {
     alignItems: 'center',
@@ -588,30 +728,33 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  emptyStateEmoji: {
-    fontSize: 40,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   noEventsImage: {
-    width: 80,
-    height: 80,
+    width: 50,
+    height: 50,
+    tintColor: COLORS.primary,
   },
   emptyStateTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1f2937',
+    fontWeight: '800',
+    color: COLORS.textDark,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   emptyStateSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    fontSize: 14,
+    color: COLORS.textLight,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
+    fontWeight: '500',
   },
 
   bottomNav: { 
@@ -627,7 +770,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4
   },
-   bottomNavItem: { 
+  bottomNavItem: { 
     alignItems: "center",
     padding: 8,
     flex: 1,
@@ -647,7 +790,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2, 
     borderColor: '#f0e342',
   },
-
 
   loaderContainer: {
     flex: 1,
