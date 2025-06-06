@@ -28,6 +28,8 @@ const COLORS = {
   cream: "#F5F5DC",
 };
 
+
+
 const carouselData = [
   {
     id: 1,
@@ -78,10 +80,12 @@ const HomeScreen = ({ navigation }) => {
   const autoScrollTimer = useRef(null);
   const searchInputRef = useRef(null);
 
+const API_URL = 'https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app';
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events');
+      const response = await fetch('${API_URL}/events');
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -95,7 +99,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events');
+        const response = await fetch(`${API_URL}/events`);
         const data = await response.json();
         
         setEvents(data.events || []);
@@ -131,30 +135,42 @@ const HomeScreen = ({ navigation }) => {
     };
   }, [isAutoScrolling]);
 
-  const performSearch = (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
+ const performSearch = (query) => {
+  if (!query.trim()) {
+    setSearchResults([]);
+    return;
+  }
 
-    setIsSearching(true);
-    const queryLower = query.toLowerCase().trim();
+  setIsSearching(true);
+  const queryLower = query.toLowerCase().trim();
+  
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const results = events.filter(event => {
+ 
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
     
-    const results = events.filter(event => {
-      return (
-        event.title?.toLowerCase().includes(queryLower) ||
-        event.department?.toLowerCase().includes(queryLower) ||
-        event.location?.toLowerCase().includes(queryLower) ||
-        event.description?.toLowerCase().includes(queryLower)
-      );
-    });
 
-    setTimeout(() => {
-      setSearchResults(results);
-      setIsSearching(false);
-    }, 300);
-  };
+    if (eventDate < today) {
+      return false;
+    }
+    
+    return (
+      event.title?.toLowerCase().includes(queryLower) ||
+      event.department?.toLowerCase().includes(queryLower) ||
+      event.location?.toLowerCase().includes(queryLower) ||
+      event.description?.toLowerCase().includes(queryLower)
+    );
+  });
 
+  setTimeout(() => {
+    setSearchResults(results);
+    setIsSearching(false);
+  }, 300);
+};
   const handleSearchChange = (text) => {
     setSearchQuery(text);
     performSearch(text);

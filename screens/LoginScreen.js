@@ -24,6 +24,8 @@ const COLORS = {
   black: "#000000",
 };
 
+const API_URL = 'https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app';
+
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +46,7 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss();
 
     try {
-      const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/login', {
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -101,7 +103,7 @@ const LoginScreen = ({ navigation }) => {
          
           <View style={styles.imageSection}>
             <Image 
-              source={require('../assets/no.jpg')}
+              source={require('../assets/uabcs.jpg')}
               style={styles.logo} 
               resizeMode="contain" 
             />

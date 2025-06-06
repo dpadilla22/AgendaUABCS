@@ -30,6 +30,8 @@ const COLORS = {
   darkGray: "#374151",
 };
 
+const API_URL = 'https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app';
+
 const Profile = ({ navigation }) => {
   const [accountId, setAccountId] = useState(null);
   const [savedEvents, setSavedEvents] = useState([]);
@@ -101,7 +103,7 @@ const Profile = ({ navigation }) => {
   const fetchFavoritesAndAttendance = async (id) => {
     try {
       const eventsResponse = await fetch(
-        'https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events',
+        `${API_URL}/events`,
         {
           method: 'GET',
           headers: {
@@ -118,7 +120,7 @@ const Profile = ({ navigation }) => {
       const eventsData = await eventsResponse.json();
 
       const favResponse = await fetch(
-        `https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/favorites/${id}`,
+        `${API_URL}/favorites/${id}`,
         {
           method: 'GET',
           headers: {
@@ -135,7 +137,7 @@ const Profile = ({ navigation }) => {
       const favData = await favResponse.json();
 
       const attendanceResponse = await fetch(
-        `https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/attendance/${id}`,
+        `${API_URL}/attendance/${id}`,
         {
           method: 'GET',
           headers: {

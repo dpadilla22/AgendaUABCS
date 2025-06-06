@@ -1,9 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, Image, TouchableOpacity, StyleSheet,ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator} from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const today = new Date();
-const todayString = today.toISOString().split('T')[0];
+
+const getTodayString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDateString = (dateString) => {
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  return dateString;
+};
+
+
+const extractTimeString = (dateString) => {
+  if (!dateString) return null;
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Mazatlan'
+    });
+  } catch (error) {
+    console.error('Error al extraer hora:', error);
+    return null;
+  }
+};
+
+
+const formatTimeFromDate = (dateString) => {
+  if (!dateString) return "Horario no especificado";
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Mazatlan'
+    });
+  } catch (error) {
+    console.error('Error al formatear hora:', error);
+    return "Horario no especificado";
+  }
+};
+
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Fecha no disponible";
+  
+  try {
+    let dateToFormat;
+    
+
+    if (dateString.includes('T')) {
+      const localDate = getLocalDateString(dateString);
+      const [year, month, day] = localDate.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+    
+      const [year, month, day] = dateString.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    
+    return dateToFormat.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch (error) {
+    console.error('Error al formatear fecha:', error);
+    return dateString;
+  }
+};
+
+const todayString = getTodayString();
 
 const COLORS = {
   darkBlue: "#003366",
@@ -18,20 +99,35 @@ const COLORS = {
   textLight: "#666666",
   white: "#FFFFFF",
   lightGray: "#E0E0E0",
-   cream: "#F5F5DC", 
+  darkGray: "#666666",
+  cream: "#F5F5DC", 
 };
+
+const API_URL = "https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app";
 
 const DepartamentScreen = ({ navigation, route }) => {
   const { nombreDepartamento } = route.params;
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accountId, setAccountId] = useState(null);
 
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const response = await fetch('https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/events');
+        console.log('Fetching events from:', API_URL);
+        const response = await fetch(`${API_URL}/events`, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Events data received:', data);
         setEventos(data.events || []);
       } catch (error) {
         console.error('Error al obtener eventos:', error);
@@ -44,21 +140,27 @@ const DepartamentScreen = ({ navigation, route }) => {
   }, []);
 
   useEffect(() => {
-  const fetchAccountId = async () => {
-    const id = await AsyncStorage.getItem('accountId');
-    setAccountId(id);
-    // console.log("accountId en EventDetailScreen:", id);
-  };
+    const fetchAccountId = async () => {
+      try {
+        const id = await AsyncStorage.getItem('accountId');
+        setAccountId(id);
+        console.log("accountId en DepartamentScreen:", id);
+      } catch (error) {
+        console.error('Error getting accountId:', error);
+      }
+    };
 
-  fetchAccountId();
-}, []);
+    fetchAccountId();
+  }, []);
 
 
   const getMarkedDates = () => {
     const marked = {};
     const eventosDelDepartamento = eventos.filter(evento => evento.department === nombreDepartamento);
+    
     eventosDelDepartamento.forEach(evento => {
-      const eventDate = evento.date.split('T')[0];
+  
+      const eventDate = getLocalDateString(evento.date);
       marked[eventDate] = {
         marked: true,
         dotColor: COLORS.darkBlue,
@@ -75,29 +177,11 @@ const DepartamentScreen = ({ navigation, route }) => {
     return marked;
   };
 
+
   const eventosFiltrados = eventos.filter(evento =>
     evento.department === nombreDepartamento &&
-    evento.date.split('T')[0] === selectedDate
+    getLocalDateString(evento.date) === selectedDate
   );
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  };
-
-  const formatDate = (dateString) => {
-    const [year, month, day] = dateString.split('T')[0].split('-');
-    const date = new Date(`${year}-${month}-${day}T12:00:00`);
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
 
   const renderEvento = ({ item }) => (
     <TouchableOpacity
@@ -106,11 +190,11 @@ const DepartamentScreen = ({ navigation, route }) => {
         eventId: item.id,
         event: {
           ...item,
-          time: formatTime(item.date),
+          time: extractTimeString(item.date), 
           formattedDate: formatDate(item.date)
         },
-        date: item.date,
-        time: formatTime(item.date),
+        date: getLocalDateString(item.date),
+        time: extractTimeString(item.date), 
       })}
       activeOpacity={0.7}
     >
@@ -131,7 +215,7 @@ const DepartamentScreen = ({ navigation, route }) => {
           <View style={styles.eventInfoRow}>
             <Image source={require("../assets/clock.png")} style={styles.eventIcon} />
             <Text style={styles.eventInfoText}>
-              {formatTime(item.date)}
+              {formatTimeFromDate(item.date)}
             </Text>
           </View>
           <View style={styles.eventInfoRow}>
@@ -153,14 +237,14 @@ const DepartamentScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.lightBlue} />
 
       {loading ? (
         <View style={styles.fullScreenLoading}>
           <Image
-         source={require("../assets/agendaLogo.png")}
-          style={styles.loadingImage}
-          resizeMode="contain"
+            source={require("../assets/agendaLogo.png")}
+            style={styles.loadingImage}
+            resizeMode="contain"
           />
         </View>
       ) : (
@@ -181,22 +265,25 @@ const DepartamentScreen = ({ navigation, route }) => {
               <Calendar
                 current={selectedDate}
                 minDate={todayString}
-                onDayPress={day => setSelectedDate(day.dateString)}
+                onDayPress={day => {
+                  console.log('Selected date:', day.dateString);
+                  setSelectedDate(day.dateString);
+                }}
                 markedDates={getMarkedDates()}
                 theme={{
-                backgroundColor: COLORS.cream,
-                calendarBackground: COLORS.cream,
-                textSectionTitleColor: COLORS.textDark,
-                selectedDayBackgroundColor: COLORS.accent,
-                selectedDayTextColor: '#fff',
-                todayTextColor: COLORS.accent,
-                dayTextColor: COLORS.textDark,
-                textDisabledColor: 'rgba(51, 51, 51, 0.5)',
-                arrowColor: COLORS.textDark,
-                monthTextColor: COLORS.textDark,
-                dotColor: COLORS.darkBlue,
-                selectedDotColor: '#fff',
-              }}
+                  backgroundColor: COLORS.cream,
+                  calendarBackground: COLORS.cream,
+                  textSectionTitleColor: COLORS.textDark,
+                  selectedDayBackgroundColor: COLORS.accent,
+                  selectedDayTextColor: '#fff',
+                  todayTextColor: COLORS.accent,
+                  dayTextColor: COLORS.textDark,
+                  textDisabledColor: 'rgba(51, 51, 51, 0.5)',
+                  arrowColor: COLORS.textDark,
+                  monthTextColor: COLORS.textDark,
+                  dotColor: COLORS.darkBlue,
+                  selectedDotColor: '#fff',
+                }}
                 style={{ borderRadius: 20, padding: 10 }}
               />
             </View>
@@ -205,7 +292,7 @@ const DepartamentScreen = ({ navigation, route }) => {
               <View style={styles.eventsHeader}>
                 <Text style={styles.eventsTitle}>{nombreDepartamento}</Text>
                 <Text style={styles.eventsSubtitle}>
-                  Eventos del {formatDate(selectedDate)}
+                  Eventos del {formatDate(selectedDate + 'T12:00:00')}
                 </Text>
                 {eventosFiltrados.length > 0 && (
                   <Text style={styles.eventsCount}>
@@ -234,43 +321,45 @@ const DepartamentScreen = ({ navigation, route }) => {
           </ScrollView>
 
           <View style={styles.bottomNav}>
-                      <TouchableOpacity style={styles.bottomNavItem} 
-                      onPress={() => navigation.navigate("Home")}
-                      activeOpacity={0.7}>
-                        <View style={styles.navIconContainer}>
-                          <Image
-                            source={require("../assets/home.png")}
-                            style={styles.navIcon}
-                          />
-                        </View>
-                      </TouchableOpacity>
-              
-                      <TouchableOpacity
-                        style={styles.bottomNavItem}
-                        onPress={() => navigation.navigate("EventScreen")}
-                        activeOpacity={0.7}
-                      >
-                        <View style={styles.navIconContainer}>
-                          <Image source={require("../assets/more.png")} style={styles.navIcon} />
-                        </View>
-                      </TouchableOpacity>
-              
-                      <TouchableOpacity
-                        style={styles.bottomNavItem}
-                        onPress={() => navigation.navigate("Profile")}
-                        activeOpacity={0.7}
-                      >
-                        <View style={styles.navIconContainer}>
-                          <Image source={require("../assets/profile.png")} style={styles.navIcon} />
-                        </View>
-                      </TouchableOpacity>
-                    </View>
+            <TouchableOpacity 
+              style={styles.bottomNavItem} 
+              onPress={() => navigation.navigate("Home")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.navIconContainer}>
+                <Image
+                  source={require("../assets/home.png")}
+                  style={styles.navIcon}
+                />
+              </View>
+            </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.bottomNavItem}
+              onPress={() => navigation.navigate("EventScreen")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.navIconContainer}>
+                <Image source={require("../assets/more.png")} style={styles.navIcon} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.bottomNavItem}
+              onPress={() => navigation.navigate("Profile")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.navIconContainer}>
+                <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </>
       )}
     </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -284,8 +373,10 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
   },
-  headerTittle:{
+  headerTitle: {
     color: COLORS.textDark,
+    fontSize: 18,
+    fontWeight: "600",
   },
   backButton: {
     padding: 8,
@@ -295,11 +386,6 @@ const styles = StyleSheet.create({
   backIcon: {
     width: 20,
     height: 20,
-  },
-  headerTitle: {
-    color: COLORS.textDark,
-    fontSize: 18,
-    fontWeight: "600",
   },
   emptySpace: {
     width: 36,
@@ -342,8 +428,6 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontWeight: '600',
   },
-  
- 
   eventCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -425,20 +509,10 @@ const styles = StyleSheet.create({
   eventSeparator: {
     height: 4, 
   },
-  
-
-  loadingContainer: {
-    padding: 30,
-    alignItems: 'center',
-  },
-    loadingImage: {
-  width: 120,   
-  height: 120,
-  marginBottom: 20,
-  },
-  loadingText: {
-    color: COLORS.textLight,
-    fontSize: 16,
+  loadingImage: {
+    width: 120,   
+    height: 120,
+    marginBottom: 20,
   },
   emptyContainer: {
     padding: 30,
@@ -462,8 +536,6 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     textAlign: 'center',
   },
-  
-
   bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
@@ -477,7 +549,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4
   },
-   bottomNavItem: { 
+  bottomNavItem: { 
     alignItems: "center",
     padding: 8,
     flex: 1,

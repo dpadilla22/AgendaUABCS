@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"; 
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react"; 
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Alert ,Modal, Pressable, Animated} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -74,13 +74,132 @@ const UABCS_LOCATIONS = {
   }
 };
 
+
+const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = 'info' }) => {
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
+  const getIconByType = () => {
+    switch (type) {
+      case 'success':
+        return { name: 'checkmark-circle', color: '#10B981' };
+      case 'error':
+        return { name: 'alert-circle', color: '#EF4444' };
+      case 'warning':
+        return { name: 'warning', color: '#F59E0B' };
+      default:
+        return { name: 'information-circle', color: COLORS.lightBlue };
+    }
+  };
+
+  const icon = getIconByType();
+
+  return (
+    <Modal
+      transparent={true}
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onCancel || onConfirm}
+    >
+      <View style={styles.modalOverlay}>
+        <Animated.View 
+          style={[
+            styles.modalContainer,
+            {
+              transform: [{
+                scale: slideAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 1]
+                })
+              }],
+              opacity: slideAnim
+            }
+          ]}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <Ionicons 
+                name={icon.name} 
+                size={50} 
+                color={icon.color} 
+              />
+            </View>
+            
+            <Text style={styles.modalTitle}>{title}</Text>
+            <Text style={styles.modalMessage}>{message}</Text>
+            
+            <View style={styles.modalButtons}>
+              {onCancel && (
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={onCancel}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={onConfirm}
+              >
+                <Text style={styles.confirmButtonText}>
+                  {onCancel ? 'Confirmar' : 'Entendido'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+};
+
 const EventDetailScreen = ({ navigation, route }) => {
   const { eventId, event, date, time } = route.params;
+  const mapRef = useRef(null); 
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isAttending, setIsAttending] = useState(false);
   const [accountId, setAccountId] = useState(null);
   const [loading, setLoading] = useState(false);
+
+
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null,
+    onCancel: null
+  });
+
+
+  const showModal = (title, message, type = 'info', onConfirm = null, onCancel = null) => {
+    setModalConfig({
+      visible: true,
+      title,
+      message,
+      type,
+      onConfirm: onConfirm || (() => setModalConfig(prev => ({ ...prev, visible: false }))),
+      onCancel: onCancel || null
+    });
+  };
 
   const checkAttendanceStatus = async (userId, eventId) => {
     try {
@@ -102,13 +221,66 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   };
 
+
+  const handleAddToFavorites = async (userId, eventId) => {
+    try {
+     
+     
+      const favoritesKey = `favorites_${userId}`;
+      const existingFavorites = await AsyncStorage.getItem(favoritesKey);
+      const favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
+      
+      if (!favorites.includes(eventId)) {
+        favorites.push(eventId);
+        await AsyncStorage.setItem(favoritesKey, JSON.stringify(favorites));
+        return { success: true, message: 'Evento agregado a favoritos exitosamente' };
+      } else {
+        return { success: false, message: 'El evento ya está en tus favoritos' };
+      }
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      return { success: false, message: 'Error al agregar a favoritos' };
+    }
+  };
+
+  const handleRemoveFromFavorites = async (userId, eventId) => {
+    try {
+      const favoritesKey = `favorites_${userId}`;
+      const existingFavorites = await AsyncStorage.getItem(favoritesKey);
+      const favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
+      
+      const updatedFavorites = favorites.filter(id => id !== eventId);
+      await AsyncStorage.setItem(favoritesKey, JSON.stringify(updatedFavorites));
+      
+      return { success: true, message: 'Evento eliminado de favoritos' };
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      return { success: false, message: 'Error al eliminar de favoritos' };
+    }
+  };
+
+  const checkIfEventBookmarked = async (userId, eventId) => {
+    try {
+      const favoritesKey = `favorites_${userId}`;
+      const existingFavorites = await AsyncStorage.getItem(favoritesKey);
+      const favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
+      return favorites.includes(eventId);
+    } catch (error) {
+      console.error('Error checking bookmark status:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const id = await AsyncStorage.getItem("accountId");
         if (id) {
           setAccountId(id);
-          await checkIfBookmarked(id, event.id, setIsBookmarked);
+          
+          
+          const bookmarked = await checkIfEventBookmarked(id, event.id);
+          setIsBookmarked(bookmarked);
           
           const attendingStatus = await checkAttendanceStatus(id, event.id);
           setIsAttending(attendingStatus);
@@ -120,10 +292,38 @@ const EventDetailScreen = ({ navigation, route }) => {
     fetchData();
   }, []);
 
+
+  const resetMapRegion = () => {
+    const coordinates = getLocationCoordinates(event.location);
+    const region = {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      latitudeDelta: 0.005,
+      longitudeDelta: 0.005,
+    };
+    
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(region, 1000);
+    }
+  };
+
+ 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      resetMapRegion();
+    }, 500); 
+
+    return () => clearTimeout(timer);
+  }, [event.location]);
+
   const handleAttendanceToggle = async () => {
     if (loading) return; 
     if (!accountId) {
-      Alert.alert("Inicia sesión", "Debes iniciar sesión para marcar asistencia");
+      showModal(
+        "Iniciar Sesión Requerido",
+        "Debes iniciar sesión para marcar tu asistencia al evento",
+        "warning"
+      );
       return;
     }
 
@@ -143,37 +343,83 @@ const EventDetailScreen = ({ navigation, route }) => {
         
         await saveAttendanceStatus(accountId, event.id, newAttendingStatus);
         
-        Alert.alert(
-          newAttendingStatus ? 'Asistencia marcada' : 'Asistencia desmarcada',
-          result.message
+        showModal(
+          newAttendingStatus ? 'Asistencia Confirmada' : 'Asistencia Cancelada',
+          result.message || (newAttendingStatus ? 
+            'Tu asistencia ha sido registrada exitosamente' : 
+            'Tu asistencia ha sido cancelada'),
+          'success'
         );
       } else {
-        Alert.alert('Error', result.message);
+        showModal(
+          'Error al Procesar',
+          result.message || 'No se pudo procesar tu solicitud de asistencia',
+          'error'
+        );
       }
     } catch (err) {
       console.error('Error en handleAttendanceToggle:', err);
 
       if (err.message && err.message.includes('Asitencia ya marcada')) {
-        Alert.alert('Aviso', 'Ya has marcado tu asistencia para este evento.');
+        showModal(
+          'Asistencia Ya Registrada',
+          'Ya has marcado tu asistencia para este evento anteriormente',
+          'info'
+        );
         setIsAttending(true);
         await saveAttendanceStatus(accountId, event.id, true);
       } else {
-        Alert.alert('Error', 'No se pudo procesar la solicitud');
+        showModal(
+          'Error de Conexión',
+          'No se pudo conectar con el servidor. Por favor, verifica tu conexión e intenta nuevamente',
+          'error'
+        );
       }
     } finally {
       setLoading(false);
     }
   };
 
+
   const toggleBookmark = async () => {
     if (!accountId) {
-      Alert.alert("Inicia sesión", "Debes iniciar sesión para guardar eventos");
+      showModal(
+        "Iniciar Sesión Requerido",
+        "Debes iniciar sesión para guardar eventos en tus favoritos",
+        "warning"
+      );
       return;
     }
-    if (isBookmarked) {
-      await removeFromFavorites(accountId, event.id, setIsBookmarked);
-    } else {
-      await addToFavorites(accountId, event.id, setIsBookmarked);
+
+    try {
+      let result;
+      if (isBookmarked) {
+        result = await handleRemoveFromFavorites(accountId, event.id);
+      } else {
+        result = await handleAddToFavorites(accountId, event.id);
+      }
+
+      if (result.success) {
+        setIsBookmarked(!isBookmarked);
+        showModal(
+          isBookmarked ? 'Eliminado de Favoritos' : 'Agregado a Favoritos',
+          result.message,
+          'success'
+        );
+      } else {
+        showModal(
+          'Error',
+          result.message,
+          'error'
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      showModal(
+        'Error de Conexión',
+        'No se pudo procesar tu solicitud. Por favor, intenta nuevamente',
+        'error'
+      );
     }
   };
 
@@ -192,31 +438,62 @@ const EventDetailScreen = ({ navigation, route }) => {
     return colors[dept] || '#6b7280'; 
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "Fecha no disponible";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      });
-    } catch (error) {
-      console.error('Error al formatear fecha:', error);
-      return dateString;
+const formatDate = (dateString) => {
+  if (!dateString) return "Fecha no disponible";
+  
+  try {
+    let dateToFormat;
+    
+    if (dateString.includes('T')) {
+      const localDate = dateString.split('T')[0];
+      const [year, month, day] = localDate.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      const [year, month, day] = dateString.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
-  };
+    
+    return dateToFormat.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch (error) {
+    console.error('Error al formatear fecha:', error);
+    return dateString;
+  }
+};
 
-  const formatTime = (timeString) => {
-    if (!timeString) return "Horario no especificado";
-    if (timeString.includes(':')) {
-      const [hours, minutes] = timeString.split(':');
-      const startHour = parseInt(hours);
-      const endHour = startHour + 2; 
-      return `${timeString} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
-    }
-    return timeString;
-  };
+const formatTime = (timeInput) => {
+  if (!timeInput) return "Horario no especificado";
+  
+  if (typeof timeInput === 'string' && timeInput.includes(':') && !timeInput.includes('T')) {
+    const [hours, minutes] = timeInput.split(':');
+    const startHour = parseInt(hours);
+    const endHour = startHour + 2;
+    
+    return `${timeInput} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
+  }
+  
+  try {
+    const date = new Date(timeInput);
+    const timeString = date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Mazatlan'
+    });
+    
+    const [hours, minutes] = timeString.split(':');
+    const startHour = parseInt(hours);
+    const endHour = startHour + 2;
+    
+    return `${timeString} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
+  } catch (error) {
+    console.error('Error al formatear hora:', error);
+    return "Horario no especificado";
+  }
+};
 
   const getLocationCoordinates = (locationName) => {
     const location = Object.keys(UABCS_LOCATIONS).find(key => 
@@ -229,7 +506,15 @@ const EventDetailScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-     
+      <CustomModal
+        visible={modalConfig.visible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={modalConfig.onCancel}
+      />
+
       <View style={styles.heroSection}>
         <Image 
           source={{ uri: event.imageUrl || 'https://via.placeholder.com/400x300' }} 
@@ -237,7 +522,6 @@ const EventDetailScreen = ({ navigation, route }) => {
         />
         <View style={styles.heroOverlay} />
         
-      
         <SafeAreaView style={styles.headerContainer}>
           <View style={styles.headerNav}>
           <TouchableOpacity 
@@ -251,8 +535,6 @@ const EventDetailScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
 
-
-            
             <Text style={styles.headerTitle}>Detalles del Evento</Text>
             
             <TouchableOpacity 
@@ -268,20 +550,17 @@ const EventDetailScreen = ({ navigation, route }) => {
           </View>
         </SafeAreaView>
 
-    
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>{event.title}</Text>
           <Text style={styles.heroSubtitle}>Por {event.department}</Text>
         </View>
       </View>
 
-
       <ScrollView 
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-       
         <View style={styles.detailsSection}>
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
@@ -316,17 +595,27 @@ const EventDetailScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-      
         <View style={styles.mapSection}>
-          <Text style={styles.sectionTitle}>Ubicación</Text>
+          <View style={styles.mapHeader}>
+            <Text style={styles.sectionTitle}>Ubicación</Text>
+            </View>
           <View style={styles.mapContainer}>
             <MapView
+              ref={mapRef}
               style={styles.map}
-              initialRegion={{
+              region={{
                 latitude: coordinates.latitude,
                 longitude: coordinates.longitude,
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005,
+              }}
+              scrollEnabled={true}
+              zoomEnabled={true}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              onMapReady={() => {
+              
+                setTimeout(() => resetMapRegion(), 100);
               }}
             >
               <Marker
@@ -342,7 +631,6 @@ const EventDetailScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-    
         <View style={styles.actionSection}>
           <TouchableOpacity
             style={[styles.attendButton, isAttending && styles.attendingButton]}
@@ -403,9 +691,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.offWhite,
-    
   },
-  
 
   heroSection: {
     height: screenHeight * 0.45,
@@ -458,7 +744,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
-
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -489,7 +774,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
-
   scrollContainer: {
     flex: 1,
     backgroundColor: COLORS.cream,
@@ -498,7 +782,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   
- 
   detailsSection: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
@@ -512,7 +795,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
-    borderRadius: 15,
   },
   detailsGrid: {
     gap: 15,
@@ -541,7 +823,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-
   mapSection: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
@@ -556,11 +837,30 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  mapHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 15,
+  },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.cream,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  resetButtonText: {
+    fontSize: 12,
+    color: COLORS.darkBlue,
+    marginLeft: 4,
+    fontWeight: '500',
   },
   mapContainer: {
     height: 200,
@@ -574,7 +874,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
 
   actionSection: {
     marginHorizontal: 20,
@@ -639,7 +938,82 @@ const styles = StyleSheet.create({
   activeNavItem: { 
     borderBottomWidth: 2, 
     borderColor: '#f0e342',
-  }
+  },
+
+  // Estilos para el modal personalizado
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 340,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+  },
+  modalContent: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    marginBottom: 20,
+    padding: 15,
+    borderRadius: 50,
+    backgroundColor: '#F8F9FA',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 30,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmButton: {
+    backgroundColor: COLORS.darkBlue,
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButtonText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default EventDetailScreen;

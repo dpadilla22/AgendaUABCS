@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar, RefreshControl } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import Toast from 'react-native-toast-message';
+import { useEffect, useState, useRef } from "react"
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar, RefreshControl } from "react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useNavigation } from "@react-navigation/native"
+import Toast from "react-native-toast-message"
 
 const COLORS = {
   darkBlue: "#003366",
@@ -24,132 +24,224 @@ const COLORS = {
   shadow: "rgba(0, 0, 0, 0.08)",
   cream: "#F5F5DC",
   darkGray: "#666666",
-};
+}
+
+const API_URL = "https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app"
 
 const Notificaciones = () => {
-  const navigation = useNavigation();
-  const [notifications, setNotifications] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation()
+  const [notifications, setNotifications] = useState([])
+  const [refreshing, setRefreshing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const previousNotificationsRef = useRef([])
+
+
+  const convertUTCToLocal = (utcDateString) => {
+    if (!utcDateString) return null
+
+    try {
+    
+      const utcDate = new Date(utcDateString)
+
+      const localDate = new Date(utcDate.getTime() - 7 * 60 * 60 * 1000)
+
+      
+
+      return localDate
+    } catch (error) {
+      console.error("Error converting UTC to local:", error)
+      return new Date(utcDateString)
+    }
+  }
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (!dateString) return ""
+
+    try {
     
-    if (diffDays === 1) {
-      return "Hoy";
-    } else if (diffDays === 2) {
-      return "Ayer";
-    } else if (diffDays <= 7) {
-      return `Hace ${diffDays - 1} días`;
-    } else {
-      return date.toLocaleDateString('es-ES', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      });
+      const localDate = convertUTCToLocal(dateString)
+      const now = new Date()
+      const diffTime = Math.abs(now - localDate)
+
+      const diffSeconds = Math.floor(diffTime / 1000)
+      const diffMinutes = Math.floor(diffTime / (1000 * 60))
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+      if (diffSeconds < 60) {
+        return "Hace unos segundos"
+      } else if (diffMinutes < 60) {
+        return diffMinutes === 1 ? "Hace 1 minuto" : `Hace ${diffMinutes} minutos`
+      } else if (diffHours < 24) {
+        return diffHours === 1 ? "Hace 1 hora" : `Hace ${diffHours} horas`
+      } else if (diffDays === 0) {
+        return "Hoy"
+      } else if (diffDays === 1) {
+        return "Ayer"
+      } else if (diffDays < 7) {
+        return `Hace ${diffDays} días`
+      } else {
+        return localDate.toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      }
+    } catch (error) {
+      console.error("Error formatting date:", error)
+      return "Fecha no válida"
     }
-  };
+  }
+
 
   const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  };
+    if (!dateString) return ""
+
+    try {
+    
+      const localDate = convertUTCToLocal(dateString)
+
+   
+      const hours = localDate.getHours().toString().padStart(2, "0")
+      const minutes = localDate.getMinutes().toString().padStart(2, "0")
+
+    
+
+      return `${hours}:${minutes}`
+    } catch (error) {
+      console.error("Error formatting time:", error)
+      return "Hora no válida"
+    }
+  }
+
+  const checkForNewNotifications = (newNotifications) => {
+    const previousNotifications = previousNotificationsRef.current
+
+    if (previousNotifications.length === 0) {
+      return
+    }
+
+    const newOnes = newNotifications.filter(
+      (newNotif) => !previousNotifications.some((prevNotif) => prevNotif.id === newNotif.id),
+    )
+
+    newOnes.forEach((notification, index) => {
+      setTimeout(() => {
+        Toast.show({
+          type: "info",
+          text1: "📅 Nueva notificación",
+          text2: notification.message,
+          visibilityTime: 4000,
+          position: "top",
+          topOffset: 60,
+        })
+      }, index * 500)
+    })
+  }
 
   const fetchNotifications = async () => {
     try {
-      const accountId = await AsyncStorage.getItem("accountId");
+      let accountId = await AsyncStorage.getItem("accountId")
       if (!accountId) {
-        setLoading(false);
-        setRefreshing(false);
-        return;
+        accountId = await AsyncStorage.getItem("idAccount")
       }
 
-      const response = await fetch(`https://5f82-2806-265-5402-ca4-4856-b42f-7290-c370.ngrok-free.app/notifications/${accountId}`);
-      const data = await response.json();
+      if (!accountId) {
+        console.log("No account ID found")
+        setLoading(false)
+        setRefreshing(false)
+        return
+      }
+
+      console.log("Fetching notifications for account:", accountId)
+
+      const response = await fetch(`${API_URL}/notifications/${accountId}`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
+      })
+
+      const data = await response.json()
+      console.log("Notifications response:", data)
 
       if (data.success && data.notifications) {
-     
-        if (notifications.length > 0) {
-          const latestNotification = data.notifications[0];
-          if (latestNotification && latestNotification.id !== notifications[0]?.id) {
-            Toast.show({
-              type: 'info',
-              text1: "📅 Nueva notificación",
-              text2: latestNotification.message,
-              visibilityTime: 4000,
-            });
-          }
-        }
+        const sortedNotifications = data.notifications.sort((a, b) => new Date(b.dateCreated) - new Date(a.dateCreated))
 
-        setNotifications(data.notifications || []);
+        checkForNewNotifications(sortedNotifications)
+        previousNotificationsRef.current = notifications
+        setNotifications(sortedNotifications)
       } else {
-        setNotifications([]);
+        console.log("No notifications found or error:", data.message)
+        setNotifications([])
       }
     } catch (error) {
-      console.error("Error al obtener notificaciones:", error);
-      setNotifications([]);
+      console.error("Error al obtener notificaciones:", error)
+      setNotifications([])
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudieron cargar las notificaciones",
+        visibilityTime: 3000,
+      })
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
+  }
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchNotifications();
-  };
+    setRefreshing(true)
+    fetchNotifications()
+  }
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    fetchNotifications()
+
+    const interval = setInterval(() => {
+      if (!refreshing && !loading) {
+        fetchNotifications()
+      }
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const renderNotificationItem = ({ item, index }) => {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.iconContainer}>
-            <Image 
-              source={require("../assets/calendar.png")} 
-              style={styles.calendarIcon}
-            />
+            <Image source={require("../assets/calendar.png")} style={styles.calendarIcon} />
           </View>
           <View style={styles.timeContainer}>
             <Text style={styles.timeText}>{formatTime(item.dateCreated)}</Text>
           </View>
         </View>
-        
+
         <Text style={styles.message}>{item.message}</Text>
-        
+
         <View style={styles.cardFooter}>
           <Text style={styles.date}>{formatDate(item.dateCreated)}</Text>
-          <View style={styles.statusDot} />
+          <View style={[styles.statusDot, { backgroundColor: item.isRead ? COLORS.textLight : COLORS.primary }]} />
         </View>
+
+       
       </View>
-    );
-  };
+    )
+  }
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
-        <Image 
-          source={require("../assets/calendar.png")} 
-          style={styles.emptyCalendarIcon}
-        />
+        <Image source={require("../assets/calendar.png")} style={styles.emptyCalendarIcon} />
       </View>
       <Text style={styles.emptyTitle}>Sin notificaciones</Text>
       <Text style={styles.emptySubtitle}>
-        No tienes notificaciones nuevas.{'\n'}
+        No tienes notificaciones nuevas.{"\n"}
         Te avisaremos cuando llegue algo importante.
       </Text>
     </View>
-  );
+  )
 
   return (
     <SafeAreaView style={styles.container}>
@@ -160,7 +252,11 @@ const Notificaciones = () => {
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notificaciones</Text>
-        <View style={styles.emptySpace} />
+        <TouchableOpacity style={styles.refreshButton} onPress={onRefresh} disabled={refreshing}>
+          <Image
+           
+          />
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -181,14 +277,9 @@ const Notificaciones = () => {
       />
 
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} 
-        onPress={() => navigation.navigate("Home")}
-        activeOpacity={0.7}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
           <View style={styles.navIconContainer}>
-            <Image
-              source={require("../assets/home.png")}
-              style={styles.navIcon}
-            />
+            <Image source={require("../assets/home.png")} style={styles.navIcon} />
           </View>
         </TouchableOpacity>
 
@@ -212,9 +303,11 @@ const Notificaciones = () => {
           </View>
         </TouchableOpacity>
       </View>
+
+      <Toast />
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -246,8 +339,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.textDark,
   },
-  emptySpace: {
-    width: 36,
+  refreshButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+  },
+  refreshIcon: {
+    width: 20,
+    height: 20,
+    tintColor: COLORS.primary,
   },
   listContainer: {
     paddingHorizontal: 16,
@@ -269,9 +369,9 @@ const styles = StyleSheet.create({
     borderColor: "#F0F0F0",
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   iconContainer: {
@@ -279,8 +379,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     backgroundColor: COLORS.cream,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.5,
     shadowOffset: { width: 0, height: 2 },
@@ -301,20 +401,20 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 12,
     color: "#FFFFFF",
-    fontWeight: '600',
+    fontWeight: "600",
   },
   message: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     lineHeight: 24,
     color: COLORS.textDark,
     marginBottom: 16,
-    textAlign: 'left',
+    textAlign: "left",
   },
   cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderTopWidth: 1,
     borderTopColor: "#F5F5F5",
     paddingTop: 12,
@@ -322,7 +422,7 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: COLORS.textLight,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   statusDot: {
     width: 10,
@@ -330,10 +430,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: COLORS.primary,
   },
+ 
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingTop: 100,
     paddingHorizontal: 40,
   },
@@ -342,8 +443,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     backgroundColor: COLORS.cream,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
     shadowColor: COLORS.shadow,
     shadowOpacity: 0.3,
@@ -359,31 +460,31 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textDark,
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 16,
     color: COLORS.textLight,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
   },
-  bottomNav: { 
-    flexDirection: "row", 
-    justifyContent: "space-around", 
-    paddingVertical: 9, 
-    borderTopWidth: 3, 
-    borderColor: "#ddd", 
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 9,
+    borderTopWidth: 3,
+    borderColor: "#ddd",
     backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4
+    shadowRadius: 4,
   },
-  bottomNavItem: { 
+  bottomNavItem: {
     alignItems: "center",
     padding: 8,
     flex: 1,
@@ -391,18 +492,14 @@ const styles = StyleSheet.create({
   navIconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    height: 32, 
-    width: 32,  
+    height: 32,
+    width: 32,
   },
-  navIcon: { 
-    width: 25, 
+  navIcon: {
+    width: 25,
     height: 25,
     tintColor: COLORS.darkGray,
   },
-  activeNavItem: { 
-    borderBottomWidth: 2, 
-    borderColor: '#f0e342',
-  }
-});
+})
 
-export default Notificaciones;
+export default Notificaciones
