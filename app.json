@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "appAgenda",
-    "slug": "appAgenda",
+    "name": "Agenda UABCS",
+    "slug": "Agenda UABCS",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/agendaLogo.png",
