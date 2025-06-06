@@ -345,7 +345,7 @@ const Profile = ({ navigation }) => {
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>{attendanceEvents.length}</Text>
-                  <Text style={styles.statLabel}>Asistidos</Text>
+                  <Text style={styles.statLabel}>Asistir</Text>
                 </View>
               </View>
             </View>
@@ -381,7 +381,7 @@ const Profile = ({ navigation }) => {
                 style={[styles.tabIcon, activeTab === 'attended' && styles.activeTabIcon]} 
               />
               <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
-                Asistidos
+                Asistir
               </Text>
             </View>
             {activeTab === 'attended' && <View style={styles.tabIndicator} />}

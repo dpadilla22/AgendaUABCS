@@ -1,5 +1,3 @@
-import { Alert } from "react-native";
-
 const API_BASE_URL = "https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app";
 
 export const checkIfBookmarked = async (accountId, eventId, setIsBookmarked) => {
@@ -29,13 +27,13 @@ export const addToFavorites = async (accountId, eventId, setIsBookmarked) => {
     const result = await response.json();
     if (result.success) {
       setIsBookmarked(true);
-      Alert.alert("Éxito", "Evento guardado en favoritos");
+     
     } else {
-      Alert.alert("Error", result.message || "No se pudo guardar el evento");
+      
     }
   } catch (error) {
     console.error("Error:", error);
-    Alert.alert("Error", "Ocurrió un error al guardar");
+   
   }
 };
 
@@ -53,12 +51,12 @@ export const removeFromFavorites = async (accountId, eventId, setIsBookmarked) =
     
     if (response.ok && result.success) {
       setIsBookmarked(false);
-      Alert.alert("Éxito", "Evento eliminado de favoritos");
+     
     } else {
-      Alert.alert("Error", result.message || "No se pudo eliminar el evento");
+      
     }
   } catch (error) {
     console.error("Error al eliminar de favoritos:", error.message);
-    Alert.alert("Error", "Ocurrió un error al eliminar");
+   
   }
 };

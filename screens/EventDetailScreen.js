@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from "react"; 
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Alert ,Modal, Pressable, Animated} from "react-native";
-import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { markAttendance, unmarkAttendance } from '../components/Attendance';
-import { checkIfBookmarked, addToFavorites, removeFromFavorites } from '../components/Favorites'; 
+import { useState, useEffect, useRef } from "react"
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Modal, Animated } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import MapView, { Marker } from "react-native-maps"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { markAttendance, unmarkAttendance } from "../components/Attendance"
+import { checkIfBookmarked, addToFavorites, removeFromFavorites } from "../components/Favorites"
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
 const COLORS = {
   coral: "#FF7B6B",
@@ -24,59 +24,59 @@ const COLORS = {
   textSecondary: "#a0a0a0",
   accent: "#3498db",
   primary: "#003366",
-  cream: "#F5F5DC",  
-};
+  cream: "#F5F5DC",
+  darkGray: "#666666",
+}
 
 const UABCS_LOCATIONS = {
-  'Poliforo': {
+  Poliforo: {
     latitude: 24.103169,
     longitude: -110.315887,
   },
-  'Agronomía':{
+  Agronomía: {
     latitude: 24.100630834143022,
     longitude: -110.3145877928253,
   },
-  'Ciencia animal y conservación del hábitat': {
+  "Ciencia animal y conservación del hábitat": {
     latitude: 24.100630834143022,
     longitude: -110.3145877928253,
   },
-  'Ciencias de la tierra': {
+  "Ciencias de la tierra": {
     latitude: 24.100913,
-    longitude: -110.315220,
+    longitude: -110.31522,
   },
-  'Ciencias marinas y costeras': {
+  "Ciencias marinas y costeras": {
     latitude: 24.100913,
     longitude: -110.315223,
   },
-  'Ciencias sociales y jurídicas': {
-    latitude: 24.102294938445176,  
+  "Ciencias sociales y jurídicas": {
+    latitude: 24.102294938445176,
     longitude: -110.31306796038446,
   },
-  'Economía': {
-    latitude: 24.102294938445176,  
+  Economía: {
+    latitude: 24.102294938445176,
     longitude: -110.31306796038446,
   },
-  'Humanidades': {
-    latitude: 24.101220,  
+  Humanidades: {
+    latitude: 24.10122,
     longitude: -110.313528,
   },
-  'Ingeniería en pesquerías': {
+  "Ingeniería en pesquerías": {
     latitude: 24.098834,
     longitude: -110.315974,
   },
-  'Sistemas computacionales': {
+  "Sistemas computacionales": {
     latitude: 24.102736,
     longitude: -110.316148,
   },
-  'default': {
-    latitude:24.102751,
+  default: {
+    latitude: 24.102751,
     longitude: -110.315809,
-  }
-};
+  },
+}
 
-
-const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = 'info' }) => {
-  const slideAnim = useRef(new Animated.Value(0)).current;
+const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "info" }) => {
+  const slideAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     if (visible) {
@@ -85,424 +85,326 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = 'inf
         useNativeDriver: true,
         tension: 50,
         friction: 8,
-      }).start();
+      }).start()
     } else {
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 200,
         useNativeDriver: true,
-      }).start();
+      }).start()
     }
-  }, [visible]);
+  }, [visible])
 
   const getIconByType = () => {
     switch (type) {
-      case 'success':
-        return { name: 'checkmark-circle', color: '#10B981' };
-      case 'error':
-        return { name: 'alert-circle', color: '#EF4444' };
-      case 'warning':
-        return { name: 'warning', color: '#F59E0B' };
+      case "success":
+        return { name: "checkmark-circle", color: "#10B981" }
+      case "error":
+        return { name: "alert-circle", color: "#EF4444" }
+      case "warning":
+        return { name: "warning", color: "#F59E0B" }
       default:
-        return { name: 'information-circle', color: COLORS.lightBlue };
+        return { name: "information-circle", color: COLORS.lightBlue }
     }
-  };
+  }
 
-  const icon = getIconByType();
+  const icon = getIconByType()
 
   return (
-    <Modal
-      transparent={true}
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onCancel || onConfirm}
-    >
+    <Modal transparent={true} visible={visible} animationType="fade" onRequestClose={onCancel || onConfirm}>
       <View style={styles.modalOverlay}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.modalContainer,
             {
-              transform: [{
-                scale: slideAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.8, 1]
-                })
-              }],
-              opacity: slideAnim
-            }
+              transform: [
+                {
+                  scale: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1],
+                  }),
+                },
+              ],
+              opacity: slideAnim,
+            },
           ]}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalIconContainer}>
-              <Ionicons 
-                name={icon.name} 
-                size={50} 
-                color={icon.color} 
-              />
+              <Ionicons name={icon.name} size={50} color={icon.color} />
             </View>
-            
+
             <Text style={styles.modalTitle}>{title}</Text>
             <Text style={styles.modalMessage}>{message}</Text>
-            
+
             <View style={styles.modalButtons}>
               {onCancel && (
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={onCancel}
-                >
+                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onCancel}>
                   <Text style={styles.cancelButtonText}>Cancelar</Text>
                 </TouchableOpacity>
               )}
-              
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={onConfirm}
-              >
-                <Text style={styles.confirmButtonText}>
-                  {onCancel ? 'Confirmar' : 'Entendido'}
-                </Text>
+
+              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={onConfirm}>
+                <Text style={styles.confirmButtonText}>{onCancel ? "Confirmar" : "Entendido"}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Animated.View>
       </View>
     </Modal>
-  );
-};
+  )
+}
 
 const EventDetailScreen = ({ navigation, route }) => {
-  const { eventId, event, date, time } = route.params;
-  const mapRef = useRef(null); 
+  const { eventId, event, date, time } = route.params
+  const mapRef = useRef(null)
 
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [isAttending, setIsAttending] = useState(false);
-  const [accountId, setAccountId] = useState(null);
-  const [loading, setLoading] = useState(false);
-
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isAttending, setIsAttending] = useState(false)
+  const [accountId, setAccountId] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [bookmarkLoading, setBookmarkLoading] = useState(false)
 
   const [modalConfig, setModalConfig] = useState({
     visible: false,
-    title: '',
-    message: '',
-    type: 'info',
+    title: "",
+    message: "",
+    type: "info",
     onConfirm: null,
-    onCancel: null
-  });
+    onCancel: null,
+  })
 
-
-  const showModal = (title, message, type = 'info', onConfirm = null, onCancel = null) => {
+  const showModal = (title, message, type = "info", onConfirm = null, onCancel = null) => {
     setModalConfig({
       visible: true,
       title,
       message,
       type,
-      onConfirm: onConfirm || (() => setModalConfig(prev => ({ ...prev, visible: false }))),
-      onCancel: onCancel || null
-    });
-  };
+      onConfirm: onConfirm || (() => setModalConfig((prev) => ({ ...prev, visible: false }))),
+      onCancel: onCancel || null,
+    })
+  }
 
   const checkAttendanceStatus = async (userId, eventId) => {
     try {
-      const attendanceKey = `attendance_${userId}_${eventId}`;
-      const attendanceStatus = await AsyncStorage.getItem(attendanceKey);
-      return attendanceStatus === 'true';
+      const attendanceKey = `attendance_${userId}_${eventId}`
+      const attendanceStatus = await AsyncStorage.getItem(attendanceKey)
+      return attendanceStatus === "true"
     } catch (error) {
-      console.error('Error checking attendance status:', error);
-      return false;
+      console.error("Error checking attendance status:", error)
+      return false
     }
-  };
+  }
 
   const saveAttendanceStatus = async (userId, eventId, status) => {
     try {
-      const attendanceKey = `attendance_${userId}_${eventId}`;
-      await AsyncStorage.setItem(attendanceKey, status.toString());
+      const attendanceKey = `attendance_${userId}_${eventId}`
+      await AsyncStorage.setItem(attendanceKey, status.toString())
     } catch (error) {
-      console.error('Error saving attendance status:', error);
+      console.error("Error saving attendance status:", error)
     }
-  };
-
-
-  const handleAddToFavorites = async (userId, eventId) => {
-    try {
-     
-     
-      const favoritesKey = `favorites_${userId}`;
-      const existingFavorites = await AsyncStorage.getItem(favoritesKey);
-      const favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
-      
-      if (!favorites.includes(eventId)) {
-        favorites.push(eventId);
-        await AsyncStorage.setItem(favoritesKey, JSON.stringify(favorites));
-        return { success: true, message: 'Evento agregado a favoritos exitosamente' };
-      } else {
-        return { success: false, message: 'El evento ya está en tus favoritos' };
-      }
-    } catch (error) {
-      console.error('Error adding to favorites:', error);
-      return { success: false, message: 'Error al agregar a favoritos' };
-    }
-  };
-
-  const handleRemoveFromFavorites = async (userId, eventId) => {
-    try {
-      const favoritesKey = `favorites_${userId}`;
-      const existingFavorites = await AsyncStorage.getItem(favoritesKey);
-      const favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
-      
-      const updatedFavorites = favorites.filter(id => id !== eventId);
-      await AsyncStorage.setItem(favoritesKey, JSON.stringify(updatedFavorites));
-      
-      return { success: true, message: 'Evento eliminado de favoritos' };
-    } catch (error) {
-      console.error('Error removing from favorites:', error);
-      return { success: false, message: 'Error al eliminar de favoritos' };
-    }
-  };
-
-  const checkIfEventBookmarked = async (userId, eventId) => {
-    try {
-      const favoritesKey = `favorites_${userId}`;
-      const existingFavorites = await AsyncStorage.getItem(favoritesKey);
-      const favorites = existingFavorites ? JSON.parse(existingFavorites) : [];
-      return favorites.includes(eventId);
-    } catch (error) {
-      console.error('Error checking bookmark status:', error);
-      return false;
-    }
-  };
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const id = await AsyncStorage.getItem("accountId");
+        const id = await AsyncStorage.getItem("accountId")
         if (id) {
-          setAccountId(id);
-          
-          
-          const bookmarked = await checkIfEventBookmarked(id, event.id);
-          setIsBookmarked(bookmarked);
-          
-          const attendingStatus = await checkAttendanceStatus(id, event.id);
-          setIsAttending(attendingStatus);
+          setAccountId(id)
+
+         
+          await checkIfBookmarked(id, event.id, setIsBookmarked)
+
+          const attendingStatus = await checkAttendanceStatus(id, event.id)
+          setIsAttending(attendingStatus)
         }
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error:", error)
       }
-    };
-    fetchData();
-  }, []);
-
+    }
+    fetchData()
+  }, [])
 
   const resetMapRegion = () => {
-    const coordinates = getLocationCoordinates(event.location);
+    const coordinates = getLocationCoordinates(event.location)
     const region = {
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       latitudeDelta: 0.005,
       longitudeDelta: 0.005,
-    };
-    
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(region, 1000);
     }
-  };
 
- 
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(region, 1000)
+    }
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      resetMapRegion();
-    }, 500); 
+      resetMapRegion()
+    }, 500)
 
-    return () => clearTimeout(timer);
-  }, [event.location]);
+    return () => clearTimeout(timer)
+  }, [event.location])
 
   const handleAttendanceToggle = async () => {
-    if (loading) return; 
+    if (loading) return
     if (!accountId) {
-      showModal(
-        "Iniciar Sesión Requerido",
-        "Debes iniciar sesión para marcar tu asistencia al evento",
-        "warning"
-      );
-      return;
+      showModal("Iniciar Sesión Requerido", "Debes iniciar sesión para marcar tu asistencia al evento", "warning")
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
-      let result;
+      let result
       if (isAttending) {
-        result = await unmarkAttendance(event.id);
+        result = await unmarkAttendance(event.id)
       } else {
-        result = await markAttendance(event.id);
+        result = await markAttendance(event.id)
       }
 
       if (result.success) {
-        const newAttendingStatus = !isAttending;
-        setIsAttending(newAttendingStatus);
-        
-        await saveAttendanceStatus(accountId, event.id, newAttendingStatus);
-        
+        const newAttendingStatus = !isAttending
+        setIsAttending(newAttendingStatus)
+
+        await saveAttendanceStatus(accountId, event.id, newAttendingStatus)
+
         showModal(
-          newAttendingStatus ? 'Asistencia Confirmada' : 'Asistencia Cancelada',
-          result.message || (newAttendingStatus ? 
-            'Tu asistencia ha sido registrada exitosamente' : 
-            'Tu asistencia ha sido cancelada'),
-          'success'
-        );
+          newAttendingStatus ? "Asistencia Confirmada" : "Asistencia Cancelada",
+          result.message ||
+            (newAttendingStatus ? "Tu asistencia ha sido registrada exitosamente" : "Tu asistencia ha sido cancelada"),
+          "success",
+        )
       } else {
-        showModal(
-          'Error al Procesar',
-          result.message || 'No se pudo procesar tu solicitud de asistencia',
-          'error'
-        );
+        showModal("Error al Procesar", result.message || "No se pudo procesar tu solicitud de asistencia", "error")
       }
     } catch (err) {
-      console.error('Error en handleAttendanceToggle:', err);
+      console.error("Error en handleAttendanceToggle:", err)
 
-      if (err.message && err.message.includes('Asitencia ya marcada')) {
-        showModal(
-          'Asistencia Ya Registrada',
-          'Ya has marcado tu asistencia para este evento anteriormente',
-          'info'
-        );
-        setIsAttending(true);
-        await saveAttendanceStatus(accountId, event.id, true);
+      if (err.message && err.message.includes("Asitencia ya marcada")) {
+        showModal("Asistencia Ya Registrada", "Ya has marcado tu asistencia para este evento anteriormente", "info")
+        setIsAttending(true)
+        await saveAttendanceStatus(accountId, event.id, true)
       } else {
         showModal(
-          'Error de Conexión',
-          'No se pudo conectar con el servidor. Por favor, verifica tu conexión e intenta nuevamente',
-          'error'
-        );
+          "Error de Conexión",
+          "No se pudo conectar con el servidor. Por favor, verifica tu conexión e intenta nuevamente",
+          "error",
+        )
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
 
   const toggleBookmark = async () => {
     if (!accountId) {
-      showModal(
-        "Iniciar Sesión Requerido",
-        "Debes iniciar sesión para guardar eventos en tus favoritos",
-        "warning"
-      );
-      return;
+      showModal("Iniciar Sesión Requerido", "Debes iniciar sesión para guardar eventos en tus favoritos", "warning")
+      return
+    }
+
+    if (bookmarkLoading) return
+
+    setBookmarkLoading(true)
+
+    try {
+      if (isBookmarked) {
+       
+        await removeFromFavorites(accountId, event.id, setIsBookmarked)
+        showModal("Eliminado de Favoritos", "El evento ha sido eliminado de tus favoritos", "success")
+      } else {
+     
+        await addToFavorites(accountId, event.id, setIsBookmarked)
+        showModal("Agregado a Favoritos", "El evento ha sido agregado a tus favoritos", "success")
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error)
+      showModal("Error de Conexión", "No se pudo procesar tu solicitud. Por favor, intenta nuevamente", "error")
+    } finally {
+      setBookmarkLoading(false)
+    }
+  }
+
+  const getDepartmentColor = (dept) => {
+    const colors = {
+      "Sistemas computacionales": "#4a6eff",
+      Economía: "#ffb16c",
+      "Ciencias Sociales y jurídicas": "#97795e",
+      Agronomia: "#f9f285",
+      "Ciencias de la tierra": "#1fd514",
+      Humanidades: "#a980f2",
+      "Ingeniería en pesquerías": "#fb6d51",
+      "Ciencias marinas y costeras": "#a8ecff",
+      "Ciencia animal y conservación del hábitat": "#f7b2f0",
+    }
+    return colors[dept] || "#6b7280"
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Fecha no disponible"
+
+    try {
+      let dateToFormat
+
+      if (dateString.includes("T")) {
+        const localDate = dateString.split("T")[0]
+        const [year, month, day] = localDate.split("-")
+        dateToFormat = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
+      } else {
+        const [year, month, day] = dateString.split("-")
+        dateToFormat = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
+      }
+
+      return dateToFormat.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    } catch (error) {
+      console.error("Error al formatear fecha:", error)
+      return dateString
+    }
+  }
+
+  const formatTime = (timeInput) => {
+    if (!timeInput) return "Horario no especificado"
+
+    if (typeof timeInput === "string" && timeInput.includes(":") && !timeInput.includes("T")) {
+      const [hours, minutes] = timeInput.split(":")
+      const startHour = Number.parseInt(hours)
+      const endHour = startHour + 2
+
+      return `${timeInput} - ${endHour.toString().padStart(2, "0")}:${minutes}`
     }
 
     try {
-      let result;
-      if (isBookmarked) {
-        result = await handleRemoveFromFavorites(accountId, event.id);
-      } else {
-        result = await handleAddToFavorites(accountId, event.id);
-      }
+      const date = new Date(timeInput)
+      const timeString = date.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "America/Mazatlan",
+      })
 
-      if (result.success) {
-        setIsBookmarked(!isBookmarked);
-        showModal(
-          isBookmarked ? 'Eliminado de Favoritos' : 'Agregado a Favoritos',
-          result.message,
-          'success'
-        );
-      } else {
-        showModal(
-          'Error',
-          result.message,
-          'error'
-        );
-      }
+      const [hours, minutes] = timeString.split(":")
+      const startHour = Number.parseInt(hours)
+      const endHour = startHour + 2
+
+      return `${timeString} - ${endHour.toString().padStart(2, "0")}:${minutes}`
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
-      showModal(
-        'Error de Conexión',
-        'No se pudo procesar tu solicitud. Por favor, intenta nuevamente',
-        'error'
-      );
+      console.error("Error al formatear hora:", error)
+      return "Horario no especificado"
     }
-  };
-
- const getDepartmentColor = (dept) => {
-    const colors = {
-      'Sistemas computacionales': '#4a6eff', 
-      'Economía': '#ffb16c', 
-      'Ciencias Sociales y jurídicas': '#97795e', 
-      'Agronomia': '#f9f285', 
-      'Ciencias de la tierra': '#1fd514',
-      'Humanidades': '#a980f2',
-      'Ingeniería en pesquerías': '#fb6d51',
-      'Ciencias marinas y costeras': '#a8ecff',
-      'Ciencia animal y conservación del hábitat': '#f7b2f0',
-    };
-    return colors[dept] || '#6b7280'; 
-  };
-
-const formatDate = (dateString) => {
-  if (!dateString) return "Fecha no disponible";
-  
-  try {
-    let dateToFormat;
-    
-    if (dateString.includes('T')) {
-      const localDate = dateString.split('T')[0];
-      const [year, month, day] = localDate.split('-');
-      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      const [year, month, day] = dateString.split('-');
-      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    }
-    
-    return dateToFormat.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  } catch (error) {
-    console.error('Error al formatear fecha:', error);
-    return dateString;
   }
-};
-
-const formatTime = (timeInput) => {
-  if (!timeInput) return "Horario no especificado";
-  
-  if (typeof timeInput === 'string' && timeInput.includes(':') && !timeInput.includes('T')) {
-    const [hours, minutes] = timeInput.split(':');
-    const startHour = parseInt(hours);
-    const endHour = startHour + 2;
-    
-    return `${timeInput} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
-  }
-  
-  try {
-    const date = new Date(timeInput);
-    const timeString = date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'America/Mazatlan'
-    });
-    
-    const [hours, minutes] = timeString.split(':');
-    const startHour = parseInt(hours);
-    const endHour = startHour + 2;
-    
-    return `${timeString} - ${endHour.toString().padStart(2, '0')}:${minutes}`;
-  } catch (error) {
-    console.error('Error al formatear hora:', error);
-    return "Horario no especificado";
-  }
-};
 
   const getLocationCoordinates = (locationName) => {
-    const location = Object.keys(UABCS_LOCATIONS).find(key => 
-      locationName?.toLowerCase().includes(key.toLowerCase())
-    );
-    return UABCS_LOCATIONS[location] || UABCS_LOCATIONS.default;
-  };
+    const location = Object.keys(UABCS_LOCATIONS).find((key) => locationName?.toLowerCase().includes(key.toLowerCase()))
+    return UABCS_LOCATIONS[location] || UABCS_LOCATIONS.default
+  }
 
-  const coordinates = getLocationCoordinates(event.location);
+  const coordinates = getLocationCoordinates(event.location)
 
   return (
     <View style={styles.container}>
@@ -516,35 +418,24 @@ const formatTime = (timeInput) => {
       />
 
       <View style={styles.heroSection}>
-        <Image 
-          source={{ uri: event.imageUrl || 'https://via.placeholder.com/400x300' }} 
-          style={styles.heroImage}
-        />
+        <Image source={{ uri: event.imageUrl || "https://via.placeholder.com/400x300" }} style={styles.heroImage} />
         <View style={styles.heroOverlay} />
-        
+
         <SafeAreaView style={styles.headerContainer}>
           <View style={styles.headerNav}>
-          <TouchableOpacity 
-          style={styles.headerButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <View style={styles.circleDecoration} />
-          <Image
-            source={require('../assets/back-arrow.png')}
-            style={styles.headerIcon}
-          />
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
+              <View style={styles.circleDecoration} />
+              <Image source={require("../assets/back-arrow.png")} style={styles.headerIcon} />
+            </TouchableOpacity>
 
             <Text style={styles.headerTitle}>Detalles del Evento</Text>
-            
-            <TouchableOpacity 
-              style={styles.headerButton}
-              onPress={toggleBookmark}
-            >
-              <Ionicons 
-                name={isBookmarked ? "bookmark" : "bookmark-outline"} 
-                size={24} 
-                color={isBookmarked ? COLORS.yellow : COLORS.textLight} 
+
+            <TouchableOpacity style={styles.headerButton} onPress={toggleBookmark} disabled={bookmarkLoading}>
+              <Ionicons
+                name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                size={24}
+                color={isBookmarked ? COLORS.yellow : COLORS.textLight}
+                style={{ opacity: bookmarkLoading ? 0.5 : 1 }}
               />
             </TouchableOpacity>
           </View>
@@ -556,7 +447,7 @@ const formatTime = (timeInput) => {
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -572,7 +463,7 @@ const formatTime = (timeInput) => {
                 <Text style={styles.detailValue}>{formatDate(event.date)}</Text>
               </View>
             </View>
-            
+
             <View style={styles.detailItem}>
               <View style={styles.detailIcon}>
                 <Ionicons name="time-outline" size={20} color={COLORS.darkBlue} />
@@ -582,7 +473,7 @@ const formatTime = (timeInput) => {
                 <Text style={styles.detailValue}>{formatTime(event.time)}</Text>
               </View>
             </View>
-            
+
             <View style={styles.detailItem}>
               <View style={styles.detailIcon}>
                 <Ionicons name="location-outline" size={20} color={COLORS.darkBlue} />
@@ -598,7 +489,7 @@ const formatTime = (timeInput) => {
         <View style={styles.mapSection}>
           <View style={styles.mapHeader}>
             <Text style={styles.sectionTitle}>Ubicación</Text>
-            </View>
+          </View>
           <View style={styles.mapContainer}>
             <MapView
               ref={mapRef}
@@ -614,15 +505,10 @@ const formatTime = (timeInput) => {
               rotateEnabled={false}
               pitchEnabled={false}
               onMapReady={() => {
-              
-                setTimeout(() => resetMapRegion(), 100);
+                setTimeout(() => resetMapRegion(), 100)
               }}
             >
-              <Marker
-                coordinate={coordinates}
-                title={event.title}
-                description={event.location}
-              >
+              <Marker coordinate={coordinates} title={event.title} description={event.location}>
                 <View style={styles.marker}>
                   <Ionicons name="location-sharp" size={30} color={COLORS.darkBlue} />
                 </View>
@@ -637,14 +523,14 @@ const formatTime = (timeInput) => {
             onPress={handleAttendanceToggle}
             disabled={loading}
           >
-            <Ionicons 
-              name={isAttending ? "checkmark-circle" : "person-add"} 
-              size={20} 
-              color="#fff" 
+            <Ionicons
+              name={isAttending ? "checkmark-circle" : "person-add"}
+              size={20}
+              color="#fff"
               style={styles.buttonIcon}
             />
             <Text style={styles.attendButtonText}>
-              {loading ? "Procesando..." : (isAttending ? "Asistiendo" : "Asistir al Evento")}
+              {loading ? "Procesando..." : isAttending ? "Asistiendo" : "Asistir al Evento"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -652,40 +538,35 @@ const formatTime = (timeInput) => {
         <View style={{ height: 100 }} />
       </ScrollView>
       <View style={styles.bottomNav}>
-              <TouchableOpacity style={styles.bottomNavItem} 
-              onPress={() => navigation.navigate("Home")}
-              activeOpacity={0.7}>
-                <View style={styles.navIconContainer}>
-                  <Image
-                    source={require("../assets/home.png")}
-                    style={styles.navIcon}
-                  />
-                </View>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={styles.bottomNavItem}
-                onPress={() => navigation.navigate("EventScreen")}
-                activeOpacity={0.7}
-              >
-                <View style={styles.navIconContainer}>
-                  <Image source={require("../assets/more.png")} style={styles.navIcon} />
-                </View>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={styles.bottomNavItem}
-                onPress={() => navigation.navigate("Profile")}
-                activeOpacity={0.7}
-              >
-                <View style={styles.navIconContainer}>
-                  <Image source={require("../assets/profile.png")} style={styles.navIcon} />
-                </View>
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
+          <View style={styles.navIconContainer}>
+            <Image source={require("../assets/home.png")} style={styles.navIcon} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("EventScreen")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navIconContainer}>
+            <Image source={require("../assets/more.png")} style={styles.navIcon} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bottomNavItem}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navIconContainer}>
+            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+          </View>
+        </TouchableOpacity>
       </View>
-  );
-};
+    </View>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -695,43 +576,43 @@ const styles = StyleSheet.create({
 
   heroSection: {
     height: screenHeight * 0.45,
-    position: 'relative',
+    position: "relative",
   },
   heroImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   headerContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     zIndex: 10,
   },
   headerNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 40,
     paddingBottom: 15,
   },
- headerButton: {
+  headerButton: {
     padding: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
   },
 
   headerIcon: {
     width: 24,
     height: 24,
-    resizeMode: 'contain',
+    resizeMode: "contain",
     zIndex: 2,
   },
 
@@ -739,18 +620,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(245, 245, 220, 0.4)',
-    position: 'absolute',
+    backgroundColor: "rgba(245, 245, 220, 0.4)",
+    position: "absolute",
     zIndex: 1,
   },
 
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textLight,
   },
   heroContent: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 40,
     left: 20,
     right: 20,
@@ -758,10 +639,10 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textLight,
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -769,7 +650,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textLight,
     opacity: 0.9,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -781,16 +662,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 20,
   },
-  
+
   detailsSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
     marginBottom: 15,
     borderRadius: 15,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -800,57 +681,57 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   detailIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: COLORS.cream,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 15,
   },
   detailLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 14,
-    color: '#111827',
-    fontWeight: '500',
+    color: "#111827",
+    fontWeight: "500",
   },
 
   mapSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
     marginBottom: 15,
     borderRadius: 15,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
   },
   mapHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: "bold",
+    color: "#111827",
   },
   resetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: COLORS.cream,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -860,19 +741,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.darkBlue,
     marginLeft: 4,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   mapContainer: {
     height: 200,
     borderRadius: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   map: {
     flex: 1,
   },
   marker: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   actionSection: {
@@ -884,9 +765,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#efdcbd",
     paddingVertical: 15,
     borderRadius: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 3,
     shadowColor: COLORS.primaryPurple,
     shadowOffset: { width: 0, height: 4 },
@@ -899,27 +780,27 @@ const styles = StyleSheet.create({
   attendButtonText: {
     color: COLORS.textLight,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 8,
   },
   buttonIcon: {
     marginRight: 4,
   },
 
- bottomNav: { 
-    flexDirection: "row", 
-    justifyContent: "space-around", 
-    paddingVertical: 9, 
-    borderTopWidth: 3, 
-    borderColor: "#ddd", 
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 9,
+    borderTopWidth: 3,
+    borderColor: "#ddd",
     backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4
+    shadowRadius: 4,
   },
-   bottomNavItem: { 
+  bottomNavItem: {
     alignItems: "center",
     padding: 8,
     flex: 1,
@@ -927,93 +808,93 @@ const styles = StyleSheet.create({
   navIconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    height: 32, 
-    width: 32,  
+    height: 32,
+    width: 32,
   },
-  navIcon: { 
-    width: 25, 
+  navIcon: {
+    width: 25,
     height: 25,
     tintColor: COLORS.darkGray,
   },
-  activeNavItem: { 
-    borderBottomWidth: 2, 
-    borderColor: '#f0e342',
+  activeNavItem: {
+    borderBottomWidth: 2,
+    borderColor: "#f0e342",
   },
 
   // Estilos para el modal personalizado
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
-    width: '100%',
+    width: "100%",
     maxWidth: 340,
     elevation: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
   },
   modalContent: {
     padding: 30,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalIconContainer: {
     marginBottom: 20,
     padding: 15,
     borderRadius: 50,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalMessage: {
     fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
     lineHeight: 24,
     marginBottom: 30,
   },
   modalButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    width: '100%',
+    width: "100%",
   },
   modalButton: {
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   confirmButton: {
     backgroundColor: COLORS.darkBlue,
   },
   cancelButton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
   },
   confirmButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   cancelButtonText: {
-    color: '#6B7280',
+    color: "#6B7280",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-});
+})
 
-export default EventDetailScreen;
+export default EventDetailScreen
