@@ -1,17 +1,16 @@
-import { useState } from "react";
-import { StatusBar as RNStatusBar } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Dimensions } from "react-native";
-import Toast from 'react-native-toast-message';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState } from "react"
+import { StatusBar } from "expo-status-bar"
+import { Ionicons } from "@expo/vector-icons"
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Image, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Dimensions } from "react-native"
+import Toast from "react-native-toast-message"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window")
 
 const COLORS = {
   primary: "#003366",
   secondary: "#4dabf7",
-  accent: "#f4e153", 
+  accent: "#f4e153",
   white: "#FFFFFF",
   gray: "#F5F5F5",
   darkGray: "#666666",
@@ -22,147 +21,175 @@ const COLORS = {
   lightBlue: "#7BBFFF",
   cream: "#F5F5DC",
   black: "#000000",
-};
+}
 
-const API_URL = 'https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app';
+const API_URL = "https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.app"
 
 const LoginScreen = ({ navigation }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+
+  const [usernameError, setUsernameError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [generalError, setGeneralError] = useState("")
+
+
+  const handleUsernameChange = (text) => {
+    setUsername(text)
+    setUsernameError("")
+    setGeneralError("")
+  }
+
+  const handlePasswordChange = (text) => {
+    setPassword(text)
+    setPasswordError("")
+    setGeneralError("")
+  }
 
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Campos requeridos',
-        text2: 'Por favor ingresa usuario y contraseña',
-      });
-      return;
+
+    setUsernameError("")
+    setPasswordError("")
+    setGeneralError("")
+
+
+    let hasError = false
+
+    if (!username.trim()) {
+      setUsernameError("Por favor ingresa tu usuario")
+      hasError = true
     }
 
-    setLoading(true);
-    Keyboard.dismiss();
+    if (!password.trim()) {
+      setPasswordError("Por favor ingresa tu contraseña")
+      hasError = true
+    }
+
+    if (hasError) {
+      return
+    }
+
+    setLoading(true)
+    Keyboard.dismiss()
 
     try {
       const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           identifierUser: username.trim(),
-          passwordUser: password
-        })
-      });
+          passwordUser: password,
+        }),
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        console.log("Usuario recibido:", data.user); 
-        await AsyncStorage.setItem('accountId', data.user.idAccount.toString()); 
-        await AsyncStorage.setItem('userName', data.user.email);
-        console.log("ID guardado:", data.user.idAccount); 
+        console.log("Usuario recibido:", data.user)
+        await AsyncStorage.setItem("accountId", data.user.idAccount.toString())
+        await AsyncStorage.setItem("userName", data.user.email)
+        console.log("ID guardado:", data.user.idAccount)
 
         Toast.show({
-          type: 'success',
-          text1: '¡Bienvenido!',
+          type: "success",
+          text1: "¡Bienvenido!",
           text2: `Alumno, ${data.user.name}`,
-        });
+        })
 
-        navigation.navigate('Home', { user: data.user });
+        navigation.navigate("Home", { user: data.user })
       } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Error de acceso',
-          text2: data.message || 'Credenciales incorrectas',
-        });
+      
+        setGeneralError(data.message || "Credenciales incorrectas")
       }
     } catch (error) {
-      console.error("Error de conexión:", error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error de conexión',
-        text2: 'No se pudo conectar al servidor',
-      });
+      console.error("Error de conexión:", error)
+      setGeneralError("No se pudo conectar al servidor")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={styles.container}>
           <StatusBar style="light" />
-          
-         
+
           <View style={styles.imageSection}>
-            <Image 
-              source={require('../assets/uabcs.jpg')}
-              style={styles.logo} 
-              resizeMode="contain" 
-            />
+            <Image source={require("../assets/uabcs.jpg")} style={styles.logo} resizeMode="contain" />
           </View>
 
           <View style={styles.formSection}>
             <View style={styles.formContainer}>
-            
+           
+              {generalError ? (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
+                  <Text style={styles.errorText}>{generalError}</Text>
+                </View>
+              ) : null}
+
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Usuario</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="person-outline" size={20} color={COLORS.darkGray} style={styles.inputIcon} />
+                <View style={[styles.inputWrapper, usernameError ? styles.inputError : null]}>
+                  <Ionicons
+                    name="person-outline"
+                    size={20}
+                    color={usernameError ? COLORS.error : COLORS.darkGray}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="Ingresa tu usuario"
                     placeholderTextColor={COLORS.darkGray}
                     value={username}
-                    onChangeText={setUsername}
+                    onChangeText={handleUsernameChange}
                     autoCapitalize="none"
                     autoCorrect={false}
                     keyboardType="default"
                   />
                 </View>
+                {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
               </View>
 
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Contraseña</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={20} color={COLORS.darkGray} style={styles.inputIcon} />
+                <View style={[styles.inputWrapper, passwordError ? styles.inputError : null]}>
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={20}
+                    color={passwordError ? COLORS.error : COLORS.darkGray}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="Ingresa tu contraseña"
                     placeholderTextColor={COLORS.darkGray}
                     secureTextEntry={!showPassword}
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={handlePasswordChange}
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  <TouchableOpacity 
-                    style={styles.eyeIcon} 
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Ionicons 
-                      name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                      size={20} 
-                      color={COLORS.darkGray} 
+                  <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons
+                      name={showPassword ? "eye-outline" : "eye-off-outline"}
+                      size={20}
+                      color={COLORS.darkGray}
                     />
                   </TouchableOpacity>
                 </View>
+                {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
               </View>
 
-           
-              <TouchableOpacity 
-                style={[
-                  styles.loginButton, 
-                  loading && styles.loginButtonDisabled
-                ]} 
-                onPress={handleLogin} 
+              <TouchableOpacity
+                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.8}
               >
@@ -183,8 +210,8 @@ const LoginScreen = ({ navigation }) => {
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -193,8 +220,8 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     height: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: COLORS.white,
     paddingTop: 40,
   },
@@ -215,19 +242,23 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.primary,
     marginBottom: 8,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.lightGray,
     borderRadius: 12,
     backgroundColor: COLORS.white,
     paddingHorizontal: 15,
     height: 50,
+  },
+  inputError: {
+    borderColor: COLORS.error,
+    borderWidth: 1.5,
   },
   inputIcon: {
     marginRight: 10,
@@ -245,11 +276,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
     borderRadius: 15,
     paddingVertical: 15,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 2,
     borderColor: COLORS.cream,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 20,
     shadowOffset: {
       width: 0,
@@ -266,23 +297,38 @@ const styles = StyleSheet.create({
   buttonText: {
     color: COLORS.black,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   buttonTextLoading: {
     color: COLORS.black,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 8,
   },
   buttonIcon: {
     marginLeft: 8,
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: COLORS.cream,
   },
-});
 
-export default LoginScreen;
+  errorText: {
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+})
+
+export default LoginScreen

@@ -127,7 +127,7 @@ const DepartamentScreen = ({ navigation, route }) => {
         }
         
         const data = await response.json();
-        console.log('Events data received:', data);
+       
         setEventos(data.events || []);
       } catch (error) {
         console.error('Error al obtener eventos:', error);

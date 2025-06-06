@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react"
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar, RefreshControl } from "react-native"
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import Toast from "react-native-toast-message"
@@ -31,22 +31,17 @@ const API_URL = "https://92d8-2806-265-5402-ca4-9c21-53fd-292c-aa68.ngrok-free.a
 const Notificaciones = () => {
   const navigation = useNavigation()
   const [notifications, setNotifications] = useState([])
-  const [refreshing, setRefreshing] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [readNotifications, setReadNotifications] = useState(new Set()) 
   const previousNotificationsRef = useRef([])
-
+  const isFirstLoadRef = useRef(true)
 
   const convertUTCToLocal = (utcDateString) => {
     if (!utcDateString) return null
 
     try {
-    
       const utcDate = new Date(utcDateString)
-
       const localDate = new Date(utcDate.getTime() - 7 * 60 * 60 * 1000)
-
-      
-
       return localDate
     } catch (error) {
       console.error("Error converting UTC to local:", error)
@@ -58,7 +53,6 @@ const Notificaciones = () => {
     if (!dateString) return ""
 
     try {
-    
       const localDate = convertUTCToLocal(dateString)
       const now = new Date()
       const diffTime = Math.abs(now - localDate)
@@ -93,20 +87,13 @@ const Notificaciones = () => {
     }
   }
 
-
   const formatTime = (dateString) => {
     if (!dateString) return ""
 
     try {
-    
       const localDate = convertUTCToLocal(dateString)
-
-   
       const hours = localDate.getHours().toString().padStart(2, "0")
       const minutes = localDate.getMinutes().toString().padStart(2, "0")
-
-    
-
       return `${hours}:${minutes}`
     } catch (error) {
       console.error("Error formatting time:", error)
@@ -114,7 +101,75 @@ const Notificaciones = () => {
     }
   }
 
-  const checkForNewNotifications = (newNotifications) => {
+ 
+  const loadReadNotifications = async () => {
+    try {
+      const readNotificationsData = await AsyncStorage.getItem("readNotifications")
+      if (readNotificationsData) {
+        const readIds = JSON.parse(readNotificationsData)
+        setReadNotifications(new Set(readIds))
+       
+      }
+    } catch (error) {
+      console.error("Error loading read notifications:", error)
+    }
+  }
+
+ 
+  const saveReadNotifications = async (readIds) => {
+    try {
+      await AsyncStorage.setItem("readNotifications", JSON.stringify(Array.from(readIds)))
+      console.log("Notificaciones leídas guardadas:", Array.from(readIds))
+    } catch (error) {
+      console.error("Error saving read notifications:", error)
+    }
+  }
+
+
+  const markNotificationAsRead = async (notificationId) => {
+    const newReadNotifications = new Set(readNotifications)
+    newReadNotifications.add(notificationId)
+    setReadNotifications(newReadNotifications)
+    await saveReadNotifications(newReadNotifications)
+
+   
+  }
+
+
+  const markAllNotificationsAsRead = async () => {
+    const allNotificationIds = notifications.map((notif) => notif.id)
+    const newReadNotifications = new Set([...readNotifications, ...allNotificationIds])
+    setReadNotifications(newReadNotifications)
+    await saveReadNotifications(newReadNotifications)
+
+    
+  }
+
+ 
+  const isNotificationRead = (notificationId) => {
+    return readNotifications.has(notificationId)
+  }
+
+  const checkForNotifications = (newNotifications, isFirstLoad = false) => {
+    if (isFirstLoad) {
+   
+      const unreadNotifications = newNotifications.filter((notif) => !isNotificationRead(notif.id))
+
+      if (unreadNotifications.length > 0) {
+        setTimeout(() => {
+          Toast.show({
+            type: "info",
+            text1: "Tienes notificaciones",
+            // text2: `${unreadNotifications.length} notificación${unreadNotifications.length > 1 ? "es" : ""} pendiente${unreadNotifications.length > 1 ? "s" : ""}`,
+            visibilityTime: 4000,
+            position: "top",
+            topOffset: 60,
+          })
+        }, 500)
+      }
+      return
+    }
+
     const previousNotifications = previousNotificationsRef.current
 
     if (previousNotifications.length === 0) {
@@ -129,7 +184,7 @@ const Notificaciones = () => {
       setTimeout(() => {
         Toast.show({
           type: "info",
-          text1: "📅 Nueva notificación",
+          text1: "Nueva notificación",
           text2: notification.message,
           visibilityTime: 4000,
           position: "top",
@@ -139,7 +194,7 @@ const Notificaciones = () => {
     })
   }
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isFirstLoad = false) => {
     try {
       let accountId = await AsyncStorage.getItem("accountId")
       if (!accountId) {
@@ -149,11 +204,10 @@ const Notificaciones = () => {
       if (!accountId) {
         console.log("No account ID found")
         setLoading(false)
-        setRefreshing(false)
         return
       }
 
-      console.log("Fetching notifications for account:", accountId)
+      
 
       const response = await fetch(`${API_URL}/notifications/${accountId}`, {
         headers: {
@@ -162,13 +216,16 @@ const Notificaciones = () => {
       })
 
       const data = await response.json()
-      console.log("Notifications response:", data)
+    
 
       if (data.success && data.notifications) {
         const sortedNotifications = data.notifications.sort((a, b) => new Date(b.dateCreated) - new Date(a.dateCreated))
 
-        checkForNewNotifications(sortedNotifications)
-        previousNotificationsRef.current = notifications
+        checkForNotifications(sortedNotifications, isFirstLoad)
+
+        if (!isFirstLoad) {
+          previousNotificationsRef.current = notifications
+        }
         setNotifications(sortedNotifications)
       } else {
         console.log("No notifications found or error:", data.message)
@@ -185,21 +242,21 @@ const Notificaciones = () => {
       })
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }
 
-  const onRefresh = () => {
-    setRefreshing(true)
-    fetchNotifications()
-  }
-
   useEffect(() => {
-    fetchNotifications()
+    const initializeNotifications = async () => {
+      await loadReadNotifications() 
+      await fetchNotifications(true)
+      isFirstLoadRef.current = false
+    }
+
+    initializeNotifications()
 
     const interval = setInterval(() => {
-      if (!refreshing && !loading) {
-        fetchNotifications()
+      if (!loading) {
+        fetchNotifications(false)
       }
     }, 30000)
 
@@ -207,8 +264,14 @@ const Notificaciones = () => {
   }, [])
 
   const renderNotificationItem = ({ item, index }) => {
+    const isRead = isNotificationRead(item.id)
+
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={[styles.card, !isRead && styles.unreadCard]}
+        onPress={() => markNotificationAsRead(item.id)}
+        activeOpacity={0.7}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.iconContainer}>
             <Image source={require("../assets/calendar.png")} style={styles.calendarIcon} />
@@ -222,11 +285,12 @@ const Notificaciones = () => {
 
         <View style={styles.cardFooter}>
           <Text style={styles.date}>{formatDate(item.dateCreated)}</Text>
-          <View style={[styles.statusDot, { backgroundColor: item.isRead ? COLORS.textLight : COLORS.primary }]} />
+          <View style={[styles.statusDot, { backgroundColor: isRead ? COLORS.textLight : COLORS.primary }]} />
         </View>
 
-       
-      </View>
+   
+        {!isRead && <View style={styles.unreadIndicator} />}
+      </TouchableOpacity>
     )
   }
 
@@ -243,6 +307,9 @@ const Notificaciones = () => {
     </View>
   )
 
+ 
+  const unreadCount = notifications.filter((notif) => !isNotificationRead(notif.id)).length
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.cream} />
@@ -251,12 +318,14 @@ const Notificaciones = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate("Home")}>
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notificaciones</Text>
-        <TouchableOpacity style={styles.refreshButton} onPress={onRefresh} disabled={refreshing}>
-          <Image
-           
-          />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Notificaciones {unreadCount > 0 && `(${unreadCount})`}</Text>
+     
+        {unreadCount > 0 && (
+          <TouchableOpacity style={styles.markAllButton} onPress={markAllNotificationsAsRead}>
+            <Text style={styles.markAllText}>Marcar todas</Text>
+          </TouchableOpacity>
+        )}
+        {unreadCount === 0 && <View style={styles.emptySpace} />}
       </View>
 
       <FlatList
@@ -265,14 +334,6 @@ const Notificaciones = () => {
         contentContainerStyle={styles.listContainer}
         renderItem={renderNotificationItem}
         ListEmptyComponent={renderEmptyState}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[COLORS.primary]}
-            tintColor={COLORS.primary}
-          />
-        }
         showsVerticalScrollIndicator={false}
       />
 
@@ -338,16 +399,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: COLORS.textDark,
+    flex: 1,
+    textAlign: "center",
   },
-  refreshButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
+  markAllButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
-  refreshIcon: {
-    width: 20,
-    height: 20,
-    tintColor: COLORS.primary,
+  markAllText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  emptySpace: {
+    width: 36,
   },
   listContainer: {
     paddingHorizontal: 16,
@@ -367,6 +434,21 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: "#F0F0F0",
+    position: "relative",
+  },
+  unreadCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    backgroundColor: "#F8FAFE",
+  },
+  unreadIndicator: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.primary,
   },
   cardHeader: {
     flexDirection: "row",
@@ -430,7 +512,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: COLORS.primary,
   },
- 
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
