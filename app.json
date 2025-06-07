@@ -1,14 +1,13 @@
 {
   "expo": {
     "name": "Agenda UABCS",
-    "slug": "Agenda UABCS",
+    "slug": "agenda-uabcs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/agendaLogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +16,18 @@
     },
     "android": {
       "adaptiveIcon": {
-        
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.agenda.uabcs"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "465d435e-bfa2-4bfc-8378-bd073ffbcf9d"
+      }
     }
   }
 }
