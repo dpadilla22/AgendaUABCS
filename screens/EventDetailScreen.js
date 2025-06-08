@@ -1,10 +1,23 @@
 import { useState, useEffect, useRef } from "react"
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Modal, Animated } from "react-native"
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Image, 
+  ScrollView, 
+  Dimensions, 
+  Modal, 
+  Animated,
+  Alert 
+} from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import MapView, { Marker } from "react-native-maps"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { markAttendance, unmarkAttendance } from "../components/Attendance"
 import { checkIfBookmarked, addToFavorites, removeFromFavorites } from "../components/Favorites"
+import LocationService from "../components/LocationServices" 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
@@ -156,14 +169,38 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
 }
 
 const EventDetailScreen = ({ navigation, route }) => {
+  // Validación de parámetros
+  if (!route?.params?.event) {
+    useEffect(() => {
+      Alert.alert(
+        "Error",
+        "No se pudieron cargar los datos del evento",
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
+    }, [navigation]);
+    
+    return (
+      <View style={styles.container}>
+        <Text>Error: No se encontraron datos del evento</Text>
+      </View>
+    );
+  }
+
   const { eventId, event, date, time } = route.params
   const mapRef = useRef(null)
 
+  // Estados existentes
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isAttending, setIsAttending] = useState(false)
   const [accountId, setAccountId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bookmarkLoading, setBookmarkLoading] = useState(false)
+
+  // 👈 NUEVOS ESTADOS PARA UBICACIÓN
+  const [userLocation, setUserLocation] = useState(null)
+  const [locationPermission, setLocationPermission] = useState(false)
+  const [loadingLocation, setLoadingLocation] = useState(false)
+  const [distance, setDistance] = useState(null)
 
   const [modalConfig, setModalConfig] = useState({
     visible: false,
@@ -173,6 +210,41 @@ const EventDetailScreen = ({ navigation, route }) => {
     onConfirm: null,
     onCancel: null,
   })
+
+  // 👈 NUEVAS FUNCIONES PARA UBICACIÓN
+  const getUserLocation = async () => {
+    setLoadingLocation(true)
+    try {
+      const location = await LocationService.getCurrentLocation()
+      if (location) {
+        setUserLocation(location)
+        
+        // Calcular distancia al evento
+        const eventCoords = getLocationCoordinates(event?.location)
+        const dist = LocationService.calculateDistance(
+          location.latitude,
+          location.longitude,
+          eventCoords.latitude,
+          eventCoords.longitude
+        )
+        
+        setDistance(dist)
+      }
+    } catch (error) {
+      console.error('Error getting user location:', error)
+    } finally {
+      setLoadingLocation(false)
+    }
+  }
+
+  const requestLocationPermission = async () => {
+    const granted = await LocationService.requestLocationPermission()
+    setLocationPermission(granted)
+    
+    if (granted) {
+      getUserLocation()
+    }
+  }
 
   const showModal = (title, message, type = "info", onConfirm = null, onCancel = null) => {
     setModalConfig({
@@ -212,12 +284,20 @@ const EventDetailScreen = ({ navigation, route }) => {
         if (id) {
           setAccountId(id)
 
-         
           await checkIfBookmarked(id, event.id, setIsBookmarked)
 
           const attendingStatus = await checkAttendanceStatus(id, event.id)
           setIsAttending(attendingStatus)
         }
+        
+        // 👈 VERIFICAR PERMISOS DE UBICACIÓN AL CARGAR
+        const hasPermission = await LocationService.checkPermissionStatus()
+        setLocationPermission(hasPermission)
+        
+        if (hasPermission) {
+          getUserLocation()
+        }
+        
       } catch (error) {
         console.error("Error:", error)
       }
@@ -298,7 +378,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-
   const toggleBookmark = async () => {
     if (!accountId) {
       showModal("Iniciar Sesión Requerido", "Debes iniciar sesión para guardar eventos en tus favoritos", "warning")
@@ -311,11 +390,9 @@ const EventDetailScreen = ({ navigation, route }) => {
 
     try {
       if (isBookmarked) {
-       
         await removeFromFavorites(accountId, event.id, setIsBookmarked)
         showModal("Eliminado de Favoritos", "El evento ha sido eliminado de tus favoritos", "success")
       } else {
-     
         await addToFavorites(accountId, event.id, setIsBookmarked)
         showModal("Agregado a Favoritos", "El evento ha sido agregado a tus favoritos", "success")
       }
@@ -425,7 +502,7 @@ const EventDetailScreen = ({ navigation, route }) => {
           <View style={styles.headerNav}>
             <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
               <View style={styles.circleDecoration} />
-              <Image source={require("../assets/back-arrow.png")} style={styles.headerIcon} />
+              <Ionicons name="arrow-back" size={24} color={COLORS.textLight} />
             </TouchableOpacity>
 
             <Text style={styles.headerTitle}>Detalles del Evento</Text>
@@ -486,10 +563,26 @@ const EventDetailScreen = ({ navigation, route }) => {
           </View>
         </View>
 
+        {/* 👈 SECCIÓN DEL MAPA ACTUALIZADA CON UBICACIÓN */}
         <View style={styles.mapSection}>
           <View style={styles.mapHeader}>
             <Text style={styles.sectionTitle}>Ubicación</Text>
+            
+            {/* Botón para solicitar ubicación */}
+            {!locationPermission && (
+              <TouchableOpacity 
+                style={styles.locationButton}
+                onPress={requestLocationPermission}
+                disabled={loadingLocation}
+              >
+                <Ionicons name="location-outline" size={16} color={COLORS.darkBlue} />
+                <Text style={styles.locationButtonText}>
+                  {loadingLocation ? "Cargando..." : "Mi ubicación"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
+          
           <View style={styles.mapContainer}>
             <MapView
               ref={mapRef}
@@ -500,6 +593,8 @@ const EventDetailScreen = ({ navigation, route }) => {
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005,
               }}
+              showsUserLocation={locationPermission} // 👈 Mostrar ubicación del usuario
+              showsMyLocationButton={true} // 👈 Botón para centrar en ubicación
               scrollEnabled={true}
               zoomEnabled={true}
               rotateEnabled={false}
@@ -508,13 +603,37 @@ const EventDetailScreen = ({ navigation, route }) => {
                 setTimeout(() => resetMapRegion(), 100)
               }}
             >
+              {/* Marcador del evento */}
               <Marker coordinate={coordinates} title={event.title} description={event.location}>
                 <View style={styles.marker}>
                   <Ionicons name="location-sharp" size={30} color={COLORS.darkBlue} />
                 </View>
               </Marker>
+              
+              {/* 👈 Marcador de ubicación del usuario (opcional) */}
+              {userLocation && (
+                <Marker
+                  coordinate={userLocation}
+                  title="Tu ubicación"
+                  description="Estás aquí"
+                >
+                  <View style={styles.userMarker}>
+                    <Ionicons name="person" size={20} color="white" />
+                  </View>
+                </Marker>
+              )}
             </MapView>
           </View>
+          
+          {/* 👈 Mostrar distancia si tenemos ubicación del usuario */}
+          {distance !== null && (
+            <View style={styles.distanceContainer}>
+              <Ionicons name="walk-outline" size={16} color={COLORS.darkBlue} />
+              <Text style={styles.distanceText}>
+                Distancia: {distance.toFixed(2)} km
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.actionSection}>
@@ -537,10 +656,11 @@ const EventDetailScreen = ({ navigation, route }) => {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/home.png")} style={styles.navIcon} />
+            <Ionicons name="home-outline" size={25} color={COLORS.darkGray} />
           </View>
         </TouchableOpacity>
 
@@ -550,7 +670,7 @@ const EventDetailScreen = ({ navigation, route }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/more.png")} style={styles.navIcon} />
+            <Ionicons name="grid-outline" size={25} color={COLORS.darkGray} />
           </View>
         </TouchableOpacity>
 
@@ -560,7 +680,7 @@ const EventDetailScreen = ({ navigation, route }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+            <Ionicons name="person-outline" size={25} color={COLORS.darkGray} />
           </View>
         </TouchableOpacity>
       </View>
@@ -895,6 +1015,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
+  // 👈 NUEVOS ESTILOS PARA UBICACIÓN
+  userMarker: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.cream,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  
+  locationButtonText: {
+    fontSize: 12,
+    color: COLORS.darkBlue,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  
+  distanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingHorizontal: 5,
+  },
+  
+  distanceText: {
+    fontSize: 14,
+    color: COLORS.darkBlue,
+    marginLeft: 5,
+    fontWeight: '500',
+  },
 })
 
-export default EventDetailScreen
+export default EventDetailScreen;
