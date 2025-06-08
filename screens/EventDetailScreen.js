@@ -1,19 +1,7 @@
 import { useState, useEffect, useRef } from "react"
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  Image, 
-  ScrollView, 
-  Dimensions, 
-  Modal, 
-  Animated,
-  Alert 
-} from "react-native"
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Modal, Animated, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import MapView, { Marker } from "react-native-maps"
+import { Linking } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { markAttendance, unmarkAttendance } from "../components/Attendance"
 import { checkIfBookmarked, addToFavorites, removeFromFavorites } from "../components/Favorites"
@@ -42,11 +30,11 @@ const COLORS = {
 }
 
 const UABCS_LOCATIONS = {
-  Poliforo: {
+  "Poliforo": {
     latitude: 24.103169,
     longitude: -110.315887,
   },
-  Agronomía: {
+  "Agronomía": {
     latitude: 24.100630834143022,
     longitude: -110.3145877928253,
   },
@@ -66,11 +54,11 @@ const UABCS_LOCATIONS = {
     latitude: 24.102294938445176,
     longitude: -110.31306796038446,
   },
-  Economía: {
+  "Economía": {
     latitude: 24.102294938445176,
     longitude: -110.31306796038446,
   },
-  Humanidades: {
+  "Humanidades": {
     latitude: 24.10122,
     longitude: -110.313528,
   },
@@ -82,7 +70,7 @@ const UABCS_LOCATIONS = {
     latitude: 24.102736,
     longitude: -110.316148,
   },
-  default: {
+  "default": {
     latitude: 24.102751,
     longitude: -110.315809,
   },
@@ -169,38 +157,52 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
 }
 
 const EventDetailScreen = ({ navigation, route }) => {
-  // Validación de parámetros
+ 
   if (!route?.params?.event) {
     useEffect(() => {
-      Alert.alert(
-        "Error",
-        "No se pudieron cargar los datos del evento",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
-      );
+      const timer = setTimeout(() => {
+        Alert.alert(
+          "Error",
+          "No se pudieron cargar los datos del evento",
+          [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }, [navigation]);
     
     return (
-      <View style={styles.container}>
-        <Text>Error: No se encontraron datos del evento</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={50} color={COLORS.coral} />
+          <Text style={styles.errorText}>Error: No se encontraron datos del evento</Text>
+          <TouchableOpacity 
+            style={styles.errorButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.errorButtonText}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
   const { eventId, event, date, time } = route.params
-  const mapRef = useRef(null)
+  
 
-  // Estados existentes
+
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isAttending, setIsAttending] = useState(false)
   const [accountId, setAccountId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bookmarkLoading, setBookmarkLoading] = useState(false)
 
-  // 👈 NUEVOS ESTADOS PARA UBICACIÓN
+
   const [userLocation, setUserLocation] = useState(null)
   const [locationPermission, setLocationPermission] = useState(false)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [distance, setDistance] = useState(null)
+  const [locationError, setLocationError] = useState(null)
 
   const [modalConfig, setModalConfig] = useState({
     visible: false,
@@ -211,38 +213,65 @@ const EventDetailScreen = ({ navigation, route }) => {
     onCancel: null,
   })
 
-  // 👈 NUEVAS FUNCIONES PARA UBICACIÓN
+
   const getUserLocation = async () => {
+    if (loadingLocation) return;
+    
     setLoadingLocation(true)
+    setLocationError(null)
+    
     try {
+   
+      if (!LocationService || typeof LocationService.getCurrentLocation !== 'function') {
+        throw new Error('LocationService no está disponible')
+      }
+
       const location = await LocationService.getCurrentLocation()
-      if (location) {
+      
+      if (location?.latitude && location?.longitude) {
         setUserLocation(location)
         
-        // Calcular distancia al evento
+   
         const eventCoords = getLocationCoordinates(event?.location)
-        const dist = LocationService.calculateDistance(
-          location.latitude,
-          location.longitude,
-          eventCoords.latitude,
-          eventCoords.longitude
-        )
-        
-        setDistance(dist)
+        if (eventCoords?.latitude && eventCoords?.longitude) {
+          const dist = LocationService.calculateDistance(
+            location.latitude,
+            location.longitude,
+            eventCoords.latitude,
+            eventCoords.longitude
+          )
+          setDistance(dist)
+        }
+      } else {
+        setLocationError('No se pudo obtener tu ubicación')
       }
     } catch (error) {
       console.error('Error getting user location:', error)
+      setLocationError('Error al obtener ubicación: ' + (error.message || 'Desconocido'))
     } finally {
       setLoadingLocation(false)
     }
   }
 
+
   const requestLocationPermission = async () => {
-    const granted = await LocationService.requestLocationPermission()
-    setLocationPermission(granted)
-    
-    if (granted) {
-      getUserLocation()
+    if (!LocationService || typeof LocationService.requestLocationPermission !== 'function') {
+      setLocationError('Servicio de ubicación no disponible')
+      return
+    }
+
+    try {
+      const granted = await LocationService.requestLocationPermission()
+      setLocationPermission(granted)
+      
+      if (granted) {
+        getUserLocation()
+      } else {
+        setLocationError('Permisos de ubicación denegados')
+      }
+    } catch (error) {
+      console.error('Error requesting location permission:', error)
+      setLocationError('Error al solicitar permisos')
     }
   }
 
@@ -277,6 +306,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -284,48 +314,55 @@ const EventDetailScreen = ({ navigation, route }) => {
         if (id) {
           setAccountId(id)
 
-          await checkIfBookmarked(id, event.id, setIsBookmarked)
+      
+          try {
+            await checkIfBookmarked(id, event.id, setIsBookmarked)
+          } catch (error) {
+            console.error("Error checking bookmark:", error)
+          }
 
-          const attendingStatus = await checkAttendanceStatus(id, event.id)
-          setIsAttending(attendingStatus)
+          try {
+            const attendingStatus = await checkAttendanceStatus(id, event.id)
+            setIsAttending(attendingStatus)
+          } catch (error) {
+            console.error("Error checking attendance:", error)
+          }
         }
         
-        // 👈 VERIFICAR PERMISOS DE UBICACIÓN AL CARGAR
-        const hasPermission = await LocationService.checkPermissionStatus()
-        setLocationPermission(hasPermission)
-        
-        if (hasPermission) {
-          getUserLocation()
+
+        if (LocationService && typeof LocationService.checkPermissionStatus === 'function') {
+          try {
+            const hasPermission = await LocationService.checkPermissionStatus()
+            setLocationPermission(hasPermission)
+            
+            if (hasPermission) {
+           
+              setTimeout(() => {
+                getUserLocation()
+              }, 1000)
+            }
+          } catch (error) {
+            console.error("Error checking location permission:", error)
+            setLocationError('Error verificando permisos de ubicación')
+          }
+        } else {
+          setLocationError('Servicio de ubicación no disponible')
         }
         
       } catch (error) {
-        console.error("Error:", error)
+        console.error("Error in fetchData:", error)
       }
     }
-    fetchData()
-  }, [])
 
-  const resetMapRegion = () => {
-    const coordinates = getLocationCoordinates(event.location)
-    const region = {
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      latitudeDelta: 0.005,
-      longitudeDelta: 0.005,
-    }
 
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(region, 1000)
-    }
-  }
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      resetMapRegion()
-    }, 500)
-
+    const timer = setTimeout(fetchData, 100)
     return () => clearTimeout(timer)
-  }, [event.location])
+  }, [event?.id])
+
+
+  
+
+  
 
   const handleAttendanceToggle = async () => {
     if (loading) return
@@ -477,11 +514,15 @@ const EventDetailScreen = ({ navigation, route }) => {
   }
 
   const getLocationCoordinates = (locationName) => {
-    const location = Object.keys(UABCS_LOCATIONS).find((key) => locationName?.toLowerCase().includes(key.toLowerCase()))
+    if (!locationName) return UABCS_LOCATIONS.default
+
+    const location = Object.keys(UABCS_LOCATIONS).find((key) => 
+      locationName?.toLowerCase().includes(key.toLowerCase())
+    )
     return UABCS_LOCATIONS[location] || UABCS_LOCATIONS.default
   }
 
-  const coordinates = getLocationCoordinates(event.location)
+  const coordinates = getLocationCoordinates(event?.location)
 
   return (
     <View style={styles.container}>
@@ -495,7 +536,11 @@ const EventDetailScreen = ({ navigation, route }) => {
       />
 
       <View style={styles.heroSection}>
-        <Image source={{ uri: event.imageUrl || "https://via.placeholder.com/400x300" }} style={styles.heroImage} />
+        <Image 
+          source={{ uri: event?.imageUrl || "https://via.placeholder.com/400x300" }} 
+          style={styles.heroImage}
+          defaultSource={{ uri: "https://via.placeholder.com/400x300" }}
+        />
         <View style={styles.heroOverlay} />
 
         <SafeAreaView style={styles.headerContainer}>
@@ -519,8 +564,8 @@ const EventDetailScreen = ({ navigation, route }) => {
         </SafeAreaView>
 
         <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>{event.title}</Text>
-          <Text style={styles.heroSubtitle}>Por {event.department}</Text>
+          <Text style={styles.heroTitle}>{event?.title || "Evento"}</Text>
+          <Text style={styles.heroSubtitle}>Por {event?.department || "Departamento"}</Text>
         </View>
       </View>
 
@@ -537,7 +582,7 @@ const EventDetailScreen = ({ navigation, route }) => {
               </View>
               <View>
                 <Text style={styles.detailLabel}>Fecha</Text>
-                <Text style={styles.detailValue}>{formatDate(event.date)}</Text>
+                <Text style={styles.detailValue}>{formatDate(event?.date)}</Text>
               </View>
             </View>
 
@@ -547,94 +592,33 @@ const EventDetailScreen = ({ navigation, route }) => {
               </View>
               <View>
                 <Text style={styles.detailLabel}>Horario</Text>
-                <Text style={styles.detailValue}>{formatTime(event.time)}</Text>
+                <Text style={styles.detailValue}>{formatTime(event?.time)}</Text>
               </View>
             </View>
 
-            <View style={styles.detailItem}>
+            <TouchableOpacity 
+              style={styles.detailItem}
+              onPress={() => {
+                const coords = getLocationCoordinates(event?.location)
+                const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`
+                Linking.openURL(url).catch(err => console.error('Error opening maps:', err))
+              }}
+              activeOpacity={0.7}
+            >
               <View style={styles.detailIcon}>
                 <Ionicons name="location-outline" size={20} color={COLORS.darkBlue} />
               </View>
-              <View>
+              <View style={styles.locationContent}>
                 <Text style={styles.detailLabel}>Ubicación</Text>
-                <Text style={styles.detailValue}>{event.location}</Text>
+                <Text style={styles.detailValue}>{event?.location || "Ubicación no especificada"}</Text>
+                <Text style={styles.tapToOpenText}>Toca para abrir en Maps</Text>
               </View>
-            </View>
+              <Ionicons name="open-outline" size={16} color={COLORS.darkBlue} style={styles.openIcon} />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* 👈 SECCIÓN DEL MAPA ACTUALIZADA CON UBICACIÓN */}
-        <View style={styles.mapSection}>
-          <View style={styles.mapHeader}>
-            <Text style={styles.sectionTitle}>Ubicación</Text>
-            
-            {/* Botón para solicitar ubicación */}
-            {!locationPermission && (
-              <TouchableOpacity 
-                style={styles.locationButton}
-                onPress={requestLocationPermission}
-                disabled={loadingLocation}
-              >
-                <Ionicons name="location-outline" size={16} color={COLORS.darkBlue} />
-                <Text style={styles.locationButtonText}>
-                  {loadingLocation ? "Cargando..." : "Mi ubicación"}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          <View style={styles.mapContainer}>
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              region={{
-                latitude: coordinates.latitude,
-                longitude: coordinates.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-              }}
-              showsUserLocation={locationPermission} // 👈 Mostrar ubicación del usuario
-              showsMyLocationButton={true} // 👈 Botón para centrar en ubicación
-              scrollEnabled={true}
-              zoomEnabled={true}
-              rotateEnabled={false}
-              pitchEnabled={false}
-              onMapReady={() => {
-                setTimeout(() => resetMapRegion(), 100)
-              }}
-            >
-              {/* Marcador del evento */}
-              <Marker coordinate={coordinates} title={event.title} description={event.location}>
-                <View style={styles.marker}>
-                  <Ionicons name="location-sharp" size={30} color={COLORS.darkBlue} />
-                </View>
-              </Marker>
-              
-              {/* 👈 Marcador de ubicación del usuario (opcional) */}
-              {userLocation && (
-                <Marker
-                  coordinate={userLocation}
-                  title="Tu ubicación"
-                  description="Estás aquí"
-                >
-                  <View style={styles.userMarker}>
-                    <Ionicons name="person" size={20} color="white" />
-                  </View>
-                </Marker>
-              )}
-            </MapView>
-          </View>
-          
-          {/* 👈 Mostrar distancia si tenemos ubicación del usuario */}
-          {distance !== null && (
-            <View style={styles.distanceContainer}>
-              <Ionicons name="walk-outline" size={16} color={COLORS.darkBlue} />
-              <Text style={styles.distanceText}>
-                Distancia: {distance.toFixed(2)} km
-              </Text>
-            </View>
-          )}
-        </View>
+       
 
         <View style={styles.actionSection}>
           <TouchableOpacity
@@ -803,6 +787,8 @@ const styles = StyleSheet.create({
   detailItem: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   detailIcon: {
     width: 40,
@@ -824,62 +810,65 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  mapSection: {
-    backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
-    marginBottom: 15,
-    borderRadius: 15,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  mapHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  resetButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.cream,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-  },
-  resetButtonText: {
-    fontSize: 12,
-    color: COLORS.darkBlue,
-    marginLeft: 4,
-    fontWeight: "500",
-  },
-  mapContainer: {
-    height: 200,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  map: {
-    flex: 1,
-  },
-  marker: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  
 
   actionSection: {
     marginHorizontal: 20,
     marginTop: 20,
     gap: 15,
+  },
+   staticMapContainer: {
+    height: 200,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  
+  mapPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  
+  mapPlaceholderTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkBlue,
+    marginTop: 15,
+    textAlign: 'center',
+  },
+  
+  mapPlaceholderSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  
+  coordinatesContainer: {
+    backgroundColor: COLORS.cream,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginTop: 15,
+  },
+  
+  coordinatesText: {
+    fontSize: 12,
+    color: COLORS.darkBlue,
+    fontFamily: 'monospace',
+  },
+  
+  locationError: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontStyle: 'italic',
+    maxWidth: 120,
+    textAlign: 'center',
   },
   attendButton: {
     backgroundColor: "#efdcbd",
@@ -941,7 +930,7 @@ const styles = StyleSheet.create({
     borderColor: "#f0e342",
   },
 
-  // Estilos para el modal personalizado
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -1016,7 +1005,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // 👈 NUEVOS ESTILOS PARA UBICACIÓN
+
   userMarker: {
     width: 30,
     height: 30,
@@ -1056,6 +1045,18 @@ const styles = StyleSheet.create({
     color: COLORS.darkBlue,
     marginLeft: 5,
     fontWeight: '500',
+  },
+  locationContent: {
+    flex: 1,
+  },
+  tapToOpenText: {
+    fontSize: 12,
+    color: COLORS.lightBlue,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  openIcon: {
+    marginLeft: 10,
   },
 })
 
