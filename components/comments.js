@@ -1,20 +1,37 @@
-const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
+/**
+ * comments.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Pantalla para obtener comentarios
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ */
+const API_URL = "https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app";
 
-
+/**
+ * Obtiene todos los comentarios desde la API
+ * @returns {Object} Un objeto con éxito y los comentarios ordenados por fecha (más recientes primero)
+ */
 export const fetchComments = async () => {
   try {
     const response = await fetch(`${API_URL}/comments`, {
       headers: {
+        // Evita la advertencia automática del navegador de ngrok
         "ngrok-skip-browser-warning": "true",
       },
     });
+
     const data = await response.json();
 
     if (data.success) {
-    
+      // Ordena los comentarios de más recientes a más antiguos
       const sortedComments = data.comments.sort(
         (a, b) => new Date(b.dateComment) - new Date(a.dateComment)
       );
+
       return {
         success: true,
         comments: sortedComments,
@@ -28,7 +45,11 @@ export const fetchComments = async () => {
   }
 };
 
-
+/**
+ * Envía un nuevo comentario a la API
+ * @param {Object} commentData - Contiene título, descripción y accountId
+ * @returns {Object} Respuesta del servidor si fue exitoso
+ */
 export const createComment = async (commentData) => {
   try {
     console.log("Enviando comentario con ID de cuenta:", commentData.accountId);
@@ -40,6 +61,7 @@ export const createComment = async (commentData) => {
         "ngrok-skip-browser-warning": "true",
       },
       body: JSON.stringify({
+        // Si no hay título, se asigna uno por defecto
         titleComment: commentData.titleComment || "Comentario de usuario",
         descriptionComment: commentData.descriptionComment,
         accountId: commentData.accountId,
@@ -62,22 +84,31 @@ export const createComment = async (commentData) => {
   }
 };
 
-
+/**
+ * Convierte una fecha en formato UTC a hora local (ajustando -7 horas)
+ * @param {string} utcDateString - Fecha UTC
+ * @returns {Date} Objeto Date en horario local
+ */
 export const convertUTCToLocal = (utcDateString) => {
   if (!utcDateString) return null;
 
   try {
     const utcDate = new Date(utcDateString);
     
+    // Ajuste manual para zona horaria UTC-7
     const localDate = new Date(utcDate.getTime() - 7 * 60 * 60 * 1000);
     return localDate;
   } catch (error) {
     console.error("Error converting UTC to local:", error);
-    return new Date(utcDateString);
+    return new Date(utcDateString); // Devuelve la fecha original si hay error
   }
 };
 
-
+/**
+ * Formatea una fecha a una cadena amigable del tipo: "Hace 5 minutos", "Hoy", "Ayer", etc.
+ * @param {string} dateString - Fecha en formato UTC
+ * @returns {string} Fecha formateada humanamente
+ */
 export const formatDateTime = (dateString) => {
   if (!dateString) return "";
 
@@ -104,6 +135,7 @@ export const formatDateTime = (dateString) => {
     } else if (diffDays < 7) {
       return `Hace ${diffDays} días`;
     } else {
+      // Si han pasado más de 7 días, se muestra la fecha completa
       const hours = localDate.getHours().toString().padStart(2, "0");
       const minutes = localDate.getMinutes().toString().padStart(2, "0");
 

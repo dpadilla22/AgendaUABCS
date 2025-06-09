@@ -1,9 +1,30 @@
+/**
+ * DepartamentScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Patalla de los departamentos con sus respectivos eventos
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
+/**
+ * Obtiene la fecha actual en formato YYYY-MM-DD
+ * @returns {string} Fecha actual formateada
+ */
 const getTodayString = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -12,6 +33,12 @@ const getTodayString = () => {
   return `${year}-${month}-${day}`;
 };
 
+/**
+ * Extrae solo la parte de fecha de un string datetime ISO
+ * Maneja tanto fechas con formato ISO completo como fechas simples
+ * @param {string} dateString - Fecha en formato ISO o YYYY-MM-DD
+ * @returns {string} Fecha en formato YYYY-MM-DD
+ */
 const getLocalDateString = (dateString) => {
   if (dateString.includes('T')) {
     return dateString.split('T')[0];
@@ -19,7 +46,11 @@ const getLocalDateString = (dateString) => {
   return dateString;
 };
 
-
+/**
+ * Extrae la hora de un string de fecha ISO y la convierte al timezone local
+ * @param {string} dateString - Fecha en formato ISO
+ * @returns {string|null} Hora formateada en formato HH:MM o null si hay error
+ */
 const extractTimeString = (dateString) => {
   if (!dateString) return null;
   
@@ -37,7 +68,11 @@ const extractTimeString = (dateString) => {
   }
 };
 
-
+/**
+ * Formatea la hora desde un string de fecha con manejo de errores
+ * @param {string} dateString - Fecha en formato ISO
+ * @returns {string} Hora formateada o mensaje de error
+ */
 const formatTimeFromDate = (dateString) => {
   if (!dateString) return "Horario no especificado";
   
@@ -55,20 +90,25 @@ const formatTimeFromDate = (dateString) => {
   }
 };
 
-
+/**
+ * Formatea una fecha para mostrar en formato legible en español
+ * Maneja tanto fechas ISO completas como fechas simples YYYY-MM-DD
+ * @param {string} dateString - Fecha en formato ISO o YYYY-MM-DD
+ * @returns {string} Fecha formateada en español (ej: "15 de enero de 2024")
+ */
 const formatDate = (dateString) => {
   if (!dateString) return "Fecha no disponible";
   
   try {
     let dateToFormat;
     
-
+    // Si es una fecha ISO completa, extraer solo la parte de fecha
     if (dateString.includes('T')) {
       const localDate = getLocalDateString(dateString);
       const [year, month, day] = localDate.split('-');
       dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     } else {
-    
+      // Fecha simple YYYY-MM-DD
       const [year, month, day] = dateString.split('-');
       dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
@@ -86,6 +126,7 @@ const formatDate = (dateString) => {
 
 const todayString = getTodayString();
 
+// Paleta de colores centralizada para consistencia visual
 const COLORS = {
   darkBlue: "#003366",
   lightBlue: "#4dabf7",
@@ -103,8 +144,14 @@ const COLORS = {
   cream: "#F5F5DC", 
 };
 
-const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
+// URL base de la API - debería moverse a variables de entorno en producción
+const API_URL = "https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app";
 
+/**
+ * Componente principal para mostrar el calendario y eventos de un departamento específico
+ * @param {Object} navigation - Objeto de navegación de React Navigation
+ * @param {Object} route - Parámetros de la ruta actual
+ */
 const DepartamentScreen = ({ navigation, route }) => {
   const { nombreDepartamento } = route.params;
   const [selectedDate, setSelectedDate] = useState(todayString);
@@ -112,12 +159,14 @@ const DepartamentScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [accountId, setAccountId] = useState(null);
 
+  // Efecto para cargar eventos desde la API al montar el componente
   useEffect(() => {
     const fetchEventos = async () => {
       try {
         console.log('Fetching events from:', API_URL);
         const response = await fetch(`${API_URL}/events`, {
           headers: {
+            // Header necesario para ngrok en desarrollo
             'ngrok-skip-browser-warning': 'true'
           }
         });
@@ -127,10 +176,10 @@ const DepartamentScreen = ({ navigation, route }) => {
         }
         
         const data = await response.json();
-       
         setEventos(data.events || []);
       } catch (error) {
         console.error('Error al obtener eventos:', error);
+        // En caso de error, establecer array vacío para evitar crashes
         setEventos([]);
       } finally {
         setLoading(false);
@@ -139,6 +188,7 @@ const DepartamentScreen = ({ navigation, route }) => {
     fetchEventos();
   }, []);
 
+  // Efecto para recuperar el ID de cuenta desde AsyncStorage
   useEffect(() => {
     const fetchAccountId = async () => {
       try {
@@ -153,13 +203,17 @@ const DepartamentScreen = ({ navigation, route }) => {
     fetchAccountId();
   }, []);
 
-
+  /**
+   * Genera el objeto de fechas marcadas para el calendario
+   * Marca las fechas que tienen eventos y resalta la fecha seleccionada
+   * @returns {Object} Objeto con fechas marcadas para react-native-calendars
+   */
   const getMarkedDates = () => {
     const marked = {};
     const eventosDelDepartamento = eventos.filter(evento => evento.department === nombreDepartamento);
     
+    // Marcar fechas con eventos
     eventosDelDepartamento.forEach(evento => {
-  
       const eventDate = getLocalDateString(evento.date);
       marked[eventDate] = {
         marked: true,
@@ -168,6 +222,7 @@ const DepartamentScreen = ({ navigation, route }) => {
       };
     });
 
+    // Resaltar fecha seleccionada (puede sobrescribir marcas anteriores)
     marked[selectedDate] = {
       ...(marked[selectedDate] || {}),
       selected: true,
@@ -177,12 +232,17 @@ const DepartamentScreen = ({ navigation, route }) => {
     return marked;
   };
 
-
+  // Filtrar eventos para mostrar solo los del departamento actual y fecha seleccionada
   const eventosFiltrados = eventos.filter(evento =>
     evento.department === nombreDepartamento &&
     getLocalDateString(evento.date) === selectedDate
   );
 
+  /**
+   * Renderiza cada evento individual en la lista
+   * @param {Object} item - Objeto del evento a renderizar
+   * @returns {JSX.Element} Componente de tarjeta de evento
+   */
   const renderEvento = ({ item }) => (
     <TouchableOpacity
       style={styles.eventCard}
@@ -226,6 +286,7 @@ const DepartamentScreen = ({ navigation, route }) => {
           </View>
         </View>
       </View>
+      {/* Badge con las primeras 3 letras del departamento */}
       <View style={styles.eventBadge}>
         <Text style={styles.eventBadgeText}>
           {nombreDepartamento.substring(0, 3).toUpperCase()}
@@ -239,6 +300,7 @@ const DepartamentScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.lightBlue} />
 
+      {/* Pantalla de carga con logo mientras se obtienen los datos */}
       {loading ? (
         <View style={styles.fullScreenLoading}>
           <Image
@@ -249,6 +311,7 @@ const DepartamentScreen = ({ navigation, route }) => {
         </View>
       ) : (
         <>
+          {/* Header con botón de regreso y título */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
               <Image
@@ -261,6 +324,7 @@ const DepartamentScreen = ({ navigation, route }) => {
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Contenedor del calendario con fechas marcadas */}
             <View style={styles.calendarContainer}>
               <Calendar
                 current={selectedDate}
@@ -288,6 +352,7 @@ const DepartamentScreen = ({ navigation, route }) => {
               />
             </View>
 
+            {/* Sección de eventos para la fecha seleccionada */}
             <View style={styles.eventsContainer}>
               <View style={styles.eventsHeader}>
                 <Text style={styles.eventsTitle}>{nombreDepartamento}</Text>
@@ -301,6 +366,7 @@ const DepartamentScreen = ({ navigation, route }) => {
                 )}
               </View>
 
+              {/* Mostrar mensaje vacío o lista de eventos */}
               {eventosFiltrados.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Image source={require("../assets/calendar.png")} style={styles.emptyImage} />
@@ -312,7 +378,7 @@ const DepartamentScreen = ({ navigation, route }) => {
                   data={eventosFiltrados}
                   keyExtractor={item => item.id.toString()}
                   renderItem={renderEvento}
-                  scrollEnabled={false}
+                  scrollEnabled={false} // Deshabilitado porque está dentro de ScrollView
                   showsVerticalScrollIndicator={false}
                   ItemSeparatorComponent={() => <View style={styles.eventSeparator} />}
                 />
@@ -320,6 +386,7 @@ const DepartamentScreen = ({ navigation, route }) => {
             </View>
           </ScrollView>
 
+          {/* Barra de navegación inferior */}
           <View style={styles.bottomNav}>
             <TouchableOpacity 
               style={styles.bottomNavItem} 

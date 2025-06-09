@@ -1,9 +1,31 @@
+/**
+ * Dashboard.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Patalla administrativa con los eventos, departamentos, comentarios y sugerencias
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, ActivityIndicator, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://4e06-200-92-221-16.ngrok-free.app'; 
+// CONFIGURACIÓN CENTRALIZADA
+// Centralizar URLs y configuraciones facilita el mantenimiento
+const API_BASE_URL = 'https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app'; 
 
+// PALETA DE COLORES CONSISTENTE
+// Mantener colores centralizados asegura consistencia visual en toda la app
 const COLORS = {
   primaryBlue: "#1B3A5C",     
   secondaryBlue: "#4A7BA7",    
@@ -20,18 +42,27 @@ const COLORS = {
   cream: "#F5F5DC",
 };
 
+
 const AdminDashboard = ({ navigation }) => {
+  // ESTADO DE AUTENTICACIÓN Y NAVEGACIÓN
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // ESTADOS DE CARGA Y ACTUALIZACIÓN
+  // Separar estados de loading mejora UX y debugging
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
-
+  // ESTADOS DE DATOS - Organizados por entidad
+  // Mantener estados separados facilita el manejo independiente de cada sección
   const [accounts, setAccounts] = useState([]);
   const [events, setEvents] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [allComments, setAllComments] = useState([]);
+  
+  // ESTADO DE ESTADÍSTICAS AGREGADAS
+  // Centralizar métricas para el dashboard overview
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalEvents: 0,
@@ -40,6 +71,8 @@ const AdminDashboard = ({ navigation }) => {
     totalSuggestions: 0
   });
 
+  // EFECTOS DE CICLO DE VIDA
+  // Cargar datos iniciales al montar el componente
   useEffect(() => {
     loadUserData();
     if (activeTab === 'overview') {
@@ -47,10 +80,17 @@ const AdminDashboard = ({ navigation }) => {
     }
   }, []);
 
+  // EFECTO REACTIVO PARA CAMBIO DE PESTAÑAS
+  // Cargar datos específicos cuando cambia la pestaña activa
   useEffect(() => {
     loadTabData();
   }, [activeTab]);
 
+  /**
+   * GESTIÓN DE DATOS DE USUARIO
+   * Cargar información persistida del usuario desde AsyncStorage
+   * PATRÓN: Error Handling + Async/Await
+   */
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
@@ -62,6 +102,11 @@ const AdminDashboard = ({ navigation }) => {
     }
   };
 
+  /**
+   * FUNCIÓN DE LOGOUT CON CONFIRMACIÓN
+   * PATRÓN: Double Confirmation para acciones destructivas
+   * Mejora UX previniendo logout accidental
+   */
   const handleLogout = async () => {
     Alert.alert(
       'Cerrar Sesión',
@@ -107,6 +152,10 @@ const AdminDashboard = ({ navigation }) => {
     }
   };
 
+  /**
+   * CARGA DE DATOS PARA OVERVIEW
+   * PATRÓN: Parallel API Calls con Promise.all
+   */
   const loadOverviewData = async () => {
     setLoading(true);
     try {
@@ -118,12 +167,14 @@ const AdminDashboard = ({ navigation }) => {
         apiCall('/suggestions')
       ]);
 
+      // Actualización de estados en batch para evitar renders múltiples
       setAccounts(accountsData.data || []);
       setEvents(eventsData.events || []);
       setDepartments(departmentsData.departments || []);
       setAllComments(commentsData.comments || []);
       setSuggestions(suggestionsData.suggestions || []);
 
+      // Cálculo de estadísticas agregadas
       setStats({
         totalUsers: (accountsData.data || []).length,
         totalEvents: (eventsData.events || []).length,
@@ -138,6 +189,13 @@ const AdminDashboard = ({ navigation }) => {
     }
   };
 
+  /**
+   * CARGA SELECTIVA DE DATOS POR PESTAÑA
+   * PATRÓN: Lazy Loading
+   * 
+   * OPTIMIZACIÓN: Solo carga datos necesarios para la pestaña activa
+   * Reduce consumo de ancho de banda y mejora rendimiento
+   */
   const loadTabData = async () => {
     setLoading(true);
     try {
@@ -170,6 +228,10 @@ const AdminDashboard = ({ navigation }) => {
     }
   };
 
+  /**
+   * FUNCIÓN DE ACTUALIZACIÓN PULL-TO-REFRESH
+   * Permite al usuario actualizar datos manualmente
+   */
   const onRefresh = async () => {
     setRefreshing(true);
     if (activeTab === 'overview') {
@@ -180,6 +242,13 @@ const AdminDashboard = ({ navigation }) => {
     setRefreshing(false);
   };
 
+  // COMPONENTES DE RENDERIZADO POR SECCIÓN
+  // PATRÓN: Component Composition - Separar renderizado en funciones específicas
+
+  /**
+   * RENDERIZADO DEL OVERVIEW CON MÉTRICAS
+   * Muestra estadísticas agregadas en cards visuales
+   */
   const renderOverview = () => (
     <View>
       <Text style={styles.sectionTitle}>Resumen General</Text>
@@ -208,6 +277,11 @@ const AdminDashboard = ({ navigation }) => {
     </View>
   );
 
+/**
+ * RENDERIZADO DE CUENTAS DE USUARIO
+ * PATRÓN: List Rendering con key única
+ * Fallback a index si no hay ID único disponible
+ */
 const renderAccounts = () => (
   <View>
     <Text style={styles.sectionTitle}>Cuentas ({accounts.length})</Text>
@@ -221,6 +295,10 @@ const renderAccounts = () => (
   </View>
 );
 
+/**
+ * RENDERIZADO DE EVENTOS
+ * Muestra información completa del evento en formato card
+ */
 const renderEvents = () => (
   <View>
     <Text style={styles.sectionTitle}>Eventos ({events.length})</Text>
@@ -236,12 +314,15 @@ const renderEvents = () => (
   </View>
 );
 
+/**
+ * RENDERIZADO DE COMENTARIOS
+ * Estructura simplificada enfocada en contenido y autor
+ */
 const renderComments = () => (
   <View>
     <Text style={styles.sectionTitle}>Comentarios ({allComments.length})</Text>
     {allComments.map((comment, index) => (
       <View key={comment.idComment || index} style={styles.card}>
-        {/* <Text style={styles.cardTitle}>{comment.titleComment}</Text> */}
         <Text style={styles.cardText}>{comment.descriptionComment}</Text>
         <Text style={styles.cardText}>{comment.nameUser}</Text>
         <Text style={styles.cardDate}>{comment.dateComment}</Text>
@@ -249,6 +330,11 @@ const renderComments = () => (
     ))}
   </View>
 );
+
+/**
+ * RENDERIZADO DE DEPARTAMENTOS
+ * PATRÓN: Defensive Programming con múltiples fallbacks para IDs
+ */
 const renderDepartments = () => (
   <View>
     <Text style={styles.sectionTitle}>Departamentos ({departments.length})</Text>
@@ -261,6 +347,10 @@ const renderDepartments = () => (
   </View>
 );
 
+/**
+ * RENDERIZADO DE SUGERENCIAS
+ * Incluye información de evento sugerido y referencias a entidades relacionadas
+ */
 const renderSuggestions = () => (
   <View>
     <Text style={styles.sectionTitle}>Sugerencias ({suggestions.length})</Text>
@@ -276,7 +366,11 @@ const renderSuggestions = () => (
   </View>
 );
 
+  /**
+   * RENDERIZADO CONDICIONAL DEL CONTENIDO PRINCIPAL
+   */
   const renderContent = () => {
+    // Estado de carga con indicador visual
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
@@ -286,6 +380,7 @@ const renderSuggestions = () => (
       );
     }
 
+    // Switch para renderizado específico por pestaña
     switch (activeTab) {
       case 'overview': return renderOverview();
       case 'accounts': return renderAccounts();
@@ -297,17 +392,18 @@ const renderSuggestions = () => (
     }
   };
 
+  // RENDERIZADO PRINCIPAL DEL COMPONENTE
   return (
     <View style={styles.container}>
-     
+      {/* HEADER PRINCIPAL */}
       <View style={styles.header}>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Dashboard</Text>
-        
         </View>
       </View>
 
-    
+      {/* NAVEGACIÓN POR PESTAÑAS HORIZONTAL */}
+      {/* PATRÓN: Tab Navigation con scroll horizontal para múltiples opciones */}
       <View style={styles.tabContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[
@@ -331,7 +427,7 @@ const renderSuggestions = () => (
         </ScrollView>
       </View>
 
-   
+      {/* CONTENIDO PRINCIPAL CON PULL-TO-REFRESH */}
       <ScrollView
         style={styles.content}
         refreshControl={
@@ -341,8 +437,8 @@ const renderSuggestions = () => (
         {renderContent()}
       </ScrollView>
 
+      {/* NAVEGACIÓN INFERIOR CON LOGOUT */}
       <View style={styles.bottomNav}>
-       
         <TouchableOpacity
           style={styles.bottomNavItem}
           onPress={() => navigation && navigation.navigate("Login")}

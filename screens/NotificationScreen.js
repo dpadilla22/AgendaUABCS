@@ -1,9 +1,28 @@
+/**
+ * NotificationScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Pantalla de notificacion donde notifica sobre los eventos que estan pasando.
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: WelcomeScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress, logoScale
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import { useEffect, useState, useRef } from "react"
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import Toast from "react-native-toast-message"
 
+// Paleta de colores centralizada
 const COLORS = {
   darkBlue: "#003366",
   lightBlue: "#7AB3D1",
@@ -26,16 +45,21 @@ const COLORS = {
   darkGray: "#666666",
 }
 
-const API_URL = "https://4e06-200-92-221-16.ngrok-free.app"
+const API_URL = "https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app"
 
 const Notificaciones = () => {
   const navigation = useNavigation()
+  
+  // Estados principales del componente
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [readNotifications, setReadNotifications] = useState(new Set()) 
+  
+  // Referencias para control de estado entre renders
   const previousNotificationsRef = useRef([])
   const isFirstLoadRef = useRef(true)
 
+  // Convierte fecha UTC a hora local (UTC-7)
   const convertUTCToLocal = (utcDateString) => {
     if (!utcDateString) return null
 
@@ -49,6 +73,7 @@ const Notificaciones = () => {
     }
   }
 
+  // Formatea fechas con texto relativo (hace X minutos, ayer, etc.)
   const formatDate = (dateString) => {
     if (!dateString) return ""
 
@@ -101,21 +126,20 @@ const Notificaciones = () => {
     }
   }
 
- 
+  // Carga notificaciones leídas desde AsyncStorage
   const loadReadNotifications = async () => {
     try {
       const readNotificationsData = await AsyncStorage.getItem("readNotifications")
       if (readNotificationsData) {
         const readIds = JSON.parse(readNotificationsData)
         setReadNotifications(new Set(readIds))
-       
       }
     } catch (error) {
       console.error("Error loading read notifications:", error)
     }
   }
 
- 
+  // Guarda notificaciones leídas en AsyncStorage
   const saveReadNotifications = async (readIds) => {
     try {
       await AsyncStorage.setItem("readNotifications", JSON.stringify(Array.from(readIds)))
@@ -125,34 +149,28 @@ const Notificaciones = () => {
     }
   }
 
-
   const markNotificationAsRead = async (notificationId) => {
     const newReadNotifications = new Set(readNotifications)
     newReadNotifications.add(notificationId)
     setReadNotifications(newReadNotifications)
     await saveReadNotifications(newReadNotifications)
-
-   
   }
-
 
   const markAllNotificationsAsRead = async () => {
     const allNotificationIds = notifications.map((notif) => notif.id)
     const newReadNotifications = new Set([...readNotifications, ...allNotificationIds])
     setReadNotifications(newReadNotifications)
     await saveReadNotifications(newReadNotifications)
-
-    
   }
 
- 
   const isNotificationRead = (notificationId) => {
     return readNotifications.has(notificationId)
   }
 
+  // Muestra toast para notificaciones nuevas o pendientes
   const checkForNotifications = (newNotifications, isFirstLoad = false) => {
     if (isFirstLoad) {
-   
+      // En primera carga, solo mostrar si hay notificaciones no leídas
       const unreadNotifications = newNotifications.filter((notif) => !isNotificationRead(notif.id))
 
       if (unreadNotifications.length > 0) {
@@ -160,7 +178,6 @@ const Notificaciones = () => {
           Toast.show({
             type: "info",
             text1: "Tienes notificaciones",
-            // text2: `${unreadNotifications.length} notificación${unreadNotifications.length > 1 ? "es" : ""} pendiente${unreadNotifications.length > 1 ? "s" : ""}`,
             visibilityTime: 4000,
             position: "top",
             topOffset: 60,
@@ -176,10 +193,12 @@ const Notificaciones = () => {
       return
     }
 
+    // Detectar notificaciones completamente nuevas
     const newOnes = newNotifications.filter(
       (newNotif) => !previousNotifications.some((prevNotif) => prevNotif.id === newNotif.id),
     )
 
+    // Mostrar toast para cada notificación nueva con delay
     newOnes.forEach((notification, index) => {
       setTimeout(() => {
         Toast.show({
@@ -194,8 +213,10 @@ const Notificaciones = () => {
     })
   }
 
+  // Obtiene notificaciones desde API
   const fetchNotifications = async (isFirstLoad = false) => {
     try {
+      // Buscar ID de cuenta en diferentes claves de AsyncStorage
       let accountId = await AsyncStorage.getItem("accountId")
       if (!accountId) {
         accountId = await AsyncStorage.getItem("idAccount")
@@ -207,8 +228,6 @@ const Notificaciones = () => {
         return
       }
 
-      
-
       const response = await fetch(`${API_URL}/notifications/${accountId}`, {
         headers: {
           "ngrok-skip-browser-warning": "true",
@@ -216,7 +235,6 @@ const Notificaciones = () => {
       })
 
       const data = await response.json()
-    
 
       if (data.success && data.notifications) {
         const sortedNotifications = data.notifications.sort((a, b) => new Date(b.dateCreated) - new Date(a.dateCreated))
@@ -245,6 +263,7 @@ const Notificaciones = () => {
     }
   }
 
+  // Inicialización y polling de notificaciones
   useEffect(() => {
     const initializeNotifications = async () => {
       await loadReadNotifications() 
@@ -254,6 +273,7 @@ const Notificaciones = () => {
 
     initializeNotifications()
 
+    // Polling cada 30 segundos para nuevas notificaciones
     const interval = setInterval(() => {
       if (!loading) {
         fetchNotifications(false)
@@ -288,7 +308,6 @@ const Notificaciones = () => {
           <View style={[styles.statusDot, { backgroundColor: isRead ? COLORS.textLight : COLORS.primary }]} />
         </View>
 
-   
         {!isRead && <View style={styles.unreadIndicator} />}
       </TouchableOpacity>
     )
@@ -307,7 +326,6 @@ const Notificaciones = () => {
     </View>
   )
 
- 
   const unreadCount = notifications.filter((notif) => !isNotificationRead(notif.id)).length
 
   return (

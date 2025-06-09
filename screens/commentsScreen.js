@@ -1,3 +1,21 @@
+/**
+ * commentsScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Patalla de comentarios de usuarios
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import { useEffect, useState } from "react"
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar, RefreshControl, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -5,6 +23,7 @@ import { useNavigation } from "@react-navigation/native"
 import Toast from "react-native-toast-message"
 import { fetchComments, createComment, formatDateTime } from "../components/comments"
 
+// Paleta de colores centralizada para mantener consistencia visual
 const COLORS = {
   darkBlue: "#003366",
   lightBlue: "#7AB3D1",
@@ -31,6 +50,8 @@ const COLORS = {
 
 const CommentsScreen = () => {
   const navigation = useNavigation()
+  
+  // Estados principales de la pantalla
   const [comments, setComments] = useState([])
   const [refreshing, setRefreshing] = useState(false)
   const [commentText, setCommentText] = useState("")
@@ -39,6 +60,7 @@ const CommentsScreen = () => {
   const [accountId, setAccountId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Estados del modal personalizado para notificaciones
   const [showModal, setShowModal] = useState(false)
   const [modalConfig, setModalConfig] = useState({
     title: "",
@@ -51,6 +73,7 @@ const CommentsScreen = () => {
     cancelText: "Cancelar",
   })
 
+  // Inicialización de la pantalla con carga paralela de datos
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true)
@@ -61,6 +84,13 @@ const CommentsScreen = () => {
     initialize()
   }, [])
 
+  /**
+   * Muestra un modal personalizado con configuración flexible
+   * @param {string} title - Título del modal
+   * @param {string} message - Mensaje a mostrar
+   * @param {string} type - Tipo de modal (error, success, warning, info)
+   * @param {Object} options - Opciones adicionales del modal
+   */
   const showCustomModal = (title, message, type = "error", options = {}) => {
     setModalConfig({
       title,
@@ -103,15 +133,22 @@ const CommentsScreen = () => {
     hideModal()
   }
 
+  /**
+   * Obtiene los datos del usuario actual desde AsyncStorage
+   * Maneja múltiples formatos de almacenamiento para compatibilidad
+   * con diferentes versiones de la aplicación
+   */
   const getCurrentUser = async () => {
     try {
       console.log("Intentando obtener datos de usuario...")
 
+      // Intenta obtener el ID de cuenta desde diferentes keys para compatibilidad
       let id = await AsyncStorage.getItem("accountId")
       if (!id) {
         id = await AsyncStorage.getItem("idAccount")
       }
 
+      // Procesa los datos de nombre de usuario
       const userData = await AsyncStorage.getItem("nameUser")
       let userName = null
 
@@ -120,14 +157,17 @@ const CommentsScreen = () => {
           const parsedData = JSON.parse(userData)
           userName = parsedData.name || parsedData.nameUser
 
+          // Fallback para obtener ID si no se encontró anteriormente
           if (parsedData.idAccount && !id) {
             id = parsedData.idAccount
           }
         } catch (e) {
+          // Si no es JSON válido, lo usa como string simple
           userName = userData
         }
       }
 
+      // Intenta obtener datos completos del usuario
       const userDataComplete = await AsyncStorage.getItem("userData")
       if (userDataComplete) {
         try {
@@ -145,6 +185,7 @@ const CommentsScreen = () => {
         }
       }
 
+      // Crea un objeto de usuario mínimo si no existe currentUser
       if (id && !currentUser) {
         setCurrentUser({
           idAccount: id,
@@ -165,7 +206,10 @@ const CommentsScreen = () => {
     }
   }
 
-
+  /**
+   * Carga los comentarios desde el servidor
+   * Maneja errores y muestra notificaciones apropiadas
+   */
   const loadComments = async () => {
     try {
       const result = await fetchComments()
@@ -180,6 +224,9 @@ const CommentsScreen = () => {
     }
   }
 
+  /**
+   * Maneja el pull-to-refresh actualizando comentarios y datos de usuario
+   */
   const onRefresh = async () => {
     setRefreshing(true)
     await loadComments()
@@ -187,13 +234,18 @@ const CommentsScreen = () => {
     setRefreshing(false)
   }
 
-
+  /**
+   * Envía un nuevo comentario al servidor
+   * Valida la entrada del usuario y maneja autenticación
+   */
   const submitComment = async () => {
+    // Validación de entrada
     if (!commentText.trim()) {
       showCustomModal("Campo requerido", "Por favor escribe un comentario antes de enviarlo.")
       return
     }
 
+    // Verificación de autenticación con reintentos
     if (!accountId) {
       await getCurrentUser()
 
@@ -226,7 +278,7 @@ const CommentsScreen = () => {
       
       setCommentText("")
       showCustomModal("Comentario enviado", "Tu comentario ha sido publicado correctamente.", "success")
-      await loadComments()
+      await loadComments() // Recarga comentarios para mostrar el nuevo
     } catch (error) {
       console.error("Error submitting comment:", error)
       showCustomModal("Error al enviar", "No se pudo enviar tu comentario. Por favor, inténtalo nuevamente.", "error")
@@ -235,10 +287,17 @@ const CommentsScreen = () => {
     }
   }
 
+  /**
+   * Obtiene el identificador de usuario para mostrar
+   * Proporciona fallback para usuarios anónimos
+   */
   const getUserIdentifier = (item) => {
     return item.nameUser || "Usuario Anónimo"
   }
 
+  /**
+   * Renderiza cada item de comentario en la lista
+   */
   const renderCommentItem = ({ item, index }) => {
     return (
       <View style={styles.commentCard}>
@@ -255,6 +314,11 @@ const CommentsScreen = () => {
       </View>
     )
   }
+
+  /**
+   * Renderiza el área de entrada de comentarios
+   * Adapta la UI según el estado de carga y autenticación
+   */
   const renderCommentInput = () => (
     <View style={styles.inputCard}>
       <View style={styles.inputHeader}>
@@ -285,6 +349,7 @@ const CommentsScreen = () => {
               </TouchableOpacity>
             </>
           ) : (
+            // Estado de error de autenticación
             <View style={styles.authErrorContainer}>
               <Text style={styles.authErrorText}>
                 No se pudo verificar tu sesión. Por favor, cierra la aplicación e inicia sesión nuevamente.
@@ -299,6 +364,9 @@ const CommentsScreen = () => {
     </View>
   )
 
+  /**
+   * Renderiza el estado vacío cuando no hay comentarios
+   */
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyTitle}>Sin comentarios</Text>
@@ -309,7 +377,10 @@ const CommentsScreen = () => {
     </View>
   )
 
-
+  /**
+   * Componente de modal personalizado reutilizable
+   * Adapta colores y comportamiento según el tipo de mensaje
+   */
   const CustomModal = () => (
     <Modal visible={showModal} transparent={true} animationType="fade" onRequestClose={hideModal}>
       <View style={styles.modalOverlay}>
@@ -359,6 +430,7 @@ const CommentsScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.cream} />
 
+      {/* Header con navegación */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
@@ -367,6 +439,7 @@ const CommentsScreen = () => {
         <View style={styles.emptySpace} />
       </View>
 
+      {/* Contenido principal con manejo de teclado */}
       <KeyboardAvoidingView style={styles.contentContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView
           style={styles.scrollContainer}
@@ -383,6 +456,7 @@ const CommentsScreen = () => {
         >
           {renderCommentInput()}
 
+          {/* Lista de comentarios o estado vacío */}
           {comments.length === 0 ? (
             renderEmptyState()
           ) : (
@@ -397,9 +471,10 @@ const CommentsScreen = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-    
+      {/* Modal de notificaciones */}
       <CustomModal />
 
+      {/* Navegación inferior */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
           <View style={styles.navIconContainer}>
@@ -428,7 +503,7 @@ const CommentsScreen = () => {
         </TouchableOpacity>
       </View>
 
-    
+      {/* Toast para notificaciones simples */}
       <Toast />
     </SafeAreaView>
   )

@@ -1,3 +1,21 @@
+/**
+ * EventDetailScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Patalla con los detalles de los eventos
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import { useState, useEffect, useRef } from "react"
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Modal, Animated, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
@@ -10,6 +28,7 @@ import LocationService from "../components/LocationServices"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
+// Paleta de colores centralizada para mantener consistencia visual
 const COLORS = {
   coral: "#FF7B6B",
   darkBlue: "#003366",
@@ -30,6 +49,8 @@ const COLORS = {
   darkGray: "#666666",
 }
 
+// Coordenadas GPS de las ubicaciones del campus UABCS
+// Utilizadas para mostrar la ubicación exacta de cada evento
 const UABCS_LOCATIONS = {
   "Poliforo": {
     latitude: 24.103169,
@@ -71,15 +92,26 @@ const UABCS_LOCATIONS = {
     latitude: 24.102736,
     longitude: -110.316148,
   },
+  // Ubicación por defecto del campus principal
   "default": {
     latitude: 24.102751,
     longitude: -110.315809,
   },
 }
 
+/**
+ * Modal personalizado con animaciones para mostrar mensajes al usuario
+ * @param {boolean} visible - Controla la visibilidad del modal
+ * @param {string} title - Título del modal
+ * @param {string} message - Mensaje a mostrar
+ * @param {function} onConfirm - Función ejecutada al confirmar
+ * @param {function} onCancel - Función ejecutada al cancelar (opcional)
+ * @param {string} type - Tipo de modal (info, success, error, warning)
+ */
 const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "info" }) => {
   const slideAnim = useRef(new Animated.Value(0)).current
 
+  // Animación de entrada y salida del modal
   useEffect(() => {
     if (visible) {
       Animated.spring(slideAnim, {
@@ -97,6 +129,7 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
     }
   }, [visible])
 
+  // Determina el icono y color según el tipo de modal
   const getIconByType = () => {
     switch (type) {
       case "success":
@@ -159,6 +192,8 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
 
 const EventDetailScreen = ({ navigation, route }) => {
  
+  // Validación temprana de parámetros requeridos
+  // Previene errores si la navegación no incluye los datos del evento
   if (!route?.params?.event) {
     useEffect(() => {
       const timer = setTimeout(() => {
@@ -190,21 +225,21 @@ const EventDetailScreen = ({ navigation, route }) => {
 
   const { eventId, event, date, time } = route.params
   
-
-
+  // Estados para el manejo de favoritos y asistencia
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isAttending, setIsAttending] = useState(false)
   const [accountId, setAccountId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bookmarkLoading, setBookmarkLoading] = useState(false)
 
-
+  // Estados para el manejo de ubicación y GPS
   const [userLocation, setUserLocation] = useState(null)
   const [locationPermission, setLocationPermission] = useState(false)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [distance, setDistance] = useState(null)
   const [locationError, setLocationError] = useState(null)
 
+  // Estado para el manejo del modal personalizado
   const [modalConfig, setModalConfig] = useState({
     visible: false,
     title: "",
@@ -214,7 +249,10 @@ const EventDetailScreen = ({ navigation, route }) => {
     onCancel: null,
   })
 
-
+  /**
+   * Obtiene la ubicación GPS actual del usuario
+   * Calcula la distancia al evento si la ubicación está disponible
+   */
   const getUserLocation = async () => {
     if (loadingLocation) return;
     
@@ -222,7 +260,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     setLocationError(null)
     
     try {
-   
+      // Validación de disponibilidad del servicio de ubicación
       if (!LocationService || typeof LocationService.getCurrentLocation !== 'function') {
         throw new Error('LocationService no está disponible')
       }
@@ -232,7 +270,7 @@ const EventDetailScreen = ({ navigation, route }) => {
       if (location?.latitude && location?.longitude) {
         setUserLocation(location)
         
-   
+        // Calcular distancia al evento si las coordenadas están disponibles
         const eventCoords = getLocationCoordinates(event?.location)
         if (eventCoords?.latitude && eventCoords?.longitude) {
           const dist = LocationService.calculateDistance(
@@ -254,7 +292,10 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-
+  /**
+   * Solicita permisos de ubicación al usuario
+   * Inicia la obtención de ubicación si los permisos son concedidos
+   */
   const requestLocationPermission = async () => {
     if (!LocationService || typeof LocationService.requestLocationPermission !== 'function') {
       setLocationError('Servicio de ubicación no disponible')
@@ -276,6 +317,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
+  // Función helper para mostrar modales con configuración personalizada
   const showModal = (title, message, type = "info", onConfirm = null, onCancel = null) => {
     setModalConfig({
       visible: true,
@@ -287,6 +329,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     })
   }
 
+  // Funciones para el manejo de asistencia almacenada localmente
   const checkAttendanceStatus = async (userId, eventId) => {
     try {
       const attendanceKey = `attendance_${userId}_${eventId}`
@@ -307,7 +350,7 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-
+  // Inicialización de datos al montar el componente
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -315,13 +358,14 @@ const EventDetailScreen = ({ navigation, route }) => {
         if (id) {
           setAccountId(id)
 
-      
+          // Verificar estado de favoritos
           try {
             await checkIfBookmarked(id, event.id, setIsBookmarked)
           } catch (error) {
             console.error("Error checking bookmark:", error)
           }
 
+          // Verificar estado de asistencia
           try {
             const attendingStatus = await checkAttendanceStatus(id, event.id)
             setIsAttending(attendingStatus)
@@ -330,14 +374,14 @@ const EventDetailScreen = ({ navigation, route }) => {
           }
         }
         
-
+        // Configuración inicial de permisos de ubicación
         if (LocationService && typeof LocationService.checkPermissionStatus === 'function') {
           try {
             const hasPermission = await LocationService.checkPermissionStatus()
             setLocationPermission(hasPermission)
             
             if (hasPermission) {
-           
+              // Delay para evitar múltiples llamadas simultáneas
               setTimeout(() => {
                 getUserLocation()
               }, 1000)
@@ -355,35 +399,41 @@ const EventDetailScreen = ({ navigation, route }) => {
       }
     }
 
-
+    // Delay inicial para evitar errores de renderizado
     const timer = setTimeout(fetchData, 100)
     return () => clearTimeout(timer)
   }, [event?.id])
 
+  /**
+   * Maneja el clic en la ubicación del evento
+   * Solicita permisos si no están disponibles, o abre Google Maps
+   */
+  const handleLocationPress = () => {
+    if (!locationPermission) {
+      showModal(
+        "Permisos de Ubicación Requeridos", 
+        "Para abrir la ubicación en Maps, necesitas otorgar permisos de ubicación primero.", 
+        "warning",
+        () => {
+          setModalConfig(prev => ({ ...prev, visible: false }));
+          // Solicitar permisos después de cerrar el modal
+          requestLocationPermission();
+        },
+        () => setModalConfig(prev => ({ ...prev, visible: false }))
+      );
+      return;
+    }
 
-  
-const handleLocationPress = () => {
-  if (!locationPermission) {
-    showModal(
-      "Permisos de Ubicación Requeridos", 
-      "Para abrir la ubicación en Maps, necesitas otorgar permisos de ubicación primero.", 
-      "warning",
-      () => {
-        setModalConfig(prev => ({ ...prev, visible: false }));
-      
-        requestLocationPermission();
-      },
-      () => setModalConfig(prev => ({ ...prev, visible: false }))
-    );
-    return;
-  }
+    // Abrir Google Maps con las coordenadas del evento
+    const coords = getLocationCoordinates(event?.location);
+    const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
+    Linking.openURL(url).catch(err => console.error('Error opening maps:', err));
+  };
 
-  const coords = getLocationCoordinates(event?.location);
-  const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
-  Linking.openURL(url).catch(err => console.error('Error opening maps:', err));
-};
-  
-
+  /**
+   * Maneja el toggle de asistencia al evento
+   * Realiza validaciones de autenticación y maneja errores de red
+   */
   const handleAttendanceToggle = async () => {
     if (loading) return
     if (!accountId) {
@@ -405,6 +455,7 @@ const handleLocationPress = () => {
         const newAttendingStatus = !isAttending
         setIsAttending(newAttendingStatus)
 
+        // Persistir el estado localmente
         await saveAttendanceStatus(accountId, event.id, newAttendingStatus)
 
         showModal(
@@ -419,6 +470,7 @@ const handleLocationPress = () => {
     } catch (err) {
       console.error("Error en handleAttendanceToggle:", err)
 
+      // Manejo especial para asistencia duplicada
       if (err.message && err.message.includes("Asitencia ya marcada")) {
         showModal("Asistencia Ya Registrada", "Ya has marcado tu asistencia para este evento anteriormente", "info")
         setIsAttending(true)
@@ -435,6 +487,10 @@ const handleLocationPress = () => {
     }
   }
 
+  /**
+   * Maneja el toggle de favoritos del evento
+   * Requiere autenticación y maneja errores de red
+   */
   const toggleBookmark = async () => {
     if (!accountId) {
       showModal("Iniciar Sesión Requerido", "Debes iniciar sesión para guardar eventos en tus favoritos", "warning")
@@ -461,6 +517,7 @@ const handleLocationPress = () => {
     }
   }
 
+  // Función helper para obtener colores por departamento
   const getDepartmentColor = (dept) => {
     const colors = {
       "Sistemas computacionales": "#4a6eff",
@@ -476,12 +533,17 @@ const handleLocationPress = () => {
     return colors[dept] || "#6b7280"
   }
 
+  /**
+   * Formatea fechas para mostrar en español
+   * Maneja diferentes formatos de fecha de entrada
+   */
   const formatDate = (dateString) => {
     if (!dateString) return "Fecha no disponible"
 
     try {
       let dateToFormat
 
+      // Manejo de fechas con formato ISO
       if (dateString.includes("T")) {
         const localDate = dateString.split("T")[0]
         const [year, month, day] = localDate.split("-")
@@ -502,9 +564,14 @@ const handleLocationPress = () => {
     }
   }
 
+  /**
+   * Formatea horarios y calcula duración estimada del evento
+   * Asume duración de 2 horas si no se especifica hora de fin
+   */
   const formatTime = (timeInput) => {
     if (!timeInput) return "Horario no especificado"
 
+    // Manejo de horarios en formato HH:MM
     if (typeof timeInput === "string" && timeInput.includes(":") && !timeInput.includes("T")) {
       const [hours, minutes] = timeInput.split(":")
       const startHour = Number.parseInt(hours)
@@ -513,6 +580,7 @@ const handleLocationPress = () => {
       return `${timeInput} - ${endHour.toString().padStart(2, "0")}:${minutes}`
     }
 
+    // Manejo de horarios en formato ISO
     try {
       const date = new Date(timeInput)
       const timeString = date.toLocaleTimeString("es-ES", {
@@ -533,6 +601,10 @@ const handleLocationPress = () => {
     }
   }
 
+  /**
+   * Obtiene coordenadas GPS basadas en el nombre de la ubicación
+   * Utiliza coincidencia parcial de texto para encontrar la ubicación
+   */
   const getLocationCoordinates = (locationName) => {
     if (!locationName) return UABCS_LOCATIONS.default
 
@@ -555,6 +627,7 @@ const handleLocationPress = () => {
         onCancel={modalConfig.onCancel}
       />
 
+      {/* Sección hero con imagen de fondo y información principal */}
       <View style={styles.heroSection}>
         <Image 
           source={{ uri: event?.imageUrl || "https://via.placeholder.com/400x300" }} 
@@ -563,6 +636,7 @@ const handleLocationPress = () => {
         />
         <View style={styles.heroOverlay} />
 
+        {/* Header con navegación y botón de favoritos */}
         <SafeAreaView style={styles.headerContainer}>
           <View style={styles.headerNav}>
             <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
@@ -583,17 +657,20 @@ const handleLocationPress = () => {
           </View>
         </SafeAreaView>
 
+        {/* Contenido principal del hero */}
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>{event?.title || "Evento"}</Text>
           <Text style={styles.heroSubtitle}>Por {event?.department || "Departamento"}</Text>
         </View>
       </View>
 
+      {/* Contenido scrolleable con detalles del evento */}
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Sección de detalles del evento */}
         <View style={styles.detailsSection}>
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
@@ -616,69 +693,72 @@ const handleLocationPress = () => {
               </View>
             </View>
 
+            {/* Botón de ubicación con manejo de permisos */}
             <TouchableOpacity 
-  style={[
-    styles.detailItem,
-    !locationPermission && styles.disabledDetailItem
-  ]}
-  onPress={handleLocationPress}
-  activeOpacity={locationPermission ? 0.7 : 1}
-  disabled={!locationPermission}
->
-  <View style={[
-    styles.detailIcon,
-    !locationPermission && styles.disabledIcon
-  ]}>
-    <Ionicons 
-      name="location-outline" 
-      size={20} 
-      color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
-    />
-  </View>
-  <View style={styles.locationContent}>
-    <Text style={[
-      styles.detailLabel,
-      !locationPermission && styles.disabledText
-    ]}>
-      Ubicación
-    </Text>
-    <Text style={[
-      styles.detailValue,
-      !locationPermission && styles.disabledText
-    ]}>
-      {event?.location || "Ubicación no especificada"}
-    </Text>
-    <Text style={[
-      styles.tapToOpenText,
-      !locationPermission && styles.disabledTapText
-    ]}>
-      {locationPermission 
-        ? "Toca para abrir en Maps" 
-        : "Permisos de ubicación requeridos"
-      }
-    </Text>
-  </View>
-  <Ionicons 
-    name="open-outline" 
-    size={16} 
-    color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
-    style={styles.openIcon} 
-  />
-</TouchableOpacity>
+              style={[
+                styles.detailItem,
+                !locationPermission && styles.disabledDetailItem
+              ]}
+              onPress={handleLocationPress}
+              activeOpacity={locationPermission ? 0.7 : 1}
+              disabled={!locationPermission}
+            >
+              <View style={[
+                styles.detailIcon,
+                !locationPermission && styles.disabledIcon
+              ]}>
+                <Ionicons 
+                  name="location-outline" 
+                  size={20} 
+                  color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
+                />
+              </View>
+              <View style={styles.locationContent}>
+                <Text style={[
+                  styles.detailLabel,
+                  !locationPermission && styles.disabledText
+                ]}>
+                  Ubicación
+                </Text>
+                <Text style={[
+                  styles.detailValue,
+                  !locationPermission && styles.disabledText
+                ]}>
+                  {event?.location || "Ubicación no especificada"}
+                </Text>
+                <Text style={[
+                  styles.tapToOpenText,
+                  !locationPermission && styles.disabledTapText
+                ]}>
+                  {locationPermission 
+                    ? "Toca para abrir en Maps" 
+                    : "Permisos de ubicación requeridos"
+                  }
+                </Text>
+              </View>
+              <Ionicons 
+                name="open-outline" 
+                size={16} 
+                color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
+                style={styles.openIcon} 
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
-{/* ;<EventLocationInfo
-  event={{
-    id: event?.id,
-    title: event?.title,
-    location: event?.location,
-    date: formatDate(event?.date),
-    time: formatTime(event?.time),
-    coordinates: getLocationCoordinates(event?.location), // Usa tu función existente
-  }}
-/> */}
+        {/* Componente de información de ubicación (comentado) */}
+        {/* <EventLocationInfo
+          event={{
+            id: event?.id,
+            title: event?.title,
+            location: event?.location,
+            date: formatDate(event?.date),
+            time: formatTime(event?.time),
+            coordinates: getLocationCoordinates(event?.location),
+          }}
+        /> */}
 
+        {/* Sección de acciones (botón de asistencia) */}
         <View style={styles.actionSection}>
           <TouchableOpacity
             style={[styles.attendButton, isAttending && styles.attendingButton]}
@@ -697,9 +777,11 @@ const handleLocationPress = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Espaciado inferior para evitar superposición con navegación */}
         <View style={{ height: 100 }} />
       </ScrollView>
       
+      {/* Navegación inferior */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
           <View style={styles.navIconContainer}>

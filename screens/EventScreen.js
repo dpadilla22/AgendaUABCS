@@ -1,10 +1,30 @@
+/**
+ * EventScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Patalla de sugerencias de eventos.
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import { useState, useRef, useEffect } from "react"
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, TextInput, Alert, Animated, Platform, Modal } from "react-native"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const API_BASE_URL = "https://4e06-200-92-221-16.ngrok-free.app"
+// Configuración de la URL base de la API - usar variable de entorno en producción
+const API_BASE_URL = "https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app"
 
+// Paleta de colores centralizada para consistencia visual
 const COLORS = {
   coral: "#FF7B6B",
   darkBlue: "#003366",
@@ -20,6 +40,7 @@ const COLORS = {
   cream: "#F5F5DC", 
 }
 
+// Configuración de departamentos con sus respectivos colores e IDs
 const DEPARTMENTS = [
   { name: "Agronomía", color: COLORS.green, id: 1 },
   { name: "Ciencia Animal y Conservación del Hábitat", color: COLORS.orange, id: 2 },
@@ -32,9 +53,14 @@ const DEPARTMENTS = [
   { name: "Sistemas Computacionales", color: COLORS.darkBlue, id: 9 },
 ]
 
+/**
+ * Función utilitaria para cargar el ID de cuenta desde AsyncStorage
+ * Maneja la compatibilidad con claves anteriores para migración
+ */
 export const loadAccountId = async () => {
   try {
     let id = await AsyncStorage.getItem("accountId")
+    // Fallback para compatibilidad con versiones anteriores
     if (!id) {
       id = await AsyncStorage.getItem("idAccount")
     }
@@ -47,22 +73,28 @@ export const loadAccountId = async () => {
 }
 
 const SuggestionScreen = ({ navigation, route }) => {
+  // Estado principal del formulario
   const [formData, setFormData] = useState({
     titulo: "",
     departamento: "",
     ubicacion: "",
   })
 
+  // Estados para los selectores y datos del evento
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [date, setDate] = useState(new Date())
   const [time, setTime] = useState(new Date())
+  
+  // Estados para controlar la visibilidad de los pickers
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
   const [showDepartmentPicker, setShowDepartmentPicker] = useState(false)
+  
+  // Estados para el manejo de la UI y autenticación
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [accountId, setAccountId] = useState(null) 
 
-
+  // Configuración del modal personalizado
   const [showModal, setShowModal] = useState(false)
   const [modalConfig, setModalConfig] = useState({
     title: "",
@@ -72,11 +104,19 @@ const SuggestionScreen = ({ navigation, route }) => {
     showCancel: false
   })
 
+  // Referencias para animaciones
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(50)).current
   const scaleAnim = useRef(new Animated.Value(0.9)).current
 
-
+  /**
+   * Función para mostrar modales personalizados con diferentes configuraciones
+   * @param {string} title - Título del modal
+   * @param {string} message - Mensaje del modal
+   * @param {string} type - Tipo de modal (error, success, info)
+   * @param {function} onConfirm - Función callback al confirmar
+   * @param {boolean} showCancel - Mostrar botón de cancelar
+   */
   const showCustomModal = (title, message, type = "error", onConfirm = null, showCancel = false) => {
     setModalConfig({
       title,
@@ -106,6 +146,10 @@ const SuggestionScreen = ({ navigation, route }) => {
     hideModal()
   }
 
+  /**
+   * Hook de inicialización de la pantalla
+   * Carga el ID de cuenta y ejecuta animaciones de entrada
+   */
   useEffect(() => {
     const initializeScreen = async () => {
       const id = await loadAccountId()
@@ -120,6 +164,7 @@ const SuggestionScreen = ({ navigation, route }) => {
         )
       }
 
+      // Animaciones paralelas para entrada suave
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -142,6 +187,11 @@ const SuggestionScreen = ({ navigation, route }) => {
     initializeScreen()
   }, [])
 
+  /**
+   * Función genérica para actualizar campos del formulario
+   * @param {string} field - Campo a actualizar
+   * @param {string} value - Nuevo valor
+   */
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -149,6 +199,7 @@ const SuggestionScreen = ({ navigation, route }) => {
     }))
   }
 
+  // Manejadores para los date/time pickers nativos
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false)
     if (selectedDate) {
@@ -163,6 +214,7 @@ const SuggestionScreen = ({ navigation, route }) => {
     }
   }
 
+  // Funciones de formateo para mostrar fecha y hora al usuario
   const formatDate = (date) => {
     return date.toLocaleDateString("es-ES", {
       weekday: "long",
@@ -180,14 +232,20 @@ const SuggestionScreen = ({ navigation, route }) => {
     })
   }
 
+  // Funciones de formateo para enviar datos a la API
   const formatDateForAPI = (date) => {
-    return date.toISOString().split("T")[0] 
+    return date.toISOString().split("T")[0] // Formato YYYY-MM-DD
   }
 
   const formatTimeForAPI = (time) => {
-    return time.toTimeString().split(" ")[0] 
+    return time.toTimeString().split(" ")[0] // Formato HH:MM:SS
   }
 
+  /**
+   * Validación del formulario antes del envío
+   * Verifica que todos los campos requeridos estén completos
+   * @returns {boolean} - true si el formulario es válido
+   */
   const validateForm = () => {
     if (!formData.titulo.trim()) {
       showCustomModal("Campo requerido", "Es necesario proporcionar un título para el evento.")
@@ -211,13 +269,18 @@ const SuggestionScreen = ({ navigation, route }) => {
     return true
   }
 
+  /**
+   * Función para crear sugerencia de evento en el backend
+   * @param {Object} eventData - Datos del evento a crear
+   * @throws {Error} - Error si la petición falla
+   */
   const createEventSuggestion = async (eventData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/createSuggestion`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true", 
+          "ngrok-skip-browser-warning": "true", // Header específico para ngrok
         },
         body: JSON.stringify(eventData),
       })
@@ -235,11 +298,16 @@ const SuggestionScreen = ({ navigation, route }) => {
     }
   }
 
+  /**
+   * Manejador principal del envío del formulario
+   * Valida, envía datos y maneja respuestas/errores
+   */
   const handleSubmit = async () => {
     if (!validateForm()) return
 
     setIsSubmitting(true)
 
+    // Animación de feedback visual al enviar
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.95,
@@ -254,6 +322,7 @@ const SuggestionScreen = ({ navigation, route }) => {
     ]).start()
 
     try {
+      // Preparación de datos para la API
       const eventData = {
         titleEventSuggestion: formData.titulo.trim(),
         idDepartment: selectedDepartment.id,
@@ -267,12 +336,13 @@ const SuggestionScreen = ({ navigation, route }) => {
 
       const result = await createEventSuggestion(eventData)
 
+      // Éxito: mostrar confirmación y resetear formulario
       showCustomModal(
         "Sugerencia enviada",
         "Su sugerencia de evento ha sido enviada correctamente. Será revisada por nuestro equipo antes de su publicación.",
         "success",
         () => {
-
+          // Reset del formulario
           setFormData({
             titulo: "",
             departamento: "",
@@ -296,18 +366,25 @@ const SuggestionScreen = ({ navigation, route }) => {
     }
   }
 
-
+  /**
+   * Manejador para la selección de departamento
+   * Actualiza tanto el estado local como el formulario
+   */
   const handleDepartmentSelect = (dept) => {
     console.log("Departamento seleccionado:", dept)
     
-
     handleInputChange("departamento", dept.name)
     setSelectedDepartment(dept)
     
-
     setShowDepartmentPicker(false)
   }
 
+  /**
+   * Función para obtener color específico de cada departamento
+   * Mapeo personalizado para mejor diferenciación visual
+   * @param {string} deptName - Nombre del departamento
+   * @returns {string} - Código de color hexadecimal
+   */
   const getDepartmentColor = (deptName) => {
     const colors = {
       'Sistemas Computacionales': '#3B82F6', 
@@ -320,10 +397,13 @@ const SuggestionScreen = ({ navigation, route }) => {
       'Ciencias Marinas y Costeras': '#34D399',
       'Ciencia Animal y Conservación del Hábitat': '#FBBF24',
     };
-    return colors[deptName] || '#6B7280'; 
+    return colors[deptName] || '#6B7280'; // Color por defecto
   };
 
-
+  /**
+   * Componente Modal para selección de departamento
+   * Interfaz mejorada con iconos y colores diferenciados
+   */
   const DepartmentPickerModal = () => (
     <Modal
       visible={showDepartmentPicker}
@@ -347,7 +427,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           >
             {DEPARTMENTS.map((dept, index) => (
               <TouchableOpacity
-                key={`dept-${dept.id}-${index}`}
+                key={`dept-${dept.id}-${index}`} // Key única para evitar warnings
                 style={[
                   styles.departmentItem, 
                   { 
@@ -382,7 +462,10 @@ const SuggestionScreen = ({ navigation, route }) => {
     </Modal>
   )
 
-
+  /**
+   * Componente Modal personalizado para mensajes del sistema
+   * Soporta diferentes tipos: success, error, info
+   */
   const CustomModal = () => (
     <Modal
       visible={showModal}
@@ -420,6 +503,7 @@ const SuggestionScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header simplificado con navegación */}
       <View style={styles.simpleHeader}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
@@ -429,11 +513,13 @@ const SuggestionScreen = ({ navigation, route }) => {
         </View>
       </View>
 
+      {/* Contenido principal con animaciones */}
       <Animated.ScrollView
         style={[styles.scrollContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Campo de título */}
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
             <View>
@@ -454,6 +540,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           </View>
         </Animated.View>
 
+        {/* Selector de departamento con indicador visual */}
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
             <View>
@@ -492,6 +579,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </Animated.View>
 
+        {/* Selector de fecha */}
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
             <View>
@@ -505,6 +593,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </Animated.View>
 
+        {/* Selector de hora */}
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
             <View>
@@ -518,6 +607,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </Animated.View>
 
+        {/* Campo de ubicación */}
         <Animated.View style={[styles.inputCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.inputHeader}>
             <View>
@@ -535,6 +625,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           />
         </Animated.View>
 
+        {/* Botón de envío con estado de carga */}
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <TouchableOpacity
             style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
@@ -549,6 +640,7 @@ const SuggestionScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </Animated.View>
 
+        {/* Nota informativa */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerNote}>
             Su sugerencia será evaluada por nuestro equipo antes de ser publicada
@@ -556,7 +648,7 @@ const SuggestionScreen = ({ navigation, route }) => {
         </View>
       </Animated.ScrollView>
 
-
+      {/* Date/Time Pickers nativos - solo se muestran cuando son necesarios */}
       {showDatePicker && (
         <DateTimePicker
           value={date}
@@ -576,12 +668,11 @@ const SuggestionScreen = ({ navigation, route }) => {
         />
       )}
 
-     
+      {/* Modales personalizados */}
       <DepartmentPickerModal />
-
- 
       <CustomModal />
 
+      {/* Navegación inferior */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.bottomNavItem} 
         onPress={() => navigation.navigate("Home")}

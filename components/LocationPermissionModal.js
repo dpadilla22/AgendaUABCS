@@ -1,8 +1,20 @@
+/**
+ * LocationPermissionModal.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Pantalla para la notificacion de solicitud para permisos de ubicación
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: EventScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ */
 import React, { useState } from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Paleta de colores definida para mantener consistencia visual en la app
 const COLORS = {
   primaryBlue: "#1B3A5C",
   secondaryBlue: "#4A7BA7",
@@ -17,15 +29,18 @@ const COLORS = {
   cream: "#F5F5DC",
 };
 
+
 const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDenied }) => {
+
   const [loading, setLoading] = useState(false);
+
   const [permissionStatus, setPermissionStatus] = useState("requesting");
 
+  // Función asincrónica que solicita permisos de ubicación y guarda datos
   const requestLocationPermission = async () => {
     setLoading(true);
-
     try {
-      
+      // Verifica si los servicios de ubicación están activados en el dispositivo
       const servicesEnabled = await Location.hasServicesEnabledAsync();
       if (!servicesEnabled) {
         setPermissionStatus("error");
@@ -33,11 +48,11 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDen
         return;
       }
 
-   
+      // Solicita permiso de ubicación al usuario
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status === "granted") {
-       
+        // Si el permiso es concedido, obtiene la ubicación del usuario
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
@@ -47,19 +62,23 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDen
           longitude: location.coords.longitude,
         };
 
-       
+        // Guarda los datos de ubicación y el permiso en almacenamiento local
         await AsyncStorage.setItem("userLocation", JSON.stringify(userLocation));
         await AsyncStorage.setItem("locationPermissionGranted", "true");
 
         setPermissionStatus("granted");
+
+        // Llama a la función de éxito después de una breve pausa
         setTimeout(() => {
           onPermissionGranted(userLocation);
         }, 1500);
       } else {
+       
         setPermissionStatus("denied");
         await AsyncStorage.setItem("locationPermissionGranted", "false");
       }
     } catch (error) {
+     
       console.error("Error requesting location:", error);
       setPermissionStatus("error");
     } finally {
@@ -67,14 +86,17 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDen
     }
   };
 
+  // Función que se ejecuta cuando el usuario niega el permiso
   const handleDeny = async () => {
     await AsyncStorage.setItem("locationPermissionGranted", "false");
     setPermissionStatus("denied");
+
     setTimeout(() => {
       onPermissionDenied();
     }, 1000);
   };
 
+  // Renderiza contenido dinámico del modal según estado actual del permiso
   const renderContent = () => {
     switch (permissionStatus) {
       case "requesting":
@@ -83,7 +105,6 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDen
             <View style={styles.iconContainer}>
               <Image source={require("../assets/location.png")} style={styles.locationIcon} />
             </View>
-
             <Text style={styles.title}>Permisos de Ubicación</Text>
             <Text style={styles.subtitle}>Para mostrarte eventos cercanos y direcciones precisas</Text>
 
@@ -166,6 +187,7 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDen
     }
   };
 
+  // Estructura del modal: fondo oscuro + contenedor de contenido
   return (
     <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onPermissionDenied}>
       <View style={styles.overlay}>
@@ -174,6 +196,7 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, onPermissionDen
     </Modal>
   );
 };
+
 
 const styles = StyleSheet.create({
   overlay: {

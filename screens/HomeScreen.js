@@ -1,3 +1,21 @@
+/**
+ * HomeScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Pantalla de login de la app.
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: HomeScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, Animated, TextInput, Modal } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient'; 
@@ -8,10 +26,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadAccountId } from './EventScreen';
 import LocationPermissionModal from "../components/LocationPermissionModal";
 
+// CONSTANTES GLOBALES - Declaradas fuera del componente para evitar re-renders
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_WIDTH = screenWidth - 32; 
 const CAROUSEL_HEIGHT = 220; 
 
+// PALETA DE COLORES CENTRALIZADA - Uso consistente en toda la aplicación
 const COLORS = {
   primaryBlue: "#1B3A5C",     
   secondaryBlue: "#4A7BA7",    
@@ -28,6 +48,7 @@ const COLORS = {
   cream: "#F5F5DC",
 };
 
+// DATOS ESTÁTICOS - Separados del componente para mejor performance
 const carouselData = [
   {
     id: 1,
@@ -62,32 +83,130 @@ const carouselData = [
 ];
 
 const HomeScreen = ({ navigation }) => {
- 
+  
+  // ESTADOS PRINCIPALES - Agrupados por funcionalidad
+  // Estados de datos
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("Hoy");
   const [refreshing, setRefreshing] = useState(false);
   
+  // Estados de UI y navegación
+  const [activeTab, setActiveTab] = useState("Hoy");
+  
+  // Estados de búsqueda - Agrupados por funcionalidad relacionada
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   
+  // Estados del carousel - Agrupados por funcionalidad
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   
+  // Estados de ubicación - Agrupados por funcionalidad
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [hasLocationPermission, setHasLocationPermission] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
-
+  // REFERENCIAS - useRef para elementos que necesitan acceso directo
   const carouselRef = useRef(null);
   const autoScrollTimer = useRef(null);
   const searchInputRef = useRef(null);
 
-  const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
+  // CONFIGURACIÓN API - Centralizada para fácil mantenimiento
+  const API_URL = "https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app";
 
+  // FUNCIONES UTILITARIAS - Funciones puras para transformación de datos
+  
+  // Función para formatear hora - Naming descriptivo con prefijo 'get'
+  const getHour = (dateString) => {
+    const dateObj = new Date(dateString);
+    return dateObj.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
 
+  // Función para formatear fecha - Consistente con getHour
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  // Función para obtener color por departamento - Lógica de mapeo centralizada
+  const getDepartmentColor = (dept) => {
+    const colors = {
+      'Sistemas computacionales': '#4a6eff', 
+      'Economía': '#ffb16c', 
+      'Ciencias Sociales y jurídicas': '#97795e', 
+      'Agronomia': '#f9f285', 
+      'Ciencias de la tierra': '#1fd514',
+      'Humanidades': '#a980f2',
+      'Ingeniería en pesquerías': '#fb6d51',
+      'Ciencias marinas y costeras': '#a8ecff',
+      'Ciencia animal y conservación del hábitat': '#f7b2f0',
+    };
+    return colors[dept] || '#6b7280'; 
+  };
+
+  // Función para filtrar eventos - Lógica compleja separada del render
+  const getFilteredEvents = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      eventDate.setHours(0, 0, 0, 0);
+
+      if (eventDate < today) return false;
+
+      if (activeTab === "Hoy") {
+        return (
+          eventDate.getDate() === today.getDate() &&
+          eventDate.getMonth() === today.getMonth() &&
+          eventDate.getFullYear() === today.getFullYear()
+        );
+      } else if (activeTab === "Esta semana") {
+        const startOfWeek = new Date(today);
+        const endOfWeek = new Date(today);
+        const dayOfWeek = today.getDay();
+
+        startOfWeek.setDate(today.getDate() - dayOfWeek);
+        endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
+
+        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+      } else if (activeTab === "Este mes") {
+        return (
+          eventDate.getMonth() === today.getMonth() &&
+          eventDate.getFullYear() === today.getFullYear()
+        );
+      }
+
+      return false;
+    });
+  };
+
+  // Función para mensaje de estado vacío - Manejo centralizado de mensajes
+  const getEmptyStateMessage = () => {
+    switch (activeTab) {
+      case "Hoy":
+        return "No hay eventos programados para hoy";
+      case "Esta semana":
+        return "No hay eventos programados para esta semana";
+      case "Este mes":
+        return "No hay eventos programados para este mes";
+      default:
+        return "No hay eventos disponibles";
+    }
+  };
+
+  // EVENT HANDLERS - Prefijo 'handle' consistente para manejadores de eventos
+
+  // Handler para refresh - Manejo de errores consistente
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -102,6 +221,7 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // Handler para búsqueda - Lógica de filtrado compleja separada
   const performSearch = (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -141,6 +261,7 @@ const HomeScreen = ({ navigation }) => {
     performSearch(text);
   };
 
+  // Handlers de modal de búsqueda - Funciones específicas y descriptivas
   const openSearchModal = () => {
     setSearchModalVisible(true);
     setSearchQuery("");
@@ -157,6 +278,7 @@ const HomeScreen = ({ navigation }) => {
     setIsSearching(false);
   };
 
+  // Handler para navegación - Async/await para operaciones asíncronas
   const navigateToEventDetail = async (event) => {
     closeSearchModal();
 
@@ -175,6 +297,7 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
+  // Handlers del carousel - Agrupados por funcionalidad relacionada
   const handleCarouselScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / (CAROUSEL_WIDTH + 16));
@@ -206,87 +329,7 @@ const HomeScreen = ({ navigation }) => {
     setActiveTab(tab);
   };
 
-  const getHour = (dateString) => {
-    const dateObj = new Date(dateString);
-    return dateObj.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const getFilteredEvents = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return events.filter(event => {
-      const eventDate = new Date(event.date);
-      eventDate.setHours(0, 0, 0, 0);
-
-      if (eventDate < today) return false;
-
-      if (activeTab === "Hoy") {
-        return (
-          eventDate.getDate() === today.getDate() &&
-          eventDate.getMonth() === today.getMonth() &&
-          eventDate.getFullYear() === today.getFullYear()
-        );
-      } else if (activeTab === "Esta semana") {
-        const startOfWeek = new Date(today);
-        const endOfWeek = new Date(today);
-        const dayOfWeek = today.getDay();
-
-        startOfWeek.setDate(today.getDate() - dayOfWeek);
-        endOfWeek.setDate(today.getDate() + (6 - dayOfWeek));
-
-        return eventDate >= startOfWeek && eventDate <= endOfWeek;
-      } else if (activeTab === "Este mes") {
-        return (
-          eventDate.getMonth() === today.getMonth() &&
-          eventDate.getFullYear() === today.getFullYear()
-        );
-      }
-
-      return false;
-    });
-  };
-
-  const getEmptyStateMessage = () => {
-    switch (activeTab) {
-      case "Hoy":
-        return "No hay eventos programados para hoy";
-      case "Esta semana":
-        return "No hay eventos programados para esta semana";
-      case "Este mes":
-        return "No hay eventos programados para este mes";
-      default:
-        return "No hay eventos disponibles";
-    }
-  };
-
-  const getDepartmentColor = (dept) => {
-    const colors = {
-      'Sistemas computacionales': '#4a6eff', 
-      'Economía': '#ffb16c', 
-      'Ciencias Sociales y jurídicas': '#97795e', 
-      'Agronomia': '#f9f285', 
-      'Ciencias de la tierra': '#1fd514',
-      'Humanidades': '#a980f2',
-      'Ingeniería en pesquerías': '#fb6d51',
-      'Ciencias marinas y costeras': '#a8ecff',
-      'Ciencia animal y conservación del hábitat': '#f7b2f0',
-    };
-    return colors[dept] || '#6b7280'; 
-  };
-
+  // FUNCIONES DE PERMISOS - Agrupadas por funcionalidad relacionada
   const checkLocationPermission = async () => {
     try {
       const permissionGranted = await AsyncStorage.getItem("locationPermissionGranted");
@@ -351,7 +394,9 @@ const HomeScreen = ({ navigation }) => {
     console.log("Permisos de ubicación denegados");
   };
 
+  // EFFECTS - useEffect al final del componente, agrupados por funcionalidad
 
+  // Effect principal para cargar eventos
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -370,6 +415,7 @@ const HomeScreen = ({ navigation }) => {
     fetchEvents();
   }, []);
 
+  // Effect para auto-scroll del carousel
   useEffect(() => {
     if (isAutoScrolling) {
       autoScrollTimer.current = setInterval(() => {
@@ -391,6 +437,7 @@ const HomeScreen = ({ navigation }) => {
     };
   }, [isAutoScrolling]);
 
+  // Effect para inicializar permisos
   useEffect(() => {
     const initLocationPermissions = async () => {
       await checkLocationPermission();
@@ -400,7 +447,7 @@ const HomeScreen = ({ navigation }) => {
     initLocationPermissions();
   }, []);
 
-
+  // RENDER CONDICIONAL PARA LOADING - Separado del render principal
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -414,8 +461,10 @@ const HomeScreen = ({ navigation }) => {
     );
   }
 
+  // VARIABLES DERIVADAS - Calculadas justo antes del render
   const filteredEvents = getFilteredEvents();
   
+  // JSX PRINCIPAL - Estructura clara y organizada
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.whiteHeader}>
@@ -445,6 +494,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
+      {/* MODAL DE BÚSQUEDA - Componente separado para mejor organización */}
       <Modal
         visible={searchModalVisible}
         animationType="slide"
@@ -487,6 +537,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
 
           <ScrollView style={styles.searchContent} showsVerticalScrollIndicator={false}>
+            {/* RENDERIZADO CONDICIONAL - Estados claros y específicos */}
             {isSearching ? (
               <View style={styles.searchLoadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.gold} />
@@ -571,6 +622,7 @@ const HomeScreen = ({ navigation }) => {
         </SafeAreaView>
       </Modal>
 
+      {/* CONTENIDO PRINCIPAL - ScrollView con RefreshControl */}
       <ScrollView
         style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
@@ -578,6 +630,7 @@ const HomeScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        {/* SECCIÓN DEL CAROUSEL */}
         <View style={styles.carouselSection}>
           <ScrollView
             ref={carouselRef}
@@ -623,6 +676,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* SECCIÓN DE TABS */}
         <View style={styles.tabSection}>
           <View style={styles.tabContainer}>
             <TouchableOpacity
@@ -646,6 +700,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* CONTENIDO DE EVENTOS - Renderizado condicional según estado */}
         <View style={styles.eventsContent}>
           {events.length === 0 ? (
             <View style={styles.emptyStateContainer}>
@@ -690,6 +745,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* NAVEGACIÓN INFERIOR */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={[styles.bottomNavItem, styles.activeNavItem]} activeOpacity={0.7}>
           <View style={styles.navIconContainer}>
@@ -721,6 +777,7 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* MODAL DE PERMISOS DE UBICACIÓN - Componente reutilizable */}
       <LocationPermissionModal
         visible={showLocationModal}
         onPermissionGranted={handleLocationPermissionGranted}

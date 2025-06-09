@@ -1,3 +1,22 @@
+/**
+ * LoginScreen.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Pantalla de login de la app.
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: LoginScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress, logoScale
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
+
 import { useState } from "react"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -5,9 +24,9 @@ import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Imag
 import Toast from "react-native-toast-message"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-
 const { width } = Dimensions.get("window")
 
+// Paleta de colores del proyecto
 const COLORS = {
   primary: "#003366",
   secondary: "#4dabf7",
@@ -24,18 +43,21 @@ const COLORS = {
   black: "#000000",
 }
 
-const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
+const API_URL = "https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app";
 
 const LoginScreen = ({ navigation }) => {
+  // Estados para campos del formulario
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Estados para manejo de errores específicos por campo
   const [usernameError, setUsernameError] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [generalError, setGeneralError] = useState("")
 
+  // Limpiar errores cuando el usuario modifica los campos
   const handleUsernameChange = (text) => {
     setUsername(text)
     setUsernameError("")
@@ -49,10 +71,12 @@ const LoginScreen = ({ navigation }) => {
   }
 
   const handleLogin = async () => {
+    // Resetear todos los errores
     setUsernameError("")
     setPasswordError("")
     setGeneralError("")
 
+    // Validación de campos vacíos
     let hasError = false
 
     if (!username.trim()) {
@@ -73,23 +97,20 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss()
 
     try {
-    
+      // Credenciales hardcodeadas para admin - mover a variables de entorno
       if (username.trim() === "admin_22" && password === "admin123") {
-      
-
         Toast.show({
           type: "success",
           text1: "¡Bienvenido Administrador!",
           text2: "Acceso al panel de administración",
         })
 
-     
         navigation.navigate("AdminDashboard")
         setLoading(false)
         return
       }
 
-   
+      // Autenticación normal contra API
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
@@ -105,6 +126,8 @@ const LoginScreen = ({ navigation }) => {
 
       if (response.ok) {
         console.log("Usuario recibido:", data.user)
+        
+        // Guardar datos de sesión en AsyncStorage
         await AsyncStorage.setItem("accountId", data.user.idAccount.toString())
         await AsyncStorage.setItem("userName", data.user.email)
         await AsyncStorage.setItem("userData", JSON.stringify(data.user))
@@ -140,6 +163,7 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.formSection}>
             <View style={styles.formContainer}>
+              {/* Error general del formulario */}
               {generalError ? (
                 <View style={styles.errorContainer}>
                   <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
@@ -147,6 +171,7 @@ const LoginScreen = ({ navigation }) => {
                 </View>
               ) : null}
 
+              {/* Campo de usuario */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Usuario</Text>
                 <View style={[styles.inputWrapper, usernameError ? styles.inputError : null]}>
@@ -170,6 +195,7 @@ const LoginScreen = ({ navigation }) => {
                 {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
               </View>
 
+              {/* Campo de contraseña */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Contraseña</Text>
                 <View style={[styles.inputWrapper, passwordError ? styles.inputError : null]}>
@@ -200,6 +226,7 @@ const LoginScreen = ({ navigation }) => {
                 {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
               </View>
 
+              {/* Botón de login con estado de carga */}
               <TouchableOpacity
                 style={[styles.loginButton, loading && styles.loginButtonDisabled]}
                 onPress={handleLogin}

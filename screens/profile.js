@@ -1,8 +1,27 @@
+/**
+ * profile.js
+ * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Fecha: 09/06/2025
+ * Descripción:Pantalla de perfil de usuario que muestra eventos favoritos y de asistencia con navegación por pestañas.
+ * 
+ * Manual de Estándares Aplicado:
+ * - Nombres de componentes en PascalCase. Ej: WelcomeScreen
+ * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress, logoScale
+ * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
+ * - Separación clara entre lógica, JSX y estilos.
+ * - Nombres descriptivos para funciones, constantes y estilos.
+ * - Uso de constantes (`const`) para valores que no cambian.
+ * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
+ * - Funciones auxiliares antes de useEffect
+ * - Manejo consistente de errores con try-catch
+ * - Uso de async/await para operaciones asíncronas
+ */
 import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, StatusBar, Alert } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient'; 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Constante de colores del tema - UPPER_SNAKE_CASE para constantes globales
 const COLORS = {
   darkBlue: "#003366",
   lightBlue: "#7AB3D1",
@@ -30,9 +49,12 @@ const COLORS = {
   darkGray: "#374151",
 };
 
-const API_URL = 'https://4e06-200-92-221-16.ngrok-free.app';
+// URL de la API - Constante global en UPPER_SNAKE_CASE
+const API_URL = 'https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app';
 
+// Componente principal - PascalCase para nombres de componentes
 const Profile = ({ navigation }) => {
+ 
   const [accountId, setAccountId] = useState(null);
   const [savedEvents, setSavedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +62,7 @@ const Profile = ({ navigation }) => {
   const [userEmail, setUserEmail] = useState('');
   const [activeTab, setActiveTab] = useState('favorites'); 
 
+  // Función auxiliar para obtener hora - camelCase para funciones
   const getHour = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('es-ES', {
@@ -49,6 +72,7 @@ const Profile = ({ navigation }) => {
     });
   };
 
+  // Función auxiliar para formatear fecha - camelCase para funciones
   const formatDate = (dateString) => {
     const [year, month, day] = dateString.split('T')[0].split('-');
     const date = new Date(`${year}-${month}-${day}T12:00:00`);
@@ -59,11 +83,14 @@ const Profile = ({ navigation }) => {
     });
   };
 
+  // useEffect para obtener email del usuario - Operación asíncrona al cargar componente
   useEffect(() => {
     const getEmail = async () => {
       try {
+        // Intenta obtener email de AsyncStorage
         let email = await AsyncStorage.getItem('userName');
         
+        // Si no existe, busca en userData
         if (!email) {
           const userData = await AsyncStorage.getItem('user');
           if (userData) {
@@ -80,6 +107,7 @@ const Profile = ({ navigation }) => {
     getEmail();
   }, []);
 
+  // useEffect principal para cargar datos del perfil
   useEffect(() => {
     const fetchAccountIdAndFavorites = async () => {
       try {
@@ -100,8 +128,10 @@ const Profile = ({ navigation }) => {
     fetchAccountIdAndFavorites();
   }, []);
 
+  // Función principal para obtener favoritos y asistencia - camelCase para función
   const fetchFavoritesAndAttendance = async (id) => {
     try {
+      // Petición para obtener todos los eventos
       const eventsResponse = await fetch(
         `${API_URL}/events`,
         {
@@ -119,6 +149,7 @@ const Profile = ({ navigation }) => {
       
       const eventsData = await eventsResponse.json();
 
+      // Petición para obtener eventos favoritos
       const favResponse = await fetch(
         `${API_URL}/favorites/${id}`,
         {
@@ -136,6 +167,7 @@ const Profile = ({ navigation }) => {
       
       const favData = await favResponse.json();
 
+      // Petición para obtener eventos de asistencia
       const attendanceResponse = await fetch(
         `${API_URL}/attendance/${id}`,
         {
@@ -153,6 +185,7 @@ const Profile = ({ navigation }) => {
       
       const attendanceData = await attendanceResponse.json();
 
+      // Procesamiento de eventos favoritos - Lógica de transformación de datos
       let formattedFavorites = [];
       if (favData.success && favData.favorites && favData.favorites.length > 0 && eventsData.success && eventsData.events) {
         const favoriteIds = favData.favorites.map(fav => fav.eventId);
@@ -161,6 +194,7 @@ const Profile = ({ navigation }) => {
         formattedFavorites = favoriteEvents.map(event => {
           let rawDateTime = event.date;
 
+          // Corrección de formato de fecha si es necesario
           if (rawDateTime.includes('T:')) {
             rawDateTime = rawDateTime.replace('T:', 'T');
           }
@@ -177,6 +211,7 @@ const Profile = ({ navigation }) => {
         });
       }
 
+      // Procesamiento de eventos de asistencia - Similar lógica para consistencia
       let formattedAttendance = [];
       if (attendanceData.success && attendanceData.attendance && attendanceData.attendance.length > 0 && eventsData.success && eventsData.events) {
         const attendanceIds = attendanceData.attendance.map(att => att.eventId);
@@ -201,6 +236,7 @@ const Profile = ({ navigation }) => {
         });
       }
 
+      // Actualización de estados con datos procesados
       setSavedEvents(formattedFavorites);
       setAttendanceEvents(formattedAttendance);
     } catch (error) {
@@ -211,7 +247,9 @@ const Profile = ({ navigation }) => {
     }
   };
 
+  // Función para obtener color por departamento - camelCase para función
   const getDepartmentColor = (dept) => {
+    // Objeto de mapeo de colores por departamento
     const colors = {
       'Sistemas computacionales': '#4a6eff', 
       'Economía': '#ffb16c', 
@@ -223,22 +261,26 @@ const Profile = ({ navigation }) => {
       'Ciencias marinas y costeras': '#a8ecff',
       'Ciencia animal y conservación del hábitat': '#f7b2f0',
     };
-    return colors[dept] || '#6b7280'; 
+    return colors[dept] || '#6b7280';
   };
 
+  // Función helper para renderizar tarjetas de eventos - Separación de lógica de renderizado
   const renderEventCard = (event) => (
     <View key={event.id} style={styles.eventCard}>
       <LinearGradient
         colors={['#ffffff', '#f8fafc']}
         style={styles.cardGradient}
       >
+        {/* Header de la tarjeta con badge del departamento */}
         <View style={styles.eventHeader}>
           <View style={[styles.categoryBadge, { backgroundColor: getDepartmentColor(event.department) }]}>
             <Text style={styles.categoryBadgeText}>{event.department}</Text>
           </View>
         </View>
         
+        {/* Contenido principal de la tarjeta */}
         <View style={styles.eventContent}>
+         
           <View style={styles.eventImageContainer}>
             <Image 
               source={{ uri: event.imageUrl }} 
@@ -248,10 +290,13 @@ const Profile = ({ navigation }) => {
             <View style={styles.imageOverlay} />
           </View>
           
+          {/* Detalles del evento */}
           <View style={styles.eventDetails}>
             <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
             
+           
             <View style={styles.eventMetaContainer}>
+             
               <View style={styles.metaItem}>
                 <View style={styles.metaIconContainer}>
                   <Image source={require("../assets/calendar.png")} style={styles.metaIcon} />
@@ -259,6 +304,7 @@ const Profile = ({ navigation }) => {
                 <Text style={styles.metaText}>{event.date}</Text>
               </View>
               
+            
               <View style={styles.metaItem}>
                 <View style={styles.metaIconContainer}>
                   <Image source={require("../assets/clock.png")} style={styles.metaIcon} />
@@ -266,6 +312,7 @@ const Profile = ({ navigation }) => {
                 <Text style={styles.metaText}>{event.time}</Text>
               </View>
               
+           
               <View style={styles.metaItem}>
                 <View style={styles.metaIconContainer}>
                   <Image source={require("../assets/location.png")} style={styles.metaIcon} />
@@ -279,6 +326,7 @@ const Profile = ({ navigation }) => {
     </View>
   );
 
+  // Handler para navegación - camelCase para función
   const handleNavigation = (screenName) => {
     try {
       navigation.navigate(screenName);
@@ -287,10 +335,12 @@ const Profile = ({ navigation }) => {
     }
   };
 
+  // Función para obtener eventos actuales según pestaña activa
   const getCurrentEvents = () => {
     return activeTab === 'favorites' ? savedEvents : attendanceEvents;
   };
 
+  // Renderizado condicional para estado de carga
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -304,10 +354,12 @@ const Profile = ({ navigation }) => {
     );
   }
 
+  // Renderizado principal del componente
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={COLORS.lightBlue} barStyle="dark-content" />
 
+      {/* Header con botón de retroceso y título */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -320,23 +372,28 @@ const Profile = ({ navigation }) => {
         <View style={{ width: 40 }} />
       </View>
 
+      {/* ScrollView principal */}
       <ScrollView 
         style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Sección del perfil con gradiente */}
         <LinearGradient
           colors={[COLORS.lightBlue, COLORS.lightBlue]}
           style={styles.profileSection}
         >
           <View style={styles.profileCard}>
+            {/* Imagen de perfil */}
             <View style={styles.profileImageContainer}>
               <Image source={require("../assets/student.png")} style={styles.profileImage} />
             </View>
             
+            {/* Información del perfil */}
             <View style={styles.profileInfo}>
               <Text style={styles.profileTitle}>Estudiante UABCS</Text>
               <Text style={styles.profileEmail}>{userEmail || 'Usuario'}</Text>
+              {/* Estadísticas del perfil */}
               <View style={styles.profileStats}>
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>{savedEvents.length}</Text>
@@ -352,7 +409,9 @@ const Profile = ({ navigation }) => {
           </View>
         </LinearGradient>
 
+        {/* Contenedor de pestañas */}
         <View style={styles.tabContainer}>
+          {/* Pestaña de favoritos */}
           <TouchableOpacity
             style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
             onPress={() => setActiveTab('favorites')}
@@ -370,6 +429,7 @@ const Profile = ({ navigation }) => {
             {activeTab === 'favorites' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
           
+          {/* Pestaña de asistencia */}
           <TouchableOpacity
             style={[styles.tab, activeTab === 'attended' && styles.activeTab]}
             onPress={() => setActiveTab('attended')}
@@ -388,8 +448,10 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Contenedor de eventos */}
         <View style={styles.eventsContainer}>
           {getCurrentEvents().length === 0 ? (
+           
             <View style={styles.emptyStateContainer}>
               <LinearGradient
                 colors={[COLORS.softBlue, COLORS.lightPurple]}
@@ -412,12 +474,15 @@ const Profile = ({ navigation }) => {
               </Text>
             </View>
           ) : (
+            // Renderizado de eventos cuando existen
             getCurrentEvents().map((event) => renderEventCard(event))
           )}
         </View>
       </ScrollView>
 
+      {/* Barra de navegación inferior */}
       <View style={styles.bottomNav}>
+       
         <TouchableOpacity style={styles.bottomNavItem} 
           onPress={() => navigation.navigate("Home")}
           activeOpacity={0.7}>
@@ -429,6 +494,7 @@ const Profile = ({ navigation }) => {
           </View>
         </TouchableOpacity>
 
+       
         <TouchableOpacity
           style={styles.bottomNavItem}
           onPress={() => navigation.navigate("EventScreen")}
@@ -439,6 +505,7 @@ const Profile = ({ navigation }) => {
           </View>
         </TouchableOpacity>
 
+        
         <TouchableOpacity
           style={styles.bottomNavItem}
           onPress={() => navigation.navigate("Profile")}
