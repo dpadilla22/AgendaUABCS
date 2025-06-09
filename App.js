@@ -13,6 +13,7 @@ import LocationScreen from './screens/LocationScreen';
 import EventScreen from './screens/EventScreen';
 import EventDetailScreen from './screens/EventDetailScreen';
 import CommentsScreen from './screens/commentsScreen';
+import dashboard from './screens/dashboard';
 
 
 const Stack = createNativeStackNavigator();
@@ -93,6 +94,16 @@ function DrawerNavigator() {
           }
         }}
       />
+
+      {/* <Drawer.Screen 
+        name="dashboard" 
+        component={dashboard}
+        options={{
+          drawerItemStyle: { 
+            marginBottom: 'auto'
+          }
+        }}
+      /> */}
       
       <Drawer.Screen 
         name="Cerrar sesión" 
@@ -107,6 +118,7 @@ function DrawerNavigator() {
         }}
       />
     </Drawer.Navigator>
+    
   );
 }
 

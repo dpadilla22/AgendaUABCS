@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollVi
 import DateTimePicker from "@react-native-community/datetimepicker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const API_BASE_URL = "https://7de7-200-92-221-16.ngrok-free.app"
+const API_BASE_URL = "https://4e06-200-92-221-16.ngrok-free.app"
 
 const COLORS = {
   coral: "#FF7B6B",

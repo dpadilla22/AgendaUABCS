@@ -103,7 +103,7 @@ const COLORS = {
   cream: "#F5F5DC", 
 };
 
-const API_URL = "https://7de7-200-92-221-16.ngrok-free.app";
+const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
 
 const DepartamentScreen = ({ navigation, route }) => {
   const { nombreDepartamento } = route.params;

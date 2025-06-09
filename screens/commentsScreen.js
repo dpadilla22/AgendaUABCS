@@ -28,7 +28,7 @@ const COLORS = {
   placeholder: "#999999",
 }
 
-const API_URL = "https://7de7-200-92-221-16.ngrok-free.app"
+const API_URL = "https://4e06-200-92-221-16.ngrok-free.app"
 
 const CommentsScreen = () => {
   const navigation = useNavigation()

@@ -3,16 +3,16 @@ import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollVi
 import { LinearGradient } from 'expo-linear-gradient'; 
 import EventCard from "../components/EventCard";
 import { ActivityIndicator } from "react-native";
+import * as Location from "expo-location";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadAccountId } from './EventScreen';
+import LocationPermissionModal from "../components/LocationPermissionModal";
 
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_WIDTH = screenWidth - 32; 
 const CAROUSEL_HEIGHT = 220; 
 
-
 const COLORS = {
-
   primaryBlue: "#1B3A5C",     
   secondaryBlue: "#4A7BA7",    
   gold: "#D4AF37",             
@@ -27,8 +27,6 @@ const COLORS = {
   purple: "#9966FF",
   cream: "#F5F5DC",
 };
-
-
 
 const carouselData = [
   {
@@ -64,6 +62,7 @@ const carouselData = [
 ];
 
 const HomeScreen = ({ navigation }) => {
+  // TODOS LOS HOOKS DECLARADOS AL INICIO, SIN CONDICIONES
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Hoy");
@@ -76,16 +75,24 @@ const HomeScreen = ({ navigation }) => {
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [hasLocationPermission, setHasLocationPermission] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+
+  // TODOS LOS REFS
   const carouselRef = useRef(null);
   const autoScrollTimer = useRef(null);
   const searchInputRef = useRef(null);
 
-const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
+  // CONSTANTE API_URL
+  const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
 
+  // TODAS LAS FUNCIONES
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch('${API_URL}/events');
+      const response = await fetch(`${API_URL}/events`);
       const data = await response.json();
       setEvents(data.events || []);
     } catch (error) {
@@ -96,81 +103,40 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
     }
   };
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch(`${API_URL}/events`);
-        const data = await response.json();
-        
-        setEvents(data.events || []);
-      } catch (error) {
-        console.error('Error al obtener eventos:', error);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    if (isAutoScrolling) {
-      autoScrollTimer.current = setInterval(() => {
-        setCurrentIndex(prevIndex => {
-          const nextIndex = (prevIndex + 1) % carouselData.length;
-          carouselRef.current?.scrollTo({
-            x: nextIndex * (CAROUSEL_WIDTH + 16), 
-            animated: true
-          });
-          return nextIndex;
-        });
-      }, 4000); 
+  const performSearch = (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
     }
 
-    return () => {
-      if (autoScrollTimer.current) {
-        clearInterval(autoScrollTimer.current);
+    setIsSearching(true);
+    const queryLower = query.toLowerCase().trim();
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const results = events.filter(event => {
+      const eventDate = new Date(event.date);
+      eventDate.setHours(0, 0, 0, 0);
+      
+      if (eventDate < today) {
+        return false;
       }
-    };
-  }, [isAutoScrolling]);
+      
+      return (
+        event.title?.toLowerCase().includes(queryLower) ||
+        event.department?.toLowerCase().includes(queryLower) ||
+        event.location?.toLowerCase().includes(queryLower) ||
+        event.description?.toLowerCase().includes(queryLower)
+      );
+    });
 
- const performSearch = (query) => {
-  if (!query.trim()) {
-    setSearchResults([]);
-    return;
-  }
+    setTimeout(() => {
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 300);
+  };
 
-  setIsSearching(true);
-  const queryLower = query.toLowerCase().trim();
-  
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const results = events.filter(event => {
- 
-    const eventDate = new Date(event.date);
-    eventDate.setHours(0, 0, 0, 0);
-    
-
-    if (eventDate < today) {
-      return false;
-    }
-    
-    return (
-      event.title?.toLowerCase().includes(queryLower) ||
-      event.department?.toLowerCase().includes(queryLower) ||
-      event.location?.toLowerCase().includes(queryLower) ||
-      event.description?.toLowerCase().includes(queryLower)
-    );
-  });
-
-  setTimeout(() => {
-    setSearchResults(results);
-    setIsSearching(false);
-  }, 300);
-};
   const handleSearchChange = (text) => {
     setSearchQuery(text);
     performSearch(text);
@@ -307,20 +273,7 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <View style={styles.fullScreenLoading}></View>
-        <Image
-          source={require("../assets/agendaLogo.png")}
-          style={{ width: 120, height: 120, marginBottom: 20 }}
-          resizeMode="contain"
-        />
-      </View>
-    );
-  }
-
- const getDepartmentColor = (dept) => {
+  const getDepartmentColor = (dept) => {
     const colors = {
       'Sistemas computacionales': '#4a6eff', 
       'Economía': '#ffb16c', 
@@ -335,11 +288,137 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
     return colors[dept] || '#6b7280'; 
   };
 
-  const filteredEvents = getFilteredEvents();
+  const checkLocationPermission = async () => {
+    try {
+      const permissionGranted = await AsyncStorage.getItem("locationPermissionGranted");
 
+      if (permissionGranted === "true") {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === "granted") {
+          setHasLocationPermission(true);
+          loadSavedLocation();
+        } else {
+          setHasLocationPermission(false);
+        }
+      } else {
+        setHasLocationPermission(false);
+      }
+    } catch (error) {
+      console.error("Error checking permission status:", error);
+      setHasLocationPermission(false);
+    }
+  };
+
+  const loadSavedLocation = async () => {
+    try {
+      const locationString = await AsyncStorage.getItem("userLocation");
+      if (locationString) {
+        const location = JSON.parse(locationString);
+        setUserLocation(location);
+      }
+    } catch (error) {
+      console.error("Error loading saved location:", error);
+    }
+  };
+
+  const checkLoginAndPermissions = async () => {
+    try {
+      const accountId = await AsyncStorage.getItem("accountId");
+
+      if (accountId) {
+        const locationPermission = await AsyncStorage.getItem("locationPermissionGranted");
+
+        if (locationPermission !== "true") {
+          setTimeout(() => {
+            setShowLocationModal(true);
+          }, 1000);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking login and permissions:", error);
+    }
+  };
+
+  const handleLocationPermissionGranted = (location) => {
+    setShowLocationModal(false);
+    setHasLocationPermission(true);
+    setUserLocation(location);
+    console.log("Ubicación obtenida:", location);
+  };
+
+  const handleLocationPermissionDenied = () => {
+    setShowLocationModal(false);
+    setHasLocationPermission(false);
+    console.log("Permisos de ubicación denegados");
+  };
+
+  // TODOS LOS useEffect JUNTOS - SIN DUPLICADOS
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch(`${API_URL}/events`);
+        const data = await response.json();
+        
+        setEvents(data.events || []);
+      } catch (error) {
+        console.error('Error al obtener eventos:', error);
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    if (isAutoScrolling) {
+      autoScrollTimer.current = setInterval(() => {
+        setCurrentIndex(prevIndex => {
+          const nextIndex = (prevIndex + 1) % carouselData.length;
+          carouselRef.current?.scrollTo({
+            x: nextIndex * (CAROUSEL_WIDTH + 16), 
+            animated: true
+          });
+          return nextIndex;
+        });
+      }, 4000); 
+    }
+
+    return () => {
+      if (autoScrollTimer.current) {
+        clearInterval(autoScrollTimer.current);
+      }
+    };
+  }, [isAutoScrolling]);
+
+  useEffect(() => {
+    const initLocationPermissions = async () => {
+      await checkLocationPermission();
+      await checkLoginAndPermissions();
+    };
+    
+    initLocationPermissions();
+  }, []);
+
+  // EARLY RETURN DESPUÉS DE TODOS LOS HOOKS
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <View style={styles.fullScreenLoading}></View>
+        <Image
+          source={require("../assets/agendaLogo.png")}
+          style={{ width: 120, height: 120, marginBottom: 20 }}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
+
+  const filteredEvents = getFilteredEvents();
+  
   return (
     <SafeAreaView style={styles.container}>
-      
       <View style={styles.whiteHeader}>
         <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <View style={styles.menuIcon}>
@@ -500,7 +579,6 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-       
         <View style={styles.carouselSection}>
           <ScrollView
             ref={carouselRef}
@@ -546,7 +624,6 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
           </View>
         </View>
 
-        
         <View style={styles.tabSection}>
           <View style={styles.tabContainer}>
             <TouchableOpacity
@@ -570,7 +647,6 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
           </View>
         </View>
 
-       
         <View style={styles.eventsContent}>
           {events.length === 0 ? (
             <View style={styles.emptyStateContainer}>
@@ -645,11 +721,17 @@ const API_URL = 'https://7de7-200-92-221-16.ngrok-free.app';
           </View>
         </TouchableOpacity>
       </View>
-   
+
+      <LocationPermissionModal
+        visible={showLocationModal}
+        onPermissionGranted={handleLocationPermissionGranted}
+        onPermissionDenied={handleLocationPermissionDenied}
+      />
     </SafeAreaView>
   );
 };
 
+   
 const styles = StyleSheet.create({
   container: {
     flex: 1,

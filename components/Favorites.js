@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://7de7-200-92-221-16.ngrok-free.app";
+const API_BASE_URL = "https://4e06-200-92-221-16.ngrok-free.app";
 
 export const checkIfBookmarked = async (accountId, eventId, setIsBookmarked) => {
   try {

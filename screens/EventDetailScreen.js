@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { markAttendance, unmarkAttendance } from "../components/Attendance"
 import { checkIfBookmarked, addToFavorites, removeFromFavorites } from "../components/Favorites"
 import LocationService from "../components/LocationServices" 
+// import EventLocationInfo from "../components/EventLocationInfo"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
@@ -361,7 +362,26 @@ const EventDetailScreen = ({ navigation, route }) => {
 
 
   
+const handleLocationPress = () => {
+  if (!locationPermission) {
+    showModal(
+      "Permisos de Ubicación Requeridos", 
+      "Para abrir la ubicación en Maps, necesitas otorgar permisos de ubicación primero.", 
+      "warning",
+      () => {
+        setModalConfig(prev => ({ ...prev, visible: false }));
+      
+        requestLocationPermission();
+      },
+      () => setModalConfig(prev => ({ ...prev, visible: false }))
+    );
+    return;
+  }
 
+  const coords = getLocationCoordinates(event?.location);
+  const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
+  Linking.openURL(url).catch(err => console.error('Error opening maps:', err));
+};
   
 
   const handleAttendanceToggle = async () => {
@@ -444,11 +464,11 @@ const EventDetailScreen = ({ navigation, route }) => {
   const getDepartmentColor = (dept) => {
     const colors = {
       "Sistemas computacionales": "#4a6eff",
-      Economía: "#ffb16c",
+      "Economía": "#ffb16c",
       "Ciencias Sociales y jurídicas": "#97795e",
-      Agronomia: "#f9f285",
+      "Agronomia": "#f9f285",
       "Ciencias de la tierra": "#1fd514",
-      Humanidades: "#a980f2",
+      "Humanidades": "#a980f2",
       "Ingeniería en pesquerías": "#fb6d51",
       "Ciencias marinas y costeras": "#a8ecff",
       "Ciencia animal y conservación del hábitat": "#f7b2f0",
@@ -597,28 +617,67 @@ const EventDetailScreen = ({ navigation, route }) => {
             </View>
 
             <TouchableOpacity 
-              style={styles.detailItem}
-              onPress={() => {
-                const coords = getLocationCoordinates(event?.location)
-                const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`
-                Linking.openURL(url).catch(err => console.error('Error opening maps:', err))
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.detailIcon}>
-                <Ionicons name="location-outline" size={20} color={COLORS.darkBlue} />
-              </View>
-              <View style={styles.locationContent}>
-                <Text style={styles.detailLabel}>Ubicación</Text>
-                <Text style={styles.detailValue}>{event?.location || "Ubicación no especificada"}</Text>
-                <Text style={styles.tapToOpenText}>Toca para abrir en Maps</Text>
-              </View>
-              <Ionicons name="open-outline" size={16} color={COLORS.darkBlue} style={styles.openIcon} />
-            </TouchableOpacity>
+  style={[
+    styles.detailItem,
+    !locationPermission && styles.disabledDetailItem
+  ]}
+  onPress={handleLocationPress}
+  activeOpacity={locationPermission ? 0.7 : 1}
+  disabled={!locationPermission}
+>
+  <View style={[
+    styles.detailIcon,
+    !locationPermission && styles.disabledIcon
+  ]}>
+    <Ionicons 
+      name="location-outline" 
+      size={20} 
+      color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
+    />
+  </View>
+  <View style={styles.locationContent}>
+    <Text style={[
+      styles.detailLabel,
+      !locationPermission && styles.disabledText
+    ]}>
+      Ubicación
+    </Text>
+    <Text style={[
+      styles.detailValue,
+      !locationPermission && styles.disabledText
+    ]}>
+      {event?.location || "Ubicación no especificada"}
+    </Text>
+    <Text style={[
+      styles.tapToOpenText,
+      !locationPermission && styles.disabledTapText
+    ]}>
+      {locationPermission 
+        ? "Toca para abrir en Maps" 
+        : "Permisos de ubicación requeridos"
+      }
+    </Text>
+  </View>
+  <Ionicons 
+    name="open-outline" 
+    size={16} 
+    color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
+    style={styles.openIcon} 
+  />
+</TouchableOpacity>
           </View>
         </View>
 
-       
+{/* ;<EventLocationInfo
+  event={{
+    id: event?.id,
+    title: event?.title,
+    location: event?.location,
+    date: formatDate(event?.date),
+    time: formatTime(event?.time),
+    coordinates: getLocationCoordinates(event?.location), // Usa tu función existente
+  }}
+/> */}
 
         <View style={styles.actionSection}>
           <TouchableOpacity
@@ -1057,6 +1116,19 @@ const styles = StyleSheet.create({
   },
   openIcon: {
     marginLeft: 10,
+  },
+    disabledDetailItem: {
+    opacity: 0.5,
+  },
+  disabledIcon: {
+    backgroundColor: COLORS.lightGray,
+  },
+  disabledText: {
+    color: COLORS.mediumGray,
+  },
+  disabledTapText: {
+    color: COLORS.mediumGray,
+    fontStyle: 'italic',
   },
 })
 

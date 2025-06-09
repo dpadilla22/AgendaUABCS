@@ -11,19 +11,40 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+   "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a la ubicación para mostrar eventos cercanos."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F5F5DC"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.agenda.uabcs"
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
-  
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Esta app necesita acceso a la ubicación para mostrar eventos cercanos y calcular distancias.",
+          "locationWhenInUsePermission": "Esta app necesita acceso a la ubicación para mostrar eventos cercanos.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
+    ]
   }
 }
