@@ -11,7 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-   "assetBundlePatterns": [
+    "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
@@ -29,8 +29,11 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
-      ]
+        "ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.agenda.uabcs"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,6 +48,11 @@
           "isAndroidBackgroundLocationEnabled": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "465d435e-bfa2-4bfc-8378-bd073ffbcf9d"
+      }
+    }
   }
 }
