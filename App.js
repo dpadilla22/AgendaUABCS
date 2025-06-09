@@ -95,15 +95,7 @@ function DrawerNavigator() {
         }}
       />
 
-      {/* <Drawer.Screen 
-        name="dashboard" 
-        component={dashboard}
-        options={{
-          drawerItemStyle: { 
-            marginBottom: 'auto'
-          }
-        }}
-      /> */}
+      
       
       <Drawer.Screen 
         name="Cerrar sesión" 
@@ -138,6 +130,7 @@ export default function App() {
           <Stack.Screen name="LocationScreen" component={LocationScreen} />
           <Stack.Screen name="EventScreen" component={EventScreen} />
           <Stack.Screen name="EventDetailScreen" component={EventDetailScreen} />
+          <Stack.Screen name="AdminDashboard" component={dashboard} />
         </Stack.Navigator>
       </NavigationContainer>
       

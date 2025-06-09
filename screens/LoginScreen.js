@@ -5,6 +5,7 @@ import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, TextInput, Imag
 import Toast from "react-native-toast-message"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
+
 const { width } = Dimensions.get("window")
 
 const COLORS = {
@@ -25,18 +26,15 @@ const COLORS = {
 
 const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
 
-
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-
   const [usernameError, setUsernameError] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [generalError, setGeneralError] = useState("")
-
 
   const handleUsernameChange = (text) => {
     setUsername(text)
@@ -51,11 +49,9 @@ const LoginScreen = ({ navigation }) => {
   }
 
   const handleLogin = async () => {
-
     setUsernameError("")
     setPasswordError("")
     setGeneralError("")
-
 
     let hasError = false
 
@@ -77,6 +73,23 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss()
 
     try {
+    
+      if (username.trim() === "admin_22" && password === "admin123") {
+      
+
+        Toast.show({
+          type: "success",
+          text1: "¡Bienvenido Administrador!",
+          text2: "Acceso al panel de administración",
+        })
+
+     
+        navigation.navigate("AdminDashboard")
+        setLoading(false)
+        return
+      }
+
+   
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
@@ -94,6 +107,7 @@ const LoginScreen = ({ navigation }) => {
         console.log("Usuario recibido:", data.user)
         await AsyncStorage.setItem("accountId", data.user.idAccount.toString())
         await AsyncStorage.setItem("userName", data.user.email)
+        await AsyncStorage.setItem("userData", JSON.stringify(data.user))
         console.log("ID guardado:", data.user.idAccount)
 
         Toast.show({
@@ -104,7 +118,6 @@ const LoginScreen = ({ navigation }) => {
 
         navigation.navigate("Home", { user: data.user })
       } else {
-      
         setGeneralError(data.message || "Credenciales incorrectas")
       }
     } catch (error) {
@@ -127,7 +140,6 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.formSection}>
             <View style={styles.formContainer}>
-           
               {generalError ? (
                 <View style={styles.errorContainer}>
                   <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
@@ -309,13 +321,6 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginLeft: 8,
   },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.cream,
-  },
-
   errorText: {
     color: COLORS.error,
     fontSize: 12,

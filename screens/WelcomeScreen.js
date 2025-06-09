@@ -120,9 +120,7 @@ const WelcomeScreen = ({ navigation }) => {
             { opacity: buttonOpacity }
           ]}
         >
-          <View style={styles.dot} />
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
+        
         </Animated.View>
       </Animated.View>
  
@@ -258,17 +256,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E0E0E0',
-  },
-  dotActive: {
-    backgroundColor: '#efdcbd',
-    width: 24,
-    borderRadius: 12,
-  },
+ 
 });
 
 export default WelcomeScreen;

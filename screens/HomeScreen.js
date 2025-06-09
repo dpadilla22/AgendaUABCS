@@ -62,7 +62,7 @@ const carouselData = [
 ];
 
 const HomeScreen = ({ navigation }) => {
-  // TODOS LOS HOOKS DECLARADOS AL INICIO, SIN CONDICIONES
+ 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Hoy");
@@ -80,15 +80,14 @@ const HomeScreen = ({ navigation }) => {
   const [hasLocationPermission, setHasLocationPermission] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
-  // TODOS LOS REFS
+
   const carouselRef = useRef(null);
   const autoScrollTimer = useRef(null);
   const searchInputRef = useRef(null);
 
-  // CONSTANTE API_URL
   const API_URL = "https://4e06-200-92-221-16.ngrok-free.app";
 
-  // TODAS LAS FUNCIONES
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -352,7 +351,7 @@ const HomeScreen = ({ navigation }) => {
     console.log("Permisos de ubicación denegados");
   };
 
-  // TODOS LOS useEffect JUNTOS - SIN DUPLICADOS
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -401,7 +400,7 @@ const HomeScreen = ({ navigation }) => {
     initLocationPermissions();
   }, []);
 
-  // EARLY RETURN DESPUÉS DE TODOS LOS HOOKS
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>

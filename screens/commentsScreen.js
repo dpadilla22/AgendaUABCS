@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import Toast from "react-native-toast-message"
+import { fetchComments, createComment, formatDateTime } from "../components/comments"
 
 const COLORS = {
   darkBlue: "#003366",
@@ -28,8 +29,6 @@ const COLORS = {
   placeholder: "#999999",
 }
 
-const API_URL = "https://4e06-200-92-221-16.ngrok-free.app"
-
 const CommentsScreen = () => {
   const navigation = useNavigation()
   const [comments, setComments] = useState([])
@@ -39,7 +38,6 @@ const CommentsScreen = () => {
   const [currentUser, setCurrentUser] = useState(null)
   const [accountId, setAccountId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-
 
   const [showModal, setShowModal] = useState(false)
   const [modalConfig, setModalConfig] = useState({
@@ -53,26 +51,6 @@ const CommentsScreen = () => {
     cancelText: "Cancelar",
   })
 
-
-  const convertUTCToLocal = (utcDateString) => {
-    if (!utcDateString) return null
-
-    try {
-
-      const utcDate = new Date(utcDateString)
-
-   
-      const localDate = new Date(utcDate.getTime() - 7 * 60 * 60 * 1000)
-
-     
-
-      return localDate
-    } catch (error) {
-      console.error("Error converting UTC to local:", error)
-      return new Date(utcDateString)
-    }
-  }
-
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true)
@@ -82,7 +60,6 @@ const CommentsScreen = () => {
 
     initialize()
   }, [])
-
 
   const showCustomModal = (title, message, type = "error", options = {}) => {
     setModalConfig({
@@ -188,23 +165,13 @@ const CommentsScreen = () => {
     }
   }
 
+
   const loadComments = async () => {
     try {
-      const response = await fetch(`${API_URL}/comments`, {
-        headers: {
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
-      const data = await response.json()
-
-      if (data.success) {
-        const sortedComments = data.comments.sort((a, b) => new Date(b.dateComment) - new Date(a.dateComment))
-        setComments(sortedComments)
-      } else {
-        console.error("Error loading comments:", data.message)
-      }
+      const result = await fetchComments()
+      setComments(result.comments)
     } catch (error) {
-      console.error("Error fetching comments:", error)
+      console.error("Error loading comments:", error)
       Toast.show({
         type: "error",
         text1: "Error",
@@ -219,6 +186,7 @@ const CommentsScreen = () => {
     await getCurrentUser()
     setRefreshing(false)
   }
+
 
   const submitComment = async () => {
     if (!commentText.trim()) {
@@ -248,31 +216,17 @@ const CommentsScreen = () => {
     setIsSubmitting(true)
 
     try {
-      console.log("Enviando comentario con ID de cuenta:", accountId)
-
-      const response = await fetch(`${API_URL}/createComment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
-        body: JSON.stringify({
-          titleComment: "Comentario de usuario",
-          descriptionComment: commentText.trim(),
-          accountId: accountId,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setCommentText("")
-        showCustomModal("Comentario enviado", "Tu comentario ha sido publicado correctamente.", "success")
-        await loadComments()
-      } else {
-        console.error("Error response:", data)
-        throw new Error(data.message || "Error al enviar comentario")
+      const commentData = {
+        titleComment: "Comentario de usuario",
+        descriptionComment: commentText.trim(),
+        accountId: accountId,
       }
+
+      await createComment(commentData)
+      
+      setCommentText("")
+      showCustomModal("Comentario enviado", "Tu comentario ha sido publicado correctamente.", "success")
+      await loadComments()
     } catch (error) {
       console.error("Error submitting comment:", error)
       showCustomModal("Error al enviar", "No se pudo enviar tu comentario. Por favor, inténtalo nuevamente.", "error")
@@ -283,53 +237,6 @@ const CommentsScreen = () => {
 
   const getUserIdentifier = (item) => {
     return item.nameUser || "Usuario Anónimo"
-  }
-
-
-  const formatDateTime = (dateString) => {
-    if (!dateString) return ""
-
-    try {
- 
-      const localDate = convertUTCToLocal(dateString)
-      const now = new Date()
-      const diffTime = Math.abs(now - localDate)
-
-  
-      const diffSeconds = Math.floor(diffTime / 1000)
-      const diffMinutes = Math.floor(diffTime / (1000 * 60))
-      const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-      if (diffSeconds < 60) {
-        return "Hace unos segundos"
-      } else if (diffMinutes < 60) {
-        return diffMinutes === 1 ? "Hace 1 minuto" : `Hace ${diffMinutes} minutos`
-      } else if (diffHours < 24) {
-        return diffHours === 1 ? "Hace 1 hora" : `Hace ${diffHours} horas`
-      } else if (diffDays === 0) {
-        return "Hoy"
-      } else if (diffDays === 1) {
-        return "Ayer"
-      } else if (diffDays < 7) {
-        return `Hace ${diffDays} días`
-      } else {
-
-        const hours = localDate.getHours().toString().padStart(2, "0")
-        const minutes = localDate.getMinutes().toString().padStart(2, "0")
-
-        return (
-          localDate.toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }) + ` ${hours}:${minutes}`
-        )
-      }
-    } catch (error) {
-      console.error("Error formatting date:", error)
-      return "Fecha no válida"
-    }
   }
 
   const renderCommentItem = ({ item, index }) => {
@@ -343,14 +250,11 @@ const CommentsScreen = () => {
             <Text style={styles.userNameText}>{getUserIdentifier(item)}</Text>
             <Text style={styles.timeText}>{formatDateTime(item.dateComment)}</Text>
             <Text style={styles.commentText}>{item.descriptionComment}</Text>
-
-            
           </View>
         </View>
       </View>
     )
   }
-
   const renderCommentInput = () => (
     <View style={styles.inputCard}>
       <View style={styles.inputHeader}>

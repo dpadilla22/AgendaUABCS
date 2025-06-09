@@ -4,11 +4,11 @@ import { Alert, Linking } from 'react-native';
 class LocationService {
   static async requestLocationPermission() {
     try {
-      // Verificar si los permisos ya están otorgados
+      
       let { status } = await Location.getForegroundPermissionsAsync();
       
       if (status !== 'granted') {
-        // Solicitar permisos
+       
         let { status: newStatus } = await Location.requestForegroundPermissionsAsync();
         
         if (newStatus !== 'granted') {
@@ -67,7 +67,7 @@ class LocationService {
   static calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
     
-    const R = 6371; // Radio de la Tierra en km
+    const R = 6371; 
     const dLat = this.deg2rad(lat2 - lat1);
     const dLon = this.deg2rad(lon2 - lon1);
     const a = 
@@ -75,7 +75,7 @@ class LocationService {
       Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const d = R * c; // Distancia en km
+    const d = R * c; 
     return d;
   }
 
