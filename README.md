@@ -20,6 +20,10 @@
 
 ###
 
+<p align="left">User Manuals / Manuales de usuario: <br><br>https://drive.google.com/drive/folders/1_rMGNs1Qr8aexn_pfDfDARpqEW701hBa?usp=sharing</p>
+
+###
+
 <h3 align="left">1. Download and install the APK / Descargar e instalar el APK</h3>
 
 ###
