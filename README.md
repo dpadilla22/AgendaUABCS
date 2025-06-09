@@ -1,4 +1,4 @@
-<h1 align="left">📖Agenda UABCS v0.9.5</h1>
+<h1 align="left">📖Agenda UABCS v1.0</h1>
 
 ###
 
@@ -20,7 +20,19 @@
 
 ###
 
-<p align="left">User Manuals / Manuales de usuario: <br><br>https://drive.google.com/drive/folders/1_rMGNs1Qr8aexn_pfDfDARpqEW701hBa?usp=sharing</p>
+<h4 align="left">Test user / Usuario de pruebas:</h4>
+
+###
+
+<p align="left">Identifier / identificador: italiaE_22<br>Password / contraseña: IngenieriaRules</p>
+
+###
+
+<h4 align="left">User Manuals / Manuales de usuario:</h4>
+
+###
+
+<p align="left">https://drive.google.com/drive/folders/1_rMGNs1Qr8aexn_pfDfDARpqEW701hBa?usp=sharing</p>
 
 ###
 
