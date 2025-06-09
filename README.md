@@ -1,4 +1,10 @@
-<h1 align="left">📖Agenda UABCS v0.5</h1>
+<h1 align="left">📖Agenda UABCS v0.9.5</h1>
+
+###
+
+<div align="center">
+  <img height="200" src="https://github.com/dpadilla22/AgendaUABCS/blob/main/assets/agendaLogo.png?raw=true"  />
+</div>
 
 ###
 
@@ -6,7 +12,67 @@
 
 ###
 
-<h2 align="left">Languages</h2>
+<p align="left"></p>
+
+###
+
+<h2 align="left">🖥 Instalation guide / Guia de instalación</h2>
+
+###
+
+<h3 align="left">1. Download and install the APK / Descargar e instalar el APK</h3>
+
+###
+
+<p align="left">1.1- Open the next link on your phone / Abra el siguiente enlace en su teléfono:<br><br>https://expo.dev/accounts/sr.m/projects/agenda-uabcs/builds/7196dae4-22e8-4be3-a468-6c3594f617c7<br><br>Or scan this QR code / O escanee el siguiente código QR:</p>
+
+###
+
+<div align="center">
+  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749434862/4efe8873-b3bf-4b7a-a12c-abfdb899f620_hz1217.jpg"  />
+</div>
+
+###
+
+<p align="left">1.2- Press the blue button called "Install" / Presione el botón azul que dice "Install" o "Instalar"</p>
+
+###
+
+<div align="center">
+  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749435147/517e0490-135f-487b-b5f5-341627023b31_hfwwqd.jpg"  />
+</div>
+
+###
+
+<p align="left">1.3- After clicked the "Install" button, your device is going to ask you about if you want to install this archive, dont worry, this app isnt a malware or any other virus, just click in the "Download" button / Después de hacer click en "Instalar", su dispositivo preguntará si desea instalar este archivo, no se preocupe, esta aplicación no es un malware o cualquier otro virus, solo presione el botón de "Descargar".</p>
+
+###
+
+<div align="center">
+  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749435564/5b98e8cb-6d9d-4fab-be45-ef4f4e374500_was5av.jpg"  />
+</div>
+
+###
+
+<p align="left">1.4- Now you need to install the APK on your phone, to do that, you need to go to your "Archive explorer" or where you have your documents downloaded and select the download archive / Ahora necesitas instalar el APK en tu teléfono, para hacerlo, necesitas ir a tu "Explorador de archivos" o donde tengas tus documentos descargados y seleccionar el archivo descargado.</p>
+
+###
+
+<div align="center">
+  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749436157/0c2b6f15-0b04-403d-881f-447ef944afcb_zgk8ya.jpg"  />
+</div>
+
+###
+
+<p align="left">1.5- Now, just select the archive, press "Install", wait until it finish the instalation process and done!, the app is ready to start/ Ahora solo selecciona el archivo, presiona el botón "Instalar", espera hasta que el termine el proceso de instalación y listo!, la aplicación esta lista para funcionar.</p>
+
+###
+
+<p align="left"></p>
+
+###
+
+<h2 align="left">Programming languages / Lenguajes de programación</h2>
 
 ###
 
@@ -22,11 +88,15 @@
 
 ###
 
-<h2 align="left">Development team</h2>
+<p align="left"></p>
 
 ###
 
-<h3 align="center">FrontEnd - (dpadilla22) Danna Cahelca Padilla Nuñez</h3>
+<h2 align="left">Development team / Equipo de desarrollo</h2>
+
+###
+
+<h3 align="center">FrontEnd - Danna Cahelca Padilla Nuñez</h3>
 
 ###
 
@@ -36,7 +106,7 @@
 
 ###
 
-<h3 align="center">BackEnd - (RedRotto) Jesús Javier Rojo Martínez</h3>
+<h3 align="center">BackEnd - Jesús Javier Rojo Martínez</h3>
 
 ###
 
