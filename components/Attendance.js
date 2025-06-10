@@ -12,7 +12,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const API_URL = 'https://9e10-2806-265-5402-ca4-ddf5-fcb1-c27a-627d.ngrok-free.app';
+const API_URL = 'https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app';
 
 /**
  * Marca la asistencia de un usuario a un evento.
