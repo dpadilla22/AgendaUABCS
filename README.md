@@ -1,4 +1,4 @@
-<h1 align="left">📖Agenda UABCS v0.9.5</h1>
+<h1 align="left">📖Agenda UABCS v1.0</h1>
 
 ###
 
@@ -20,7 +20,19 @@
 
 ###
 
-<p align="left">User Manuals / Manuales de usuario: <br><br>https://drive.google.com/drive/folders/1_rMGNs1Qr8aexn_pfDfDARpqEW701hBa?usp=sharing</p>
+<h4 align="left">Test user / Usuario de pruebas:</h4>
+
+###
+
+<p align="left">Identifier / identificador: italiaE_22<br>Password / contraseña: IngenieriaRules</p>
+
+###
+
+<h4 align="left">User Manuals / Manuales de usuario:</h4>
+
+###
+
+<p align="left">https://drive.google.com/drive/folders/1_rMGNs1Qr8aexn_pfDfDARpqEW701hBa?usp=sharing</p>
 
 ###
 
@@ -28,12 +40,12 @@
 
 ###
 
-<p align="left">1.1- Open the next link on your phone / Abra el siguiente enlace en su teléfono:<br><br>https://expo.dev/accounts/sr.m/projects/agenda-uabcs/builds/7196dae4-22e8-4be3-a468-6c3594f617c7<br><br>Or scan this QR code / O escanee el siguiente código QR:</p>
+<p align="left">1.1- Open the next link on your phone / Abra el siguiente enlace en su teléfono:<br><br>https://expo.dev/accounts/sr.m/projects/agenda-uabcs/builds/60ac982f-ba4f-43a6-84a6-2606c8670972<br><br>Or scan this QR code / O escanee el siguiente código QR:</p>
 
 ###
 
 <div align="center">
-  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749434862/4efe8873-b3bf-4b7a-a12c-abfdb899f620_hz1217.jpg"  />
+  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749505193/99f8d0d4-e597-4464-a0dd-72bf40184833_hxwifg.jpg"  />
 </div>
 
 ###
