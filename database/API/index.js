@@ -17,7 +17,8 @@ app.listen(PORT, () => {
 });
 
 
-
+// Pa correr el server, ponte en /database/API y luego en la terminal pon "npm start"
+// pero antes ocupas el .env, y ese si que no te lo doy ;)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
