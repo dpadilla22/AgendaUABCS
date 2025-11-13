@@ -1,19 +1,17 @@
-DROP DATABASE IF EXISTS AGENDA_UABCS;
-CREATE DATABASE AGENDA_UABCS;
-USE AGENDA_UABCS;
+USE railway;
 
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 -- 												TABLES
 -- ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DROP TABLE IF EXISTS favorites;
-DROP TABLE IF EXISTS Account;
-DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS suggestions;
 DROP TABLE IF EXISTS departments;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS attendance;
+DROP TABLE IF EXISTS Account;
+DROP TABLE IF EXISTS events;
 
 CREATE TABLE Account(
     idAccount CHAR(6) NOT NULL PRIMARY KEY UNIQUE,
