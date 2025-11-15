@@ -145,7 +145,7 @@ const COLORS = {
 };
 
 // URL base de la API - debería moverse a variables de entorno en producción
-const API_URL = "https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app";
+const API_URL = "https://agendauabcs.up.railway.app";
 
 /**
  * Componente principal para mostrar el calendario y eventos de un departamento específico

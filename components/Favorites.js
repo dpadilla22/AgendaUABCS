@@ -10,7 +10,7 @@
  * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
  * - La constante API_BASE_URL se declara al inicio, en mayúsculas.
  */
-const API_BASE_URL = "https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app";
+const API_BASE_URL = "https://agendauabcs.up.railway.app";
 
 /**
  * Verifica si un evento está guardado como favorito por el usuario.

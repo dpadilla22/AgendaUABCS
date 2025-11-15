@@ -22,7 +22,7 @@ import DateTimePicker from "@react-native-community/datetimepicker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 // Configuración de la URL base de la API - usar variable de entorno en producción
-const API_BASE_URL = "https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app"
+const API_BASE_URL = "https://agendauabcs.up.railway.app"
 
 // Paleta de colores centralizada para consistencia visual
 const COLORS = {

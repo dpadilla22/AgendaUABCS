@@ -50,7 +50,7 @@ const COLORS = {
 };
 
 // URL de la API - Constante global en UPPER_SNAKE_CASE
-const API_URL = 'https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app';
+const API_URL = 'https://agendauabcs.up.railway.app';
 
 // Componente principal - PascalCase para nombres de componentes
 const Profile = ({ navigation }) => {

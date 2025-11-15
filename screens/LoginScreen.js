@@ -43,7 +43,7 @@ const COLORS = {
   black: "#000000",
 }
 
-const API_URL = "https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app";
+const API_URL = "https://agendauabcs.up.railway.app";
 
 const LoginScreen = ({ navigation }) => {
   // Estados para campos del formulario

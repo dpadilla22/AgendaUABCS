@@ -9,7 +9,7 @@
  * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
  * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
  */
-const API_URL = "https://a023-2806-265-5402-ca4-e919-8d18-acec-634b.ngrok-free.app";
+const API_URL = "https://agendauabcs.up.railway.app";
 
 /**
  * Obtiene todos los comentarios desde la API

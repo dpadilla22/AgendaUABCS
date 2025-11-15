@@ -791,6 +791,7 @@ const EventDetailScreen = ({ navigation, route }) => {
 
         <TouchableOpacity
           style={styles.bottomNavItem}
+          
           onPress={() => navigation.navigate("EventScreen")}
           activeOpacity={0.7}
         >
