@@ -1,30 +1,9 @@
-/**
- * DepartamentScreen.js
- * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
- * Fecha: 09/06/2025
- * Descripción:Patalla de los departamentos con sus respectivos eventos
- * 
- * Manual de Estándares Aplicado:
- * - Nombres de componentes en PascalCase. Ej: EventScreen
- * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
- * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
- * - Separación clara entre lógica, JSX y estilos.
- * - Nombres descriptivos para funciones, constantes y estilos.
- * - Uso de constantes (`const`) para valores que no cambian.
- * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
- * - Funciones auxiliares antes de useEffect
- * - Manejo consistente de errores con try-catch
- * - Uso de async/await para operaciones asíncronas
- */
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, StatusBar, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, StatusBar, FlatList } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppTheme } from '../hooks/useThemeApp';
 
-/**
- * Obtiene la fecha actual en formato YYYY-MM-DD
- * @returns {string} Fecha actual formateada
- */
 const getTodayString = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -33,12 +12,6 @@ const getTodayString = () => {
   return `${year}-${month}-${day}`;
 };
 
-/**
- * Extrae solo la parte de fecha de un string datetime ISO
- * Maneja tanto fechas con formato ISO completo como fechas simples
- * @param {string} dateString - Fecha en formato ISO o YYYY-MM-DD
- * @returns {string} Fecha en formato YYYY-MM-DD
- */
 const getLocalDateString = (dateString) => {
   if (dateString.includes('T')) {
     return dateString.split('T')[0];
@@ -46,11 +19,6 @@ const getLocalDateString = (dateString) => {
   return dateString;
 };
 
-/**
- * Extrae la hora de un string de fecha ISO y la convierte al timezone local
- * @param {string} dateString - Fecha en formato ISO
- * @returns {string|null} Hora formateada en formato HH:MM o null si hay error
- */
 const extractTimeString = (dateString) => {
   if (!dateString) return null;
   
@@ -68,11 +36,6 @@ const extractTimeString = (dateString) => {
   }
 };
 
-/**
- * Formatea la hora desde un string de fecha con manejo de errores
- * @param {string} dateString - Fecha en formato ISO
- * @returns {string} Hora formateada o mensaje de error
- */
 const formatTimeFromDate = (dateString) => {
   if (!dateString) return "Horario no especificado";
   
@@ -90,25 +53,17 @@ const formatTimeFromDate = (dateString) => {
   }
 };
 
-/**
- * Formatea una fecha para mostrar en formato legible en español
- * Maneja tanto fechas ISO completas como fechas simples YYYY-MM-DD
- * @param {string} dateString - Fecha en formato ISO o YYYY-MM-DD
- * @returns {string} Fecha formateada en español (ej: "15 de enero de 2024")
- */
 const formatDate = (dateString) => {
   if (!dateString) return "Fecha no disponible";
   
   try {
     let dateToFormat;
     
-    // Si es una fecha ISO completa, extraer solo la parte de fecha
     if (dateString.includes('T')) {
       const localDate = getLocalDateString(dateString);
       const [year, month, day] = localDate.split('-');
       dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     } else {
-      // Fecha simple YYYY-MM-DD
       const [year, month, day] = dateString.split('-');
       dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
@@ -125,48 +80,22 @@ const formatDate = (dateString) => {
 };
 
 const todayString = getTodayString();
-
-// Paleta de colores centralizada para consistencia visual
-const COLORS = {
-  darkBlue: "#003366",
-  lightBlue: "#4dabf7",
-  accent: "#3498db",
-  yellow: "#FFF7A3",
-  green: "#E6FFE6",
-  orange: "#FFEBCD",
-  red: "#FFE4E1",
-  gray: "#F5F5F5",
-  textDark: "#333333",
-  textLight: "#666666",
-  white: "#FFFFFF",
-  lightGray: "#E0E0E0",
-  darkGray: "#666666",
-  cream: "#F5F5DC", 
-};
-
-// URL base de la API - debería moverse a variables de entorno en producción
 const API_URL = "https://agendauabcs.up.railway.app";
 
-/**
- * Componente principal para mostrar el calendario y eventos de un departamento específico
- * @param {Object} navigation - Objeto de navegación de React Navigation
- * @param {Object} route - Parámetros de la ruta actual
- */
 const DepartamentScreen = ({ navigation, route }) => {
   const { nombreDepartamento } = route.params;
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accountId, setAccountId] = useState(null);
+  const { colors, isDark } = useAppTheme();
 
-  // Efecto para cargar eventos desde la API al montar el componente
   useEffect(() => {
     const fetchEventos = async () => {
       try {
         console.log('Fetching events from:', API_URL);
         const response = await fetch(`${API_URL}/events`, {
           headers: {
-            // Header necesario para ngrok en desarrollo
             'ngrok-skip-browser-warning': 'true'
           }
         });
@@ -179,7 +108,6 @@ const DepartamentScreen = ({ navigation, route }) => {
         setEventos(data.events || []);
       } catch (error) {
         console.error('Error al obtener eventos:', error);
-        // En caso de error, establecer array vacío para evitar crashes
         setEventos([]);
       } finally {
         setLoading(false);
@@ -188,7 +116,6 @@ const DepartamentScreen = ({ navigation, route }) => {
     fetchEventos();
   }, []);
 
-  // Efecto para recuperar el ID de cuenta desde AsyncStorage
   useEffect(() => {
     const fetchAccountId = async () => {
       try {
@@ -203,49 +130,36 @@ const DepartamentScreen = ({ navigation, route }) => {
     fetchAccountId();
   }, []);
 
-  /**
-   * Genera el objeto de fechas marcadas para el calendario
-   * Marca las fechas que tienen eventos y resalta la fecha seleccionada
-   * @returns {Object} Objeto con fechas marcadas para react-native-calendars
-   */
   const getMarkedDates = () => {
     const marked = {};
     const eventosDelDepartamento = eventos.filter(evento => evento.department === nombreDepartamento);
     
-    // Marcar fechas con eventos
     eventosDelDepartamento.forEach(evento => {
       const eventDate = getLocalDateString(evento.date);
       marked[eventDate] = {
         marked: true,
-        dotColor: COLORS.darkBlue,
+        dotColor: '#3498db',
         activeOpacity: 0.8
       };
     });
 
-    // Resaltar fecha seleccionada (puede sobrescribir marcas anteriores)
     marked[selectedDate] = {
       ...(marked[selectedDate] || {}),
       selected: true,
-      selectedColor: COLORS.accent,
+      selectedColor: '#3498db',
       selectedTextColor: '#fff'
     };
     return marked;
   };
 
-  // Filtrar eventos para mostrar solo los del departamento actual y fecha seleccionada
   const eventosFiltrados = eventos.filter(evento =>
     evento.department === nombreDepartamento &&
     getLocalDateString(evento.date) === selectedDate
   );
 
-  /**
-   * Renderiza cada evento individual en la lista
-   * @param {Object} item - Objeto del evento a renderizar
-   * @returns {JSX.Element} Componente de tarjeta de evento
-   */
   const renderEvento = ({ item }) => (
     <TouchableOpacity
-      style={styles.eventCard}
+      style={[styles.eventCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
       onPress={() => navigation.navigate('EventDetailScreen', {
         eventId: item.id,
         event: {
@@ -267,26 +181,31 @@ const DepartamentScreen = ({ navigation, route }) => {
       </View>
       <View style={styles.eventContent}>
         <View style={styles.eventHeader}>
-          <Text style={styles.eventTitle} numberOfLines={2}>
+          <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={2}>
             {item.title}
           </Text>
         </View>
         <View style={styles.eventInfo}>
           <View style={styles.eventInfoRow}>
-            <Image source={require("../assets/clock.png")} style={styles.eventIcon} />
-            <Text style={styles.eventInfoText}>
+            <Image 
+              source={require("../assets/clock.png")} 
+              style={[styles.eventIcon, { tintColor: colors.textSecondary }]} 
+            />
+            <Text style={[styles.eventInfoText, { color: colors.textSecondary }]}>
               {formatTimeFromDate(item.date)}
             </Text>
           </View>
           <View style={styles.eventInfoRow}>
-            <Image source={require("../assets/location.png")} style={styles.eventIcon} />
-            <Text style={styles.eventInfoText} numberOfLines={1}>
+            <Image 
+              source={require("../assets/location.png")} 
+              style={[styles.eventIcon, { tintColor: colors.textSecondary }]} 
+            />
+            <Text style={[styles.eventInfoText, { color: colors.textSecondary }]} numberOfLines={1}>
               {item.location}
             </Text>
           </View>
         </View>
       </View>
-      {/* Badge con las primeras 3 letras del departamento */}
       <View style={styles.eventBadge}>
         <Text style={styles.eventBadgeText}>
           {nombreDepartamento.substring(0, 3).toUpperCase()}
@@ -297,12 +216,14 @@ const DepartamentScreen = ({ navigation, route }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.lightBlue} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.black }]}>
+      <StatusBar 
+        backgroundColor={colors.headerBg} 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+      />
 
-      {/* Pantalla de carga con logo mientras se obtienen los datos */}
       {loading ? (
-        <View style={styles.fullScreenLoading}>
+        <View style={[styles.fullScreenLoading, { backgroundColor: colors.background }]}>
           <Image
             source={require("../assets/agendaLogo.png")}
             style={styles.loadingImage}
@@ -311,21 +232,22 @@ const DepartamentScreen = ({ navigation, route }) => {
         </View>
       ) : (
         <>
-          {/* Header con botón de regreso y título */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
+            <TouchableOpacity 
+              style={[styles.backButton, { backgroundColor: isDark ? 'rgba(90, 90, 90, 0.1)' : 'rgba(255, 255, 255, 0.2)' }]} 
+              onPress={() => navigation.goBack()}
+            >
               <Image
                 source={require("../assets/back-arrow.png")}
-                style={[styles.backIcon, { tintColor: "#fff" }]}
+                style={[styles.backIcon, { tintColor: colors.text }]}
               />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Calendario</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Calendario</Text>
             <View style={styles.emptySpace} />
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {/* Contenedor del calendario con fechas marcadas */}
-            <View style={styles.calendarContainer}>
+            <View style={[styles.calendarContainer, { backgroundColor: colors.cardBg }]}>
               <Calendar
                 current={selectedDate}
                 minDate={todayString}
@@ -335,28 +257,30 @@ const DepartamentScreen = ({ navigation, route }) => {
                 }}
                 markedDates={getMarkedDates()}
                 theme={{
-                  backgroundColor: COLORS.cream,
-                  calendarBackground: COLORS.cream,
-                  textSectionTitleColor: COLORS.textDark,
-                  selectedDayBackgroundColor: COLORS.accent,
+                  backgroundColor: colors.cardBg,
+                  calendarBackground: colors.cardBg,
+                  textSectionTitleColor: colors.text,
+                  selectedDayBackgroundColor: '#3498db',
                   selectedDayTextColor: '#fff',
-                  todayTextColor: COLORS.accent,
-                  dayTextColor: COLORS.textDark,
-                  textDisabledColor: 'rgba(51, 51, 51, 0.5)',
-                  arrowColor: COLORS.textDark,
-                  monthTextColor: COLORS.textDark,
-                  dotColor: COLORS.darkBlue,
+                  todayTextColor: '#3498db',
+                  dayTextColor: colors.text,
+                  textDisabledColor: colors.textSecondary,
+                  arrowColor: colors.text,
+                  monthTextColor: colors.text,
+                  dotColor: '#3498db',
                   selectedDotColor: '#fff',
+                  textDayFontWeight: '400',
+                  textMonthFontWeight: 'bold',
+                  textDayHeaderFontWeight: '600',
                 }}
                 style={{ borderRadius: 20, padding: 10 }}
               />
             </View>
 
-            {/* Sección de eventos para la fecha seleccionada */}
-            <View style={styles.eventsContainer}>
+            <View style={[styles.eventsContainer, { backgroundColor: colors.cardBg }]}>
               <View style={styles.eventsHeader}>
-                <Text style={styles.eventsTitle}>{nombreDepartamento}</Text>
-                <Text style={styles.eventsSubtitle}>
+                <Text style={[styles.eventsTitle, { color: colors.text }]}>{nombreDepartamento}</Text>
+                <Text style={[styles.eventsSubtitle, { color: colors.textSecondary }]}>
                   Eventos del {formatDate(selectedDate + 'T12:00:00')}
                 </Text>
                 {eventosFiltrados.length > 0 && (
@@ -366,19 +290,25 @@ const DepartamentScreen = ({ navigation, route }) => {
                 )}
               </View>
 
-              {/* Mostrar mensaje vacío o lista de eventos */}
               {eventosFiltrados.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                  <Image source={require("../assets/calendar.png")} style={styles.emptyImage} />
-                  <Text style={styles.emptyText}>No hay eventos para esta fecha</Text>
-                  <Text style={styles.emptySubtext}>Selecciona otra fecha en el calendario</Text>
+                  <Image 
+                    source={require("../assets/calendar.png")} 
+                    style={[styles.emptyImage, { tintColor: colors.border }]} 
+                  />
+                  <Text style={[styles.emptyText, { color: colors.text }]}>
+                    No hay eventos para esta fecha
+                  </Text>
+                  <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+                    Selecciona otra fecha en el calendario
+                  </Text>
                 </View>
               ) : (
                 <FlatList
                   data={eventosFiltrados}
                   keyExtractor={item => item.id.toString()}
                   renderItem={renderEvento}
-                  scrollEnabled={false} // Deshabilitado porque está dentro de ScrollView
+                  scrollEnabled={false}
                   showsVerticalScrollIndicator={false}
                   ItemSeparatorComponent={() => <View style={styles.eventSeparator} />}
                 />
@@ -386,8 +316,10 @@ const DepartamentScreen = ({ navigation, route }) => {
             </View>
           </ScrollView>
 
-          {/* Barra de navegación inferior */}
-          <View style={styles.bottomNav}>
+          <View style={[styles.bottomNav, { 
+            backgroundColor: colors.navBg,
+            borderTopColor: colors.border
+          }]}>
             <TouchableOpacity 
               style={styles.bottomNavItem} 
               onPress={() => navigation.navigate("Home")}
@@ -396,7 +328,7 @@ const DepartamentScreen = ({ navigation, route }) => {
               <View style={styles.navIconContainer}>
                 <Image
                   source={require("../assets/home.png")}
-                  style={styles.navIcon}
+                  style={[styles.navIcon, { tintColor: colors.textSecondary }]}
                 />
               </View>
             </TouchableOpacity>
@@ -407,7 +339,10 @@ const DepartamentScreen = ({ navigation, route }) => {
               activeOpacity={0.7}
             >
               <View style={styles.navIconContainer}>
-                <Image source={require("../assets/more.png")} style={styles.navIcon} />
+                <Image 
+                  source={require("../assets/more.png")} 
+                  style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+                />
               </View>
             </TouchableOpacity>
 
@@ -417,7 +352,10 @@ const DepartamentScreen = ({ navigation, route }) => {
               activeOpacity={0.7}
             >
               <View style={styles.navIconContainer}>
-                <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+                <Image 
+                  source={require("../assets/profile.png")} 
+                  style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+                />
               </View>
             </TouchableOpacity>
           </View>
@@ -430,7 +368,6 @@ const DepartamentScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightBlue,
   },
   header: {
     flexDirection: "row",
@@ -441,14 +378,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerTitle: {
-    color: COLORS.textDark,
     fontSize: 18,
     fontWeight: "600",
   },
   backButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   backIcon: {
     width: 20,
@@ -461,14 +396,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   calendarContainer: {
-    backgroundColor: COLORS.cream,
     borderRadius: 20,
     margin: 15,
     marginBottom: 0,
     padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   eventsContainer: {
-    backgroundColor: COLORS.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     marginTop: 15,
@@ -482,21 +420,18 @@ const styles = StyleSheet.create({
   eventsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.textDark,
     marginBottom: 5,
   },
   eventsSubtitle: {
     fontSize: 14,
-    color: COLORS.textLight,
     marginBottom: 5,
   },
   eventsCount: {
     fontSize: 12,
-    color: COLORS.accent,
+    color: '#3498db',
     fontWeight: '600',
   },
   eventCard: {
-    backgroundColor: COLORS.white,
     borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
@@ -507,7 +442,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     flexDirection: 'row', 
-    height: 120, 
+    height: 120,
+    borderWidth: 1,
   },
   eventImageContainer: {
     width: 80,
@@ -529,7 +465,6 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textDark,
     lineHeight: 20,
   },
   eventInfo: {
@@ -542,12 +477,10 @@ const styles = StyleSheet.create({
   eventIcon: {
     width: 12,
     height: 12,
-    tintColor: COLORS.textLight,
     marginRight: 8,
   },
   eventInfoText: {
     fontSize: 12,
-    color: COLORS.textLight,
     flex: 1,
     fontWeight: '500',
   },
@@ -555,13 +488,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: COLORS.accent,
+    backgroundColor: '#3498db',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
   },
   eventBadgeText: {
-    color: COLORS.white,
+    color: '#fff',
     fontSize: 8,
     fontWeight: '600',
   },
@@ -571,7 +504,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: 3,
     height: '100%',
-    backgroundColor: COLORS.accent,
+    backgroundColor: '#3498db',
   },
   eventSeparator: {
     height: 4, 
@@ -589,18 +522,15 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     marginBottom: 12,
-    tintColor: COLORS.lightGray,
   },
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textDark,
     marginBottom: 6,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: COLORS.textLight,
     textAlign: 'center',
   },
   bottomNav: { 
@@ -608,8 +538,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around", 
     paddingVertical: 9, 
     borderTopWidth: 3, 
-    borderColor: "#ddd", 
-    backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -630,7 +558,6 @@ const styles = StyleSheet.create({
   navIcon: { 
     width: 25, 
     height: 25,
-    tintColor: COLORS.darkGray,
   },
   activeNavItem: { 
     borderBottomWidth: 2, 
@@ -640,7 +567,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.cream,
   },
 });
 

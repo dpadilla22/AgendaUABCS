@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
+import { ThemeProvider } from './components/Theme'; 
+
 import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -15,10 +17,8 @@ import EventDetailScreen from './screens/EventDetailScreen';
 import CommentsScreen from './screens/commentsScreen';
 import dashboard from './screens/dashboard';
 
-
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
-
 
 function DrawerNavigator() {
   return (
@@ -31,13 +31,13 @@ function DrawerNavigator() {
         drawerInactiveTintColor: 'black',
       }}
     >
-     <Drawer.Screen
-     name="Home"
-     component={HomeScreen}
-     options={{
-     drawerItemStyle: { height: 0 }, 
-      }}
-    />
+      <Drawer.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          drawerItemStyle: { height: 0 }, 
+        }}
+      />
 
       <Drawer.Screen
         name="Agronomía"
@@ -95,8 +95,6 @@ function DrawerNavigator() {
         }}
       />
 
-      
-      
       <Drawer.Screen 
         name="Cerrar sesión" 
         component={WelcomeScreen}
@@ -110,31 +108,29 @@ function DrawerNavigator() {
         }}
       />
     </Drawer.Navigator>
-    
   );
 }
 
-
-
 export default function App() {
-   return (
+  return (
     <>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Home" component={DrawerNavigator} />
-          <Stack.Screen name="Profile" component={Profile} />
-          <Stack.Screen name="DepartamentScreen" component={DepartamentScreen} />
-          <Stack.Screen name="Notificaciones" component={Notificaciones} />
-          <Stack.Screen name="LocationScreen" component={LocationScreen} />
-          <Stack.Screen name="EventScreen" component={EventScreen} />
-          <Stack.Screen name="EventDetailScreen" component={EventDetailScreen} />
-          <Stack.Screen name="AdminDashboard" component={dashboard} />
-        </Stack.Navigator>
-      </NavigationContainer>
-      
-      <Toast />
+      <ThemeProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Home" component={DrawerNavigator} />
+            <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="DepartamentScreen" component={DepartamentScreen} />
+            <Stack.Screen name="Notificaciones" component={Notificaciones} />
+            <Stack.Screen name="LocationScreen" component={LocationScreen} />
+            <Stack.Screen name="EventScreen" component={EventScreen} />
+            <Stack.Screen name="EventDetailScreen" component={EventDetailScreen} />
+            <Stack.Screen name="AdminDashboard" component={dashboard} />
+          </Stack.Navigator>
+        </NavigationContainer>
+        <Toast />
+      </ThemeProvider>
     </>
   );
 }

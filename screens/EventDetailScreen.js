@@ -1,117 +1,38 @@
 /**
- * EventDetailScreen.js
- * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * EventDetailScreen.js con Modo Oscuro
+ * Autor: Danna Cahelca Padilla Nuñez, Jesus Javier Rojo Martinez
  * Fecha: 09/06/2025
- * Descripción:Patalla con los detalles de los eventos
- * 
- * Manual de Estándares Aplicado:
- * - Nombres de componentes en PascalCase. Ej: EventScreen
- * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
- * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
- * - Separación clara entre lógica, JSX y estilos.
- * - Nombres descriptivos para funciones, constantes y estilos.
- * - Uso de constantes (`const`) para valores que no cambian.
- * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
- * - Funciones auxiliares antes de useEffect
- * - Manejo consistente de errores con try-catch
- * - Uso de async/await para operaciones asíncronas
  */
 import { useState, useEffect, useRef } from "react"
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, Dimensions, Modal, Animated, Alert } from "react-native"
+import { StatusBar } from 'expo-status-bar'
 import { Ionicons } from "@expo/vector-icons"
 import { Linking } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { markAttendance, unmarkAttendance } from "../components/Attendance"
 import { checkIfBookmarked, addToFavorites, removeFromFavorites } from "../components/Favorites"
-import LocationService from "../components/LocationServices" 
-// import EventLocationInfo from "../components/EventLocationInfo"
+import LocationService from "../components/LocationServices"
+import { useAppTheme } from '../hooks/useThemeApp'
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
-// Paleta de colores centralizada para mantener consistencia visual
-const COLORS = {
-  coral: "#FF7B6B",
-  darkBlue: "#003366",
-  lightBlue: "#7BBFFF",
-  lightGray: "#D9D9D9",
-  offWhite: "#F5F5F5",
-  yellow: "#FFCC33",
-  purple: "#9966FF",
-  attendingBlue: "#007bff",
-  darkBackground: "#1a1a1a",
-  cardBackground: "#2a2a2a",
-  primaryPurple: "#8B5CF6",
-  textLight: "#ffffff",
-  textSecondary: "#a0a0a0",
-  accent: "#3498db",
-  primary: "#003366",
-  cream: "#F5F5DC",
-  darkGray: "#666666",
-}
-
-// Coordenadas GPS de las ubicaciones del campus UABCS
-// Utilizadas para mostrar la ubicación exacta de cada evento
 const UABCS_LOCATIONS = {
-  "Poliforo": {
-    latitude: 24.103169,
-    longitude: -110.315887,
-  },
-  "Agronomía": {
-    latitude: 24.100630834143022,
-    longitude: -110.3145877928253,
-  },
-  "Ciencia animal y conservación del hábitat": {
-    latitude: 24.100630834143022,
-    longitude: -110.3145877928253,
-  },
-  "Ciencias de la tierra": {
-    latitude: 24.100913,
-    longitude: -110.31522,
-  },
-  "Ciencias marinas y costeras": {
-    latitude: 24.100913,
-    longitude: -110.315223,
-  },
-  "Ciencias sociales y jurídicas": {
-    latitude: 24.102294938445176,
-    longitude: -110.31306796038446,
-  },
-  "Economía": {
-    latitude: 24.102294938445176,
-    longitude: -110.31306796038446,
-  },
-  "Humanidades": {
-    latitude: 24.10122,
-    longitude: -110.313528,
-  },
-  "Ingeniería en pesquerías": {
-    latitude: 24.098834,
-    longitude: -110.315974,
-  },
-  "Sistemas computacionales": {
-    latitude: 24.102736,
-    longitude: -110.316148,
-  },
-  // Ubicación por defecto del campus principal
-  "default": {
-    latitude: 24.102751,
-    longitude: -110.315809,
-  },
+  "Poliforo": { latitude: 24.103169, longitude: -110.315887 },
+  "Agronomía": { latitude: 24.100630834143022, longitude: -110.3145877928253 },
+  "Ciencia animal y conservación del hábitat": { latitude: 24.100630834143022, longitude: -110.3145877928253 },
+  "Ciencias de la tierra": { latitude: 24.100913, longitude: -110.31522 },
+  "Ciencias marinas y costeras": { latitude: 24.100913, longitude: -110.315223 },
+  "Ciencias sociales y jurídicas": { latitude: 24.102294938445176, longitude: -110.31306796038446 },
+  "Economía": { latitude: 24.102294938445176, longitude: -110.31306796038446 },
+  "Humanidades": { latitude: 24.10122, longitude: -110.313528 },
+  "Ingeniería en pesquerías": { latitude: 24.098834, longitude: -110.315974 },
+  "Sistemas computacionales": { latitude: 24.102736, longitude: -110.316148 },
+  "default": { latitude: 24.102751, longitude: -110.315809 },
 }
 
-/**
- * Modal personalizado con animaciones para mostrar mensajes al usuario
- * @param {boolean} visible - Controla la visibilidad del modal
- * @param {string} title - Título del modal
- * @param {string} message - Mensaje a mostrar
- * @param {function} onConfirm - Función ejecutada al confirmar
- * @param {function} onCancel - Función ejecutada al cancelar (opcional)
- * @param {string} type - Tipo de modal (info, success, error, warning)
- */
-const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "info" }) => {
+const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "info", isDark, colors }) => {
   const slideAnim = useRef(new Animated.Value(0)).current
 
-  // Animación de entrada y salida del modal
   useEffect(() => {
     if (visible) {
       Animated.spring(slideAnim, {
@@ -129,7 +50,6 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
     }
   }, [visible])
 
-  // Determina el icono y color según el tipo de modal
   const getIconByType = () => {
     switch (type) {
       case "success":
@@ -139,7 +59,7 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
       case "warning":
         return { name: "warning", color: "#F59E0B" }
       default:
-        return { name: "information-circle", color: COLORS.lightBlue }
+        return { name: "information-circle", color: "#7BBFFF" }
     }
   }
 
@@ -151,6 +71,7 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
         <Animated.View
           style={[
             styles.modalContainer,
+            { backgroundColor: colors.cardBg },
             {
               transform: [
                 {
@@ -165,21 +86,30 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
           ]}
         >
           <View style={styles.modalContent}>
-            <View style={styles.modalIconContainer}>
+            <View style={[styles.modalIconContainer, { backgroundColor: isDark ? colors.inputBg : '#F8F9FA' }]}>
               <Ionicons name={icon.name} size={50} color={icon.color} />
             </View>
 
-            <Text style={styles.modalTitle}>{title}</Text>
-            <Text style={styles.modalMessage}>{message}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
+            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>{message}</Text>
 
             <View style={styles.modalButtons}>
               {onCancel && (
-                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onCancel}>
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton, { 
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.border
+                  }]} 
+                  onPress={onCancel}
+                >
+                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={onConfirm}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.confirmButton, { backgroundColor: '#003366' }]} 
+                onPress={onConfirm}
+              >
                 <Text style={styles.confirmButtonText}>{onCancel ? "Confirmar" : "Entendido"}</Text>
               </TouchableOpacity>
             </View>
@@ -191,9 +121,8 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
 }
 
 const EventDetailScreen = ({ navigation, route }) => {
- 
-  // Validación temprana de parámetros requeridos
-  // Previene errores si la navegación no incluye los datos del evento
+  const { colors, isDark } = useAppTheme()
+
   if (!route?.params?.event) {
     useEffect(() => {
       const timer = setTimeout(() => {
@@ -208,12 +137,18 @@ const EventDetailScreen = ({ navigation, route }) => {
     }, [navigation]);
     
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar 
+          backgroundColor={colors.headerBg} 
+          barStyle={isDark ? "light-content" : "dark-content"} 
+        />
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={50} color={COLORS.coral} />
-          <Text style={styles.errorText}>Error: No se encontraron datos del evento</Text>
+          <Ionicons name="alert-circle" size={50} color="#FF7B6B" />
+          <Text style={[styles.errorText, { color: colors.text }]}>
+            Error: No se encontraron datos del evento
+          </Text>
           <TouchableOpacity 
-            style={styles.errorButton}
+            style={[styles.errorButton, { backgroundColor: colors.buttonPrimary }]}
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.errorButtonText}>Volver</Text>
@@ -225,21 +160,16 @@ const EventDetailScreen = ({ navigation, route }) => {
 
   const { eventId, event, date, time } = route.params
   
-  // Estados para el manejo de favoritos y asistencia
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isAttending, setIsAttending] = useState(false)
   const [accountId, setAccountId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bookmarkLoading, setBookmarkLoading] = useState(false)
-
-  // Estados para el manejo de ubicación y GPS
   const [userLocation, setUserLocation] = useState(null)
   const [locationPermission, setLocationPermission] = useState(false)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [distance, setDistance] = useState(null)
   const [locationError, setLocationError] = useState(null)
-
-  // Estado para el manejo del modal personalizado
   const [modalConfig, setModalConfig] = useState({
     visible: false,
     title: "",
@@ -249,10 +179,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     onCancel: null,
   })
 
-  /**
-   * Obtiene la ubicación GPS actual del usuario
-   * Calcula la distancia al evento si la ubicación está disponible
-   */
   const getUserLocation = async () => {
     if (loadingLocation) return;
     
@@ -260,7 +186,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     setLocationError(null)
     
     try {
-      // Validación de disponibilidad del servicio de ubicación
       if (!LocationService || typeof LocationService.getCurrentLocation !== 'function') {
         throw new Error('LocationService no está disponible')
       }
@@ -270,7 +195,6 @@ const EventDetailScreen = ({ navigation, route }) => {
       if (location?.latitude && location?.longitude) {
         setUserLocation(location)
         
-        // Calcular distancia al evento si las coordenadas están disponibles
         const eventCoords = getLocationCoordinates(event?.location)
         if (eventCoords?.latitude && eventCoords?.longitude) {
           const dist = LocationService.calculateDistance(
@@ -292,10 +216,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  /**
-   * Solicita permisos de ubicación al usuario
-   * Inicia la obtención de ubicación si los permisos son concedidos
-   */
   const requestLocationPermission = async () => {
     if (!LocationService || typeof LocationService.requestLocationPermission !== 'function') {
       setLocationError('Servicio de ubicación no disponible')
@@ -317,7 +237,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  // Función helper para mostrar modales con configuración personalizada
   const showModal = (title, message, type = "info", onConfirm = null, onCancel = null) => {
     setModalConfig({
       visible: true,
@@ -329,7 +248,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     })
   }
 
-  // Funciones para el manejo de asistencia almacenada localmente
   const checkAttendanceStatus = async (userId, eventId) => {
     try {
       const attendanceKey = `attendance_${userId}_${eventId}`
@@ -350,7 +268,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  // Inicialización de datos al montar el componente
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -358,14 +275,12 @@ const EventDetailScreen = ({ navigation, route }) => {
         if (id) {
           setAccountId(id)
 
-          // Verificar estado de favoritos
           try {
             await checkIfBookmarked(id, event.id, setIsBookmarked)
           } catch (error) {
             console.error("Error checking bookmark:", error)
           }
 
-          // Verificar estado de asistencia
           try {
             const attendingStatus = await checkAttendanceStatus(id, event.id)
             setIsAttending(attendingStatus)
@@ -374,14 +289,12 @@ const EventDetailScreen = ({ navigation, route }) => {
           }
         }
         
-        // Configuración inicial de permisos de ubicación
         if (LocationService && typeof LocationService.checkPermissionStatus === 'function') {
           try {
             const hasPermission = await LocationService.checkPermissionStatus()
             setLocationPermission(hasPermission)
             
             if (hasPermission) {
-              // Delay para evitar múltiples llamadas simultáneas
               setTimeout(() => {
                 getUserLocation()
               }, 1000)
@@ -399,15 +312,10 @@ const EventDetailScreen = ({ navigation, route }) => {
       }
     }
 
-    // Delay inicial para evitar errores de renderizado
     const timer = setTimeout(fetchData, 100)
     return () => clearTimeout(timer)
   }, [event?.id])
 
-  /**
-   * Maneja el clic en la ubicación del evento
-   * Solicita permisos si no están disponibles, o abre Google Maps
-   */
   const handleLocationPress = () => {
     if (!locationPermission) {
       showModal(
@@ -416,7 +324,6 @@ const EventDetailScreen = ({ navigation, route }) => {
         "warning",
         () => {
           setModalConfig(prev => ({ ...prev, visible: false }));
-          // Solicitar permisos después de cerrar el modal
           requestLocationPermission();
         },
         () => setModalConfig(prev => ({ ...prev, visible: false }))
@@ -424,16 +331,11 @@ const EventDetailScreen = ({ navigation, route }) => {
       return;
     }
 
-    // Abrir Google Maps con las coordenadas del evento
     const coords = getLocationCoordinates(event?.location);
     const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
     Linking.openURL(url).catch(err => console.error('Error opening maps:', err));
   };
 
-  /**
-   * Maneja el toggle de asistencia al evento
-   * Realiza validaciones de autenticación y maneja errores de red
-   */
   const handleAttendanceToggle = async () => {
     if (loading) return
     if (!accountId) {
@@ -454,8 +356,6 @@ const EventDetailScreen = ({ navigation, route }) => {
       if (result.success) {
         const newAttendingStatus = !isAttending
         setIsAttending(newAttendingStatus)
-
-        // Persistir el estado localmente
         await saveAttendanceStatus(accountId, event.id, newAttendingStatus)
 
         showModal(
@@ -470,7 +370,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     } catch (err) {
       console.error("Error en handleAttendanceToggle:", err)
 
-      // Manejo especial para asistencia duplicada
       if (err.message && err.message.includes("Asitencia ya marcada")) {
         showModal("Asistencia Ya Registrada", "Ya has marcado tu asistencia para este evento anteriormente", "info")
         setIsAttending(true)
@@ -487,10 +386,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  /**
-   * Maneja el toggle de favoritos del evento
-   * Requiere autenticación y maneja errores de red
-   */
   const toggleBookmark = async () => {
     if (!accountId) {
       showModal("Iniciar Sesión Requerido", "Debes iniciar sesión para guardar eventos en tus favoritos", "warning")
@@ -517,7 +412,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  // Función helper para obtener colores por departamento
   const getDepartmentColor = (dept) => {
     const colors = {
       "Sistemas computacionales": "#4a6eff",
@@ -533,17 +427,12 @@ const EventDetailScreen = ({ navigation, route }) => {
     return colors[dept] || "#6b7280"
   }
 
-  /**
-   * Formatea fechas para mostrar en español
-   * Maneja diferentes formatos de fecha de entrada
-   */
   const formatDate = (dateString) => {
     if (!dateString) return "Fecha no disponible"
 
     try {
       let dateToFormat
 
-      // Manejo de fechas con formato ISO
       if (dateString.includes("T")) {
         const localDate = dateString.split("T")[0]
         const [year, month, day] = localDate.split("-")
@@ -564,14 +453,9 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  /**
-   * Formatea horarios y calcula duración estimada del evento
-   * Asume duración de 2 horas si no se especifica hora de fin
-   */
   const formatTime = (timeInput) => {
     if (!timeInput) return "Horario no especificado"
 
-    // Manejo de horarios en formato HH:MM
     if (typeof timeInput === "string" && timeInput.includes(":") && !timeInput.includes("T")) {
       const [hours, minutes] = timeInput.split(":")
       const startHour = Number.parseInt(hours)
@@ -580,7 +464,6 @@ const EventDetailScreen = ({ navigation, route }) => {
       return `${timeInput} - ${endHour.toString().padStart(2, "0")}:${minutes}`
     }
 
-    // Manejo de horarios en formato ISO
     try {
       const date = new Date(timeInput)
       const timeString = date.toLocaleTimeString("es-ES", {
@@ -601,10 +484,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     }
   }
 
-  /**
-   * Obtiene coordenadas GPS basadas en el nombre de la ubicación
-   * Utiliza coincidencia parcial de texto para encontrar la ubicación
-   */
   const getLocationCoordinates = (locationName) => {
     if (!locationName) return UABCS_LOCATIONS.default
 
@@ -617,7 +496,13 @@ const EventDetailScreen = ({ navigation, route }) => {
   const coordinates = getLocationCoordinates(event?.location)
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar 
+        backgroundColor="transparent" 
+        barStyle="light-content"
+        translucent
+      />
+      
       <CustomModal
         visible={modalConfig.visible}
         title={modalConfig.title}
@@ -625,9 +510,11 @@ const EventDetailScreen = ({ navigation, route }) => {
         type={modalConfig.type}
         onConfirm={modalConfig.onConfirm}
         onCancel={modalConfig.onCancel}
+        isDark={isDark}
+        colors={colors}
       />
 
-      {/* Sección hero con imagen de fondo y información principal */}
+      {/* Hero Section */}
       <View style={styles.heroSection}>
         <Image 
           source={{ uri: event?.imageUrl || "https://via.placeholder.com/400x300" }} 
@@ -636,12 +523,11 @@ const EventDetailScreen = ({ navigation, route }) => {
         />
         <View style={styles.heroOverlay} />
 
-        {/* Header con navegación y botón de favoritos */}
         <SafeAreaView style={styles.headerContainer}>
           <View style={styles.headerNav}>
             <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
-              <View style={styles.circleDecoration} />
-              <Ionicons name="arrow-back" size={24} color={COLORS.textLight} />
+              <View style={[styles.circleDecoration, { backgroundColor: isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(245, 245, 220, 0.4)' }]} />
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
 
             <Text style={styles.headerTitle}>Detalles del Evento</Text>
@@ -650,50 +536,51 @@ const EventDetailScreen = ({ navigation, route }) => {
               <Ionicons
                 name={isBookmarked ? "bookmark" : "bookmark-outline"}
                 size={24}
-                color={isBookmarked ? COLORS.yellow : COLORS.textLight}
+                color={isBookmarked ? "#FFCC33" : "#fff"}
                 style={{ opacity: bookmarkLoading ? 0.5 : 1 }}
               />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
 
-        {/* Contenido principal del hero */}
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>{event?.title || "Evento"}</Text>
           <Text style={styles.heroSubtitle}>Por {event?.department || "Departamento"}</Text>
         </View>
       </View>
 
-      {/* Contenido scrolleable con detalles del evento */}
+      {/* Scrollable Content */}
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Sección de detalles del evento */}
-        <View style={styles.detailsSection}>
+        {/* Details Section */}
+        <View style={[styles.detailsSection, { 
+          backgroundColor: colors.cardBg,
+          borderColor: colors.border
+        }]}>
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
-              <View style={styles.detailIcon}>
-                <Ionicons name="calendar-outline" size={20} color={COLORS.darkBlue} />
+              <View style={[styles.detailIcon, { backgroundColor: isDark ? colors.inputBg : '#f9ff55ff' }]}>
+                <Ionicons name="calendar-outline" size={20} color={isDark ? colors.text : "#003366"} />
               </View>
               <View>
-                <Text style={styles.detailLabel}>Fecha</Text>
-                <Text style={styles.detailValue}>{formatDate(event?.date)}</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Fecha</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(event?.date)}</Text>
               </View>
             </View>
 
             <View style={styles.detailItem}>
-              <View style={styles.detailIcon}>
-                <Ionicons name="time-outline" size={20} color={COLORS.darkBlue} />
+              <View style={[styles.detailIcon, { backgroundColor: isDark ? colors.inputBg : '#f9ff55ff' }]}>
+                <Ionicons name="time-outline" size={20} color={isDark ? colors.text : "#003366"} />
               </View>
               <View>
-                <Text style={styles.detailLabel}>Horario</Text>
-                <Text style={styles.detailValue}>{formatTime(event?.time)}</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Horario</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{formatTime(event?.time)}</Text>
               </View>
             </View>
 
-            {/* Botón de ubicación con manejo de permisos */}
             <TouchableOpacity 
               style={[
                 styles.detailItem,
@@ -705,23 +592,26 @@ const EventDetailScreen = ({ navigation, route }) => {
             >
               <View style={[
                 styles.detailIcon,
+                { backgroundColor: isDark ? colors.inputBg : '#f9ff55ff' },
                 !locationPermission && styles.disabledIcon
               ]}>
                 <Ionicons 
                   name="location-outline" 
                   size={20} 
-                  color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
+                  color={locationPermission ? (isDark ? colors.text : "#003366") : colors.textSecondary} 
                 />
               </View>
               <View style={styles.locationContent}>
                 <Text style={[
                   styles.detailLabel,
+                  { color: colors.textSecondary },
                   !locationPermission && styles.disabledText
                 ]}>
                   Ubicación
                 </Text>
                 <Text style={[
                   styles.detailValue,
+                  { color: colors.text },
                   !locationPermission && styles.disabledText
                 ]}>
                   {event?.location || "Ubicación no especificada"}
@@ -739,29 +629,20 @@ const EventDetailScreen = ({ navigation, route }) => {
               <Ionicons 
                 name="open-outline" 
                 size={16} 
-                color={locationPermission ? COLORS.darkBlue : COLORS.mediumGray} 
+                color={locationPermission ? (isDark ? colors.text : "#003366") : colors.textSecondary} 
                 style={styles.openIcon} 
               />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Componente de información de ubicación (comentado) */}
-        {/* <EventLocationInfo
-          event={{
-            id: event?.id,
-            title: event?.title,
-            location: event?.location,
-            date: formatDate(event?.date),
-            time: formatTime(event?.time),
-            coordinates: getLocationCoordinates(event?.location),
-          }}
-        /> */}
-
-        {/* Sección de acciones (botón de asistencia) */}
+        {/* Action Section */}
         <View style={styles.actionSection}>
           <TouchableOpacity
-            style={[styles.attendButton, isAttending && styles.attendingButton]}
+            style={[
+              styles.attendButton, 
+              { backgroundColor: isDark ? (isAttending ? '#0b2d4dff' : colors.buttonPrimary) : (isAttending ? '#051c31ff' : '#2f42d2ff') }
+            ]}
             onPress={handleAttendanceToggle}
             disabled={loading}
           >
@@ -777,26 +658,31 @@ const EventDetailScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Espaciado inferior para evitar superposición con navegación */}
         <View style={{ height: 100 }} />
       </ScrollView>
       
-      {/* Navegación inferior */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
+      {/* Bottom Navigation */}
+      <View style={[styles.bottomNav, { 
+        backgroundColor: colors.navBg,
+        borderTopColor: colors.border
+      }]}>
+        <TouchableOpacity 
+          style={styles.bottomNavItem} 
+          onPress={() => navigation.navigate("Home")} 
+          activeOpacity={0.7}
+        >
           <View style={styles.navIconContainer}>
-            <Ionicons name="home-outline" size={25} color={COLORS.darkGray} />
+            <Ionicons name="home-outline" size={25} color={colors.textSecondary} />
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.bottomNavItem}
-          
           onPress={() => navigation.navigate("EventScreen")}
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Ionicons name="grid-outline" size={25} color={COLORS.darkGray} />
+            <Ionicons name="grid-outline" size={25} color={colors.textSecondary} />
           </View>
         </TouchableOpacity>
 
@@ -806,7 +692,7 @@ const EventDetailScreen = ({ navigation, route }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Ionicons name="person-outline" size={25} color={COLORS.darkGray} />
+            <Ionicons name="person-outline" size={25} color={colors.textSecondary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -817,9 +703,7 @@ const EventDetailScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.offWhite,
   },
-
   heroSection: {
     height: screenHeight * 0.45,
     position: "relative",
@@ -854,27 +738,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     position: "relative",
   },
-
-  headerIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: "contain",
-    zIndex: 2,
-  },
-
   circleDecoration: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(245, 245, 220, 0.4)",
     position: "absolute",
     zIndex: 1,
   },
-
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.textLight,
+    color: "#fff",
   },
   heroContent: {
     position: "absolute",
@@ -886,7 +760,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: COLORS.textLight,
+    color: "#fff",
     marginBottom: 8,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
@@ -894,29 +768,24 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: {
     fontSize: 16,
-    color: COLORS.textLight,
+    color: "#fff",
     opacity: 0.9,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-
   scrollContainer: {
     flex: 1,
-    backgroundColor: COLORS.cream,
   },
   scrollContent: {
     paddingTop: 20,
   },
-
   detailsSection: {
-    backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
     marginBottom: 15,
     borderRadius: 15,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -936,100 +805,37 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.cream,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
   },
   detailLabel: {
     fontSize: 12,
-    color: "#6B7280",
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 14,
-    color: "#111827",
     fontWeight: "500",
   },
-
-  
-
   actionSection: {
     marginHorizontal: 20,
     marginTop: 20,
     gap: 15,
   },
-   staticMapContainer: {
-    height: 200,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-  },
-  
-  mapPlaceholderTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.darkBlue,
-    marginTop: 15,
-    textAlign: 'center',
-  },
-  
-  mapPlaceholderSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  
-  coordinatesContainer: {
-    backgroundColor: COLORS.cream,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    marginTop: 15,
-  },
-  
-  coordinatesText: {
-    fontSize: 12,
-    color: COLORS.darkBlue,
-    fontFamily: 'monospace',
-  },
-  
-  locationError: {
-    fontSize: 12,
-    color: '#EF4444',
-    fontStyle: 'italic',
-    maxWidth: 120,
-    textAlign: 'center',
-  },
   attendButton: {
-    backgroundColor: "#efdcbd",
     paddingVertical: 15,
     borderRadius: 25,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     elevation: 3,
-    shadowColor: COLORS.primaryPurple,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  attendingButton: {
-    backgroundColor: COLORS.lightBlue,
-  },
   attendButtonText: {
-    color: COLORS.textLight,
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 8,
@@ -1037,14 +843,36 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 4,
   },
-
+  locationContent: {
+    flex: 1,
+  },
+  tapToOpenText: {
+    fontSize: 12,
+    color: "#7BBFFF",
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  openIcon: {
+    marginLeft: 10,
+  },
+  disabledDetailItem: {
+    opacity: 0.5,
+  },
+  disabledIcon: {
+    backgroundColor: '#D9D9D9',
+  },
+  disabledText: {
+    color: '#999',
+  },
+  disabledTapText: {
+    color: '#999',
+    fontStyle: 'italic',
+  },
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
     paddingVertical: 9,
     borderTopWidth: 3,
-    borderColor: "#ddd",
-    backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -1062,17 +890,6 @@ const styles = StyleSheet.create({
     height: 32,
     width: 32,
   },
-  navIcon: {
-    width: 25,
-    height: 25,
-    tintColor: COLORS.darkGray,
-  },
-  activeNavItem: {
-    borderBottomWidth: 2,
-    borderColor: "#f0e342",
-  },
-
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -1081,7 +898,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: "white",
     borderRadius: 20,
     width: "100%",
     maxWidth: 340,
@@ -1099,18 +915,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 15,
     borderRadius: 50,
-    backgroundColor: "#F8F9FA",
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#1F2937",
     marginBottom: 12,
     textAlign: "center",
   },
   modalMessage: {
     fontSize: 16,
-    color: "#6B7280",
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 30,
@@ -1129,12 +942,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   confirmButton: {
-    backgroundColor: COLORS.darkBlue,
+    backgroundColor: "#003366",
   },
   cancelButton: {
-    backgroundColor: "#F3F4F6",
     borderWidth: 1,
-    borderColor: "#D1D5DB",
   },
   confirmButtonText: {
     color: "white",
@@ -1142,77 +953,31 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   cancelButtonText: {
-    color: "#6B7280",
     fontSize: 16,
     fontWeight: "600",
   },
-
-
-  userMarker: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  
-  locationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.cream,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-  },
-  
-  locationButtonText: {
-    fontSize: 12,
-    color: COLORS.darkBlue,
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  
-  distanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    paddingHorizontal: 5,
-  },
-  
-  distanceText: {
-    fontSize: 14,
-    color: COLORS.darkBlue,
-    marginLeft: 5,
-    fontWeight: '500',
-  },
-  locationContent: {
+  errorContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  tapToOpenText: {
-    fontSize: 12,
-    color: COLORS.lightBlue,
-    marginTop: 2,
-    fontStyle: 'italic',
+  errorText: {
+    fontSize: 16,
+    marginTop: 20,
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  openIcon: {
-    marginLeft: 10,
+  errorButton: {
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-    disabledDetailItem: {
-    opacity: 0.5,
+  errorButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  disabledIcon: {
-    backgroundColor: COLORS.lightGray,
-  },
-  disabledText: {
-    color: COLORS.mediumGray,
-  },
-  disabledTapText: {
-    color: COLORS.mediumGray,
-    fontStyle: 'italic',
-  },
-})
+});
 
 export default EventDetailScreen;

@@ -2,53 +2,25 @@
  * HomeScreen.js
  * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
  * Fecha: 09/06/2025
- * Descripción:Pantalla de login de la app.
- * 
- * Manual de Estándares Aplicado:
- * - Nombres de componentes en PascalCase. Ej: HomeScreen
- * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
- * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
- * - Separación clara entre lógica, JSX y estilos.
- * - Nombres descriptivos para funciones, constantes y estilos.
- * - Uso de constantes (`const`) para valores que no cambian.
- * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
- * - Funciones auxiliares antes de useEffect
- * - Manejo consistente de errores con try-catch
- * - Uso de async/await para operaciones asíncronas
+ * Descripción: Pantalla principal con modo oscuro
  */
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, Animated, TextInput, Modal } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, RefreshControl, Dimensions, TextInput, Modal } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient'; 
+import { StatusBar } from 'expo-status-bar';
 import EventCard from "../components/EventCard";
 import { ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadAccountId } from './EventScreen';
 import LocationPermissionModal from "../components/LocationPermissionModal";
+import { useAppTheme } from '../hooks/useThemeApp';
 
-// CONSTANTES GLOBALES - Declaradas fuera del componente para evitar re-renders
+// CONSTANTES GLOBALES
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_WIDTH = screenWidth - 32; 
 const CAROUSEL_HEIGHT = 220; 
 
-// PALETA DE COLORES CENTRALIZADA - Uso consistente en toda la aplicación
-const COLORS = {
-  primaryBlue: "#1B3A5C",     
-  secondaryBlue: "#4A7BA7",    
-  gold: "#D4AF37",             
-  lightGold: "#F5E6A3",        
-  warmWhite: "#FFFFFF",      
-  lightGray: "#E5E5E5",    
-  mediumGray: "#999999",       
-  darkGray: "#333333",        
-  success: "#28A745",
-  warning: "#FFC107",
-  error: "#DC3545",
-  purple: "#9966FF",
-  cream: "#F5F5DC",
-};
-
-// DATOS ESTÁTICOS - Separados del componente para mejor performance
+// DATOS ESTÁTICOS
 const carouselData = [
   {
     id: 1,
@@ -83,42 +55,33 @@ const carouselData = [
 ];
 
 const HomeScreen = ({ navigation }) => {
+  // HOOK DE TEMA
+  const { colors, isDark } = useAppTheme();
   
-  // ESTADOS PRINCIPALES - Agrupados por funcionalidad
-  // Estados de datos
+  // ESTADOS PRINCIPALES
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Estados de UI y navegación
   const [activeTab, setActiveTab] = useState("Hoy");
-  
-  // Estados de búsqueda - Agrupados por funcionalidad relacionada
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  
-  // Estados del carousel - Agrupados por funcionalidad
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  
-  // Estados de ubicación - Agrupados por funcionalidad
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [hasLocationPermission, setHasLocationPermission] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
-  // REFERENCIAS - useRef para elementos que necesitan acceso directo
+  // REFERENCIAS
   const carouselRef = useRef(null);
   const autoScrollTimer = useRef(null);
   const searchInputRef = useRef(null);
 
-  // CONFIGURACIÓN API - Centralizada para fácil mantenimiento
+  // CONFIGURACIÓN API
   const API_URL = "https://agendauabcs.up.railway.app";
 
-  // FUNCIONES UTILITARIAS - Funciones puras para transformación de datos
-  
-  // Función para formatear hora - Naming descriptivo con prefijo 'get'
+  // FUNCIONES UTILITARIAS
   const getHour = (dateString) => {
     const dateObj = new Date(dateString);
     return dateObj.toLocaleTimeString('es-ES', {
@@ -128,7 +91,6 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  // Función para formatear fecha - Consistente con getHour
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
@@ -138,7 +100,6 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  // Función para obtener color por departamento - Lógica de mapeo centralizada
   const getDepartmentColor = (dept) => {
     const colors = {
       'Sistemas computacionales': '#4a6eff', 
@@ -154,7 +115,6 @@ const HomeScreen = ({ navigation }) => {
     return colors[dept] || '#6b7280'; 
   };
 
-  // Función para filtrar eventos - Lógica compleja separada del render
   const getFilteredEvents = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -190,7 +150,6 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  // Función para mensaje de estado vacío - Manejo centralizado de mensajes
   const getEmptyStateMessage = () => {
     switch (activeTab) {
       case "Hoy":
@@ -204,9 +163,7 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // EVENT HANDLERS - Prefijo 'handle' consistente para manejadores de eventos
-
-  // Handler para refresh - Manejo de errores consistente
+  // EVENT HANDLERS
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -221,7 +178,6 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // Handler para búsqueda - Lógica de filtrado compleja separada
   const performSearch = (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -261,7 +217,6 @@ const HomeScreen = ({ navigation }) => {
     performSearch(text);
   };
 
-  // Handlers de modal de búsqueda - Funciones específicas y descriptivas
   const openSearchModal = () => {
     setSearchModalVisible(true);
     setSearchQuery("");
@@ -278,7 +233,6 @@ const HomeScreen = ({ navigation }) => {
     setIsSearching(false);
   };
 
-  // Handler para navegación - Async/await para operaciones asíncronas
   const navigateToEventDetail = async (event) => {
     closeSearchModal();
 
@@ -297,7 +251,6 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  // Handlers del carousel - Agrupados por funcionalidad relacionada
   const handleCarouselScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / (CAROUSEL_WIDTH + 16));
@@ -329,7 +282,7 @@ const HomeScreen = ({ navigation }) => {
     setActiveTab(tab);
   };
 
-  // FUNCIONES DE PERMISOS - Agrupadas por funcionalidad relacionada
+  // FUNCIONES DE PERMISOS
   const checkLocationPermission = async () => {
     try {
       const permissionGranted = await AsyncStorage.getItem("locationPermissionGranted");
@@ -394,9 +347,7 @@ const HomeScreen = ({ navigation }) => {
     console.log("Permisos de ubicación denegados");
   };
 
-  // EFFECTS - useEffect al final del componente, agrupados por funcionalidad
-
-  // Effect principal para cargar eventos
+  // EFFECTS
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -415,7 +366,6 @@ const HomeScreen = ({ navigation }) => {
     fetchEvents();
   }, []);
 
-  // Effect para auto-scroll del carousel
   useEffect(() => {
     if (isAutoScrolling) {
       autoScrollTimer.current = setInterval(() => {
@@ -437,7 +387,6 @@ const HomeScreen = ({ navigation }) => {
     };
   }, [isAutoScrolling]);
 
-  // Effect para inicializar permisos
   useEffect(() => {
     const initLocationPermissions = async () => {
       await checkLocationPermission();
@@ -447,11 +396,10 @@ const HomeScreen = ({ navigation }) => {
     initLocationPermissions();
   }, []);
 
-  // RENDER CONDICIONAL PARA LOADING - Separado del render principal
+  // RENDER CONDICIONAL PARA LOADING
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <View style={styles.fullScreenLoading}></View>
+      <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
         <Image
           source={require("../assets/agendaLogo.png")}
           style={{ width: 120, height: 120, marginBottom: 20 }}
@@ -461,26 +409,33 @@ const HomeScreen = ({ navigation }) => {
     );
   }
 
-  // VARIABLES DERIVADAS - Calculadas justo antes del render
   const filteredEvents = getFilteredEvents();
   
-  // JSX PRINCIPAL - Estructura clara y organizada
+  // JSX PRINCIPAL
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.whiteHeader}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar 
+        backgroundColor={colors.headerBg} 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+      />
+
+      <View style={[styles.whiteHeader, { backgroundColor: colors.black }]}>
         <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <View style={styles.menuIcon}>
-            <View style={styles.menuLine}></View>
-            <View style={styles.menuLine}></View>
-            <View style={styles.menuLine}></View>
+            <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
+            <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
+            <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
           </View>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Agenda UABCS</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Agenda UABCS</Text>
 
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton} onPress={openSearchModal}>
-            <Image source={require("../assets/search.png")} style={styles.headerIcon} />
+            <Image 
+              source={require("../assets/search.png")} 
+              style={[styles.headerIcon, { tintColor: colors.text }]} 
+            />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.iconButton} 
@@ -488,37 +443,43 @@ const HomeScreen = ({ navigation }) => {
           >
             <Image
               source={require("../assets/notification.png")} 
-              style={styles.headerIcon} 
+              style={[styles.headerIcon, { tintColor: colors.text }]} 
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* MODAL DE BÚSQUEDA - Componente separado para mejor organización */}
+      {/* MODAL DE BÚSQUEDA */}
       <Modal
         visible={searchModalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={closeSearchModal}
       >
-        <SafeAreaView style={styles.searchModalContainer}>
-          <View style={styles.searchHeader}>
+        <SafeAreaView style={[styles.searchModalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.searchHeader, { 
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border 
+          }]}>
             <TouchableOpacity style={styles.searchBackButton} onPress={closeSearchModal}>
               <Image 
                 source={require("../assets/back-arrow.png")} 
-                style={styles.searchBackIcon} 
+                style={[styles.searchBackIcon, { tintColor: colors.text }]} 
               />
             </TouchableOpacity>
-            <View style={styles.searchInputContainer}>
+            <View style={[styles.searchInputContainer, { 
+              backgroundColor: colors.inputBg,
+              borderColor: colors.border
+            }]}>
               <Image 
                 source={require("../assets/search.png")} 
-                style={styles.searchInputIcon} 
+                style={[styles.searchInputIcon, { tintColor: colors.textSecondary }]} 
               />
               <TextInput
                 ref={searchInputRef}
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: colors.text }]}
                 placeholder="Buscar eventos, departamentos, ubicaciones..."
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.textSecondary}
                 value={searchQuery}
                 onChangeText={handleSearchChange}
                 autoCapitalize="none"
@@ -530,27 +491,26 @@ const HomeScreen = ({ navigation }) => {
                   style={styles.clearSearchButton} 
                   onPress={() => handleSearchChange("")}
                 >
-                  <Text style={styles.clearSearchText}>✕</Text>
+                  <Text style={[styles.clearSearchText, { color: colors.textSecondary }]}>✕</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
           <ScrollView style={styles.searchContent} showsVerticalScrollIndicator={false}>
-            {/* RENDERIZADO CONDICIONAL - Estados claros y específicos */}
             {isSearching ? (
               <View style={styles.searchLoadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.gold} />
-                <Text style={styles.searchLoadingText}>Buscando...</Text>
+                <ActivityIndicator size="large" color="#D4AF37" />
+                <Text style={[styles.searchLoadingText, { color: colors.textSecondary }]}>Buscando...</Text>
               </View>
             ) : searchQuery.length === 0 ? (
               <View style={styles.searchEmptyContainer}>
                 <Image 
                   source={require("../assets/search.png")} 
-                  style={styles.searchEmptyIcon} 
+                  style={[styles.searchEmptyIcon, { tintColor: colors.border }]} 
                 />
-                <Text style={styles.searchEmptyTitle}>Buscar Eventos</Text>
-                <Text style={styles.searchEmptyText}>
+                <Text style={[styles.searchEmptyTitle, { color: colors.text }]}>Buscar Eventos</Text>
+                <Text style={[styles.searchEmptyText, { color: colors.textSecondary }]}>
                   Ingresa el nombre de un evento, departamento o ubicación para encontrar lo que buscas
                 </Text>
               </View>
@@ -558,22 +518,25 @@ const HomeScreen = ({ navigation }) => {
               <View style={styles.searchEmptyContainer}>
                 <Image 
                   source={require("../assets/search.png")} 
-                  style={styles.searchEmptyIcon} 
+                  style={[styles.searchEmptyIcon, { tintColor: colors.border }]} 
                 />
-                <Text style={styles.searchEmptyTitle}>Sin resultados</Text>
-                <Text style={styles.searchEmptyText}>
+                <Text style={[styles.searchEmptyTitle, { color: colors.text }]}>Sin resultados</Text>
+                <Text style={[styles.searchEmptyText, { color: colors.textSecondary }]}>
                   No se encontraron eventos que coincidan con "{searchQuery}"
                 </Text>
               </View>
             ) : (
               <View style={styles.searchResultsContainer}>
-                <Text style={styles.searchResultsTitle}>
+                <Text style={[styles.searchResultsTitle, { color: colors.text }]}>
                   {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
                 </Text>
                 {searchResults.map((event, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.searchResultItem}
+                    style={[styles.searchResultItem, { 
+                      backgroundColor: colors.cardBg,
+                      borderColor: colors.border
+                    }]}
                     onPress={() => navigateToEventDetail(event)}
                     activeOpacity={0.7}
                   >
@@ -585,25 +548,25 @@ const HomeScreen = ({ navigation }) => {
                       />
                     </View>
                     <View style={styles.searchResultContent}>
-                      <Text style={styles.searchResultTitle} numberOfLines={2}>
+                      <Text style={[styles.searchResultTitle, { color: colors.text }]} numberOfLines={2}>
                         {event.title}
                       </Text>
                       <View style={styles.searchResultInfo}>
                         <View style={styles.searchResultInfoRow}>
                           <Image 
                             source={require("../assets/clock.png")} 
-                            style={styles.searchResultIcon} 
+                            style={[styles.searchResultIcon, { tintColor: colors.textSecondary }]} 
                           />
-                          <Text style={styles.searchResultInfoText}>
+                          <Text style={[styles.searchResultInfoText, { color: colors.textSecondary }]}>
                             {getHour(event.date)} • {formatDate(event.date)}
                           </Text>
                         </View>
                         <View style={styles.searchResultInfoRow}>
                           <Image 
                             source={require("../assets/location.png")} 
-                            style={styles.searchResultIcon} 
+                            style={[styles.searchResultIcon, { tintColor: colors.textSecondary }]} 
                           />
-                          <Text style={styles.searchResultInfoText} numberOfLines={1}>
+                          <Text style={[styles.searchResultInfoText, { color: colors.textSecondary }]} numberOfLines={1}>
                             {event.location}
                           </Text>
                         </View>
@@ -622,7 +585,7 @@ const HomeScreen = ({ navigation }) => {
         </SafeAreaView>
       </Modal>
 
-      {/* CONTENIDO PRINCIPAL - ScrollView con RefreshControl */}
+      {/* CONTENIDO PRINCIPAL */}
       <ScrollView
         style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
@@ -630,7 +593,7 @@ const HomeScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* SECCIÓN DEL CAROUSEL */}
+        {/* CAROUSEL */}
         <View style={styles.carouselSection}>
           <ScrollView
             ref={carouselRef}
@@ -668,7 +631,7 @@ const HomeScreen = ({ navigation }) => {
                 key={index}
                 style={[
                   styles.dot,
-                  index === currentIndex ? styles.activeDot : styles.inactiveDot
+                  index === currentIndex ? styles.activeDot : [styles.inactiveDot, { backgroundColor: colors.border }]
                 ]}
                 onPress={() => goToSlide(index)}
               />
@@ -676,31 +639,40 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* SECCIÓN DE TABS */}
+        {/* TABS */}
         <View style={styles.tabSection}>
           <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.tab, activeTab === "Hoy" && styles.activeTab]}
+              style={[styles.tab, activeTab === "Hoy" && [styles.activeTab, { backgroundColor: colors.cardBg }]]}
               onPress={() => handleTabPress("Hoy")}
             >
-              <Text style={[styles.tabText, activeTab === "Hoy" && styles.activeTabText]}>Hoy</Text>
+              <Text style={[
+                styles.tabText, 
+                activeTab === "Hoy" && [styles.activeTabText, { color: colors.text }]
+              ]}>Hoy</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, activeTab === "Esta semana" && styles.activeTab]}
+              style={[styles.tab, activeTab === "Esta semana" && [styles.activeTab, { backgroundColor: colors.cardBg }]]}
               onPress={() => handleTabPress("Esta semana")}
             >
-              <Text style={[styles.tabText, activeTab === "Esta semana" && styles.activeTabText]}>Esta semana</Text>
+              <Text style={[
+                styles.tabText, 
+                activeTab === "Esta semana" && [styles.activeTabText, { color: colors.text }]
+              ]}>Esta semana</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, activeTab === "Este mes" && styles.activeTab]}
+              style={[styles.tab, activeTab === "Este mes" && [styles.activeTab, { backgroundColor: colors.cardBg }]]}
               onPress={() => handleTabPress("Este mes")}
             >
-              <Text style={[styles.tabText, activeTab === "Este mes" && styles.activeTabText]}>Este mes</Text>
+              <Text style={[
+                styles.tabText, 
+                activeTab === "Este mes" && [styles.activeTabText, { color: colors.text }]
+              ]}>Este mes</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* CONTENIDO DE EVENTOS - Renderizado condicional según estado */}
+        {/* EVENTOS */}
         <View style={styles.eventsContent}>
           {events.length === 0 ? (
             <View style={styles.emptyStateContainer}>
@@ -708,8 +680,8 @@ const HomeScreen = ({ navigation }) => {
                 source={require("../assets/agendaLogo.png")} 
                 style={styles.emptyStateIcon} 
               />
-              <Text style={styles.emptyStateTitle}>No hay eventos disponibles</Text>
-              <Text style={styles.emptyStateText}>
+              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No hay eventos disponibles</Text>
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
                 Actualmente no hay eventos programados. ¡Mantente atento para futuras actividades!
               </Text>
             </View>
@@ -719,8 +691,8 @@ const HomeScreen = ({ navigation }) => {
                 source={require("../assets/agendaLogo.png")} 
                 style={styles.emptyStateIcon} 
               />
-              <Text style={styles.emptyStateTitle}>{getEmptyStateMessage()}</Text>
-              <Text style={styles.emptyStateText}>
+              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>{getEmptyStateMessage()}</Text>
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
                 Prueba seleccionando otro período de tiempo o revisa más tarde.
               </Text>
             </View>
@@ -746,12 +718,15 @@ const HomeScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* NAVEGACIÓN INFERIOR */}
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { 
+        backgroundColor: colors.navBg,
+        borderTopColor: colors.border
+      }]}>
         <TouchableOpacity style={[styles.bottomNavItem, styles.activeNavItem]} activeOpacity={0.7}>
           <View style={styles.navIconContainer}>
             <Image
               source={require("../assets/home.png")}
-              style={styles.navIcon}
+              style={[styles.navIcon, { tintColor: '#D4AF37' }]}
             />
           </View>
         </TouchableOpacity>
@@ -762,7 +737,10 @@ const HomeScreen = ({ navigation }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/more.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/more.png")} 
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+            />
           </View>
         </TouchableOpacity>
 
@@ -772,12 +750,15 @@ const HomeScreen = ({ navigation }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/profile.png")} 
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+            />
           </View>
         </TouchableOpacity>
       </View>
 
-      {/* MODAL DE PERMISOS DE UBICACIÓN - Componente reutilizable */}
+      {/* MODAL DE PERMISOS */}
       <LocationPermissionModal
         visible={showLocationModal}
         onPermissionGranted={handleLocationPermissionGranted}
@@ -791,17 +772,14 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.warmWhite, 
   },
   whiteHeader: {
-    backgroundColor: COLORS.cream, 
     paddingTop: 40,
     paddingBottom: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-  
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -819,11 +797,9 @@ const styles = StyleSheet.create({
   menuLine: {
     height: 3,
     width: "100%",
-    backgroundColor: COLORS.primaryBlue,
     borderRadius: 5,
   },
   headerTitle: {
-    color: COLORS.primaryBlue,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -838,12 +814,9 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 22,
     height: 22,
-    tintColor: COLORS.primaryBlue,
   },
-  
   searchModalContainer: {
     flex: 1,
-    backgroundColor: COLORS.warmWhite,
   },
   searchHeader: {
     flexDirection: 'row',
@@ -851,8 +824,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
-    backgroundColor: COLORS.warmWhite,
   },
   searchBackButton: {
     padding: 8,
@@ -861,29 +832,24 @@ const styles = StyleSheet.create({
   searchBackIcon: {
     width: 20,
     height: 20,
-    tintColor: COLORS.primaryBlue,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.cream,
     borderRadius: 25,
     paddingHorizontal: 16,
     height: 45,
     borderWidth: 1,
-    borderColor: COLORS.lightGold,
   },
   searchInputIcon: {
     width: 18,
     height: 18,
-    tintColor: COLORS.mediumGray,
     marginRight: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.darkGray,
     paddingVertical: 0,
   },
   clearSearchButton: {
@@ -892,7 +858,6 @@ const styles = StyleSheet.create({
   },
   clearSearchText: {
     fontSize: 16,
-    color: COLORS.mediumGray,
     fontWeight: 'bold',
   },
   searchContent: {
@@ -907,7 +872,6 @@ const styles = StyleSheet.create({
   searchLoadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: COLORS.mediumGray,
   },
   searchEmptyContainer: {
     flex: 1,
@@ -919,19 +883,16 @@ const styles = StyleSheet.create({
   searchEmptyIcon: {
     width: 60,
     height: 60,
-    tintColor: COLORS.lightGray,
     marginBottom: 24,
   },
   searchEmptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: COLORS.primaryBlue,
     marginBottom: 12,
     textAlign: 'center',
   },
   searchEmptyText: {
     fontSize: 16,
-    color: COLORS.mediumGray,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -941,12 +902,10 @@ const styles = StyleSheet.create({
   searchResultsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.primaryBlue,
     marginBottom: 16,
   },
   searchResultItem: {
     flexDirection: 'row',
-    backgroundColor: COLORS.warmWhite,
     borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
@@ -957,7 +916,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     height: 120,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
   },
   searchResultImageContainer: {
     width: 100,
@@ -975,7 +933,6 @@ const styles = StyleSheet.create({
   searchResultTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.primaryBlue,
     lineHeight: 20,
     marginBottom: 8,
   },
@@ -989,29 +946,25 @@ const styles = StyleSheet.create({
   searchResultIcon: {
     width: 12,
     height: 12,
-    tintColor: COLORS.mediumGray,
     marginRight: 8,
   },
   searchResultInfoText: {
     fontSize: 12,
-    color: COLORS.mediumGray,
     flex: 1,
   },
   searchResultDepartment: {
     fontSize: 12,
-    color: COLORS.primaryBlue,
+    color: '#1B3A5C',
     fontWeight: '600',
-    backgroundColor: COLORS.lightGold,
+    backgroundColor: '#F5E6A3',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
-  
   mainScrollView: {
     flex: 1,
   },
-
   carouselSection: {
     marginTop: 20,
     marginBottom: 20,
@@ -1082,19 +1035,16 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
-    transition: 'all 0.3s ease',
   },
   activeDot: {
-    backgroundColor: COLORS.primaryBlue,
+    backgroundColor: '#1B3A5C',
     width: 24,
   },
   inactiveDot: {
-    backgroundColor: COLORS.lightGray,
     width: 8,
   },
-
   tabSection: {
-    backgroundColor: COLORS.secondaryBlue,
+    backgroundColor: '#4A7BA7',
     paddingVertical: 12,
     borderRadius: 25,
     marginHorizontal: 16,
@@ -1117,7 +1067,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeTab: {
-    backgroundColor: "white",
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -1130,17 +1079,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activeTabText: {
-    color: "#333",
     fontWeight: "bold",
   },
-  
   eventsContent: {
     paddingHorizontal: 16,
     paddingBottom: 20,
     marginTop: 10,
   },
-  
-
   emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1156,25 +1101,19 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.primaryBlue,
     textAlign: 'center',
     marginBottom: 12,
   },
   emptyStateText: {
     fontSize: 16,
-    color: COLORS.mediumGray,
     textAlign: 'center',
     lineHeight: 22,
   },
-  
-
   bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
     paddingVertical: 12, 
     borderTopWidth: 1, 
-    borderColor: COLORS.lightGray, 
-    backgroundColor: COLORS.warmWhite,
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -1195,27 +1134,15 @@ const styles = StyleSheet.create({
   navIcon: { 
     width: 25, 
     height: 25,
-    tintColor: COLORS.darkGray,
   },
   activeNavItem: { 
     borderBottomWidth: 2, 
-    borderColor: COLORS.gold,
+    borderColor: '#D4AF37',
   },
-  
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.cream,
-  },
-  fullScreenLoading: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.cream, 
-    zIndex: -1, 
   },
 });
 

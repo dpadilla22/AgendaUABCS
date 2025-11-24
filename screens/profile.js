@@ -1,68 +1,70 @@
 /**
  * profile.js
- * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * Autor: Danna Cahelca Padilla Nuñez, Jesus Javier Rojo Martinez
  * Fecha: 09/06/2025
- * Descripción:Pantalla de perfil de usuario que muestra eventos favoritos y de asistencia con navegación por pestañas.
- * 
- * Manual de Estándares Aplicado:
- * - Nombres de componentes en PascalCase. Ej: WelcomeScreen
- * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress, logoScale
- * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
- * - Separación clara entre lógica, JSX y estilos.
- * - Nombres descriptivos para funciones, constantes y estilos.
- * - Uso de constantes (`const`) para valores que no cambian.
- * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
- * - Funciones auxiliares antes de useEffect
- * - Manejo consistente de errores con try-catch
- * - Uso de async/await para operaciones asíncronas
+ * Descripción: Pantalla de perfil de usuario con modo oscuro completo
  */
-import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, ScrollView, StatusBar, Alert } from "react-native";
+
+import{ useState, useEffect, useContext } from "react";
+import { 
+  View, 
+  Text, 
+  Image, 
+  SafeAreaView, 
+  Switch, 
+  StyleSheet,
+  TouchableOpacity, 
+  ScrollView,
+  Alert
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from 'expo-linear-gradient'; 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ThemeContext } from "../components/Theme";
 
-// Constante de colores del tema - UPPER_SNAKE_CASE para constantes globales
+// Constantes de colores para modo claro y oscuro
 const COLORS = {
-  darkBlue: "#003366",
-  lightBlue: "#7AB3D1",
-  accent: "#4A90E2",
-  yellow: "#FFF7A3",
-  green: "#E6FFE6",
-  orange: "#FFEBCD",
-  red: "#FFE4E1",
-  gray: "#F5F5F5",
-  textDark: "#333333",
-  textLight: "#666666",
-  primary: "#2563eb",
-  secondary: "#3b82f6",
-  cardBg: "#ffffff",
-  shadowColor: "#000",
-  gradientStart: "#f59e0b",
-  gradientEnd: "#fbbf24",
-  profileBg: "#f8fafc",
-  cream: "#F5F5DC",
-  deepBlue: "#1e3a8a",
-  softBlue: "#dbeafe",
-  warmGray: "#f9fafb",
-  accentOrange: "#fb923c",
-  lightPurple: "#e0e7ff",
-  darkGray: "#374151",
+  light: {
+    background: "#f9fafb",
+    cardBg: "#ffffff",
+    headerBg: "#F5F5DC",
+    text: "#333333",
+    textSecondary: "#666666",
+    border: "#ddd",
+    navBg: "#fcfbf8",
+    profileGradient: ["#7AB3D1", "#7AB3D1"],
+    emptyStateGradient: ["#dbeafe", "#e0e7ff"],
+    cardGradient: ["#ffffff", "#f8fafc"],
+  },
+  dark: {
+    background: "#0f172a",
+    cardBg: "#1e293b",
+    headerBg: "#1e293b",
+    text: "#f1f5f9",
+    textSecondary: "#94a3b8",
+    border: "#334155",
+    navBg: "#1e293b",
+    profileGradient: ["#334155", "#475569"],
+    emptyStateGradient: ["#1e293b", "#334155"],
+    cardGradient: ["#1e293b", "#334155"],
+  }
 };
 
-// URL de la API - Constante global en UPPER_SNAKE_CASE
 const API_URL = 'https://agendauabcs.up.railway.app';
 
-// Componente principal - PascalCase para nombres de componentes
 const Profile = ({ navigation }) => {
- 
   const [accountId, setAccountId] = useState(null);
   const [savedEvents, setSavedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attendanceEvents, setAttendanceEvents] = useState([]);
   const [userEmail, setUserEmail] = useState('');
   const [activeTab, setActiveTab] = useState('favorites'); 
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
-  // Función auxiliar para obtener hora - camelCase para funciones
+  const isDark = theme === "dark";
+  const colors = isDark ? COLORS.dark : COLORS.light;
+
+  // Funciones auxiliares
   const getHour = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('es-ES', {
@@ -72,7 +74,6 @@ const Profile = ({ navigation }) => {
     });
   };
 
-  // Función auxiliar para formatear fecha - camelCase para funciones
   const formatDate = (dateString) => {
     const [year, month, day] = dateString.split('T')[0].split('-');
     const date = new Date(`${year}-${month}-${day}T12:00:00`);
@@ -83,14 +84,10 @@ const Profile = ({ navigation }) => {
     });
   };
 
-  // useEffect para obtener email del usuario - Operación asíncrona al cargar componente
   useEffect(() => {
     const getEmail = async () => {
       try {
-        // Intenta obtener email de AsyncStorage
         let email = await AsyncStorage.getItem('userName');
-        
-        // Si no existe, busca en userData
         if (!email) {
           const userData = await AsyncStorage.getItem('user');
           if (userData) {
@@ -98,7 +95,6 @@ const Profile = ({ navigation }) => {
             email = user.email;
           }
         }
-        
         setUserEmail(email || '');
       } catch (error) {
         console.error("Error obteniendo email:", error);
@@ -107,7 +103,6 @@ const Profile = ({ navigation }) => {
     getEmail();
   }, []);
 
-  // useEffect principal para cargar datos del perfil
   useEffect(() => {
     const fetchAccountIdAndFavorites = async () => {
       try {
@@ -128,20 +123,15 @@ const Profile = ({ navigation }) => {
     fetchAccountIdAndFavorites();
   }, []);
 
-  // Función principal para obtener favoritos y asistencia - camelCase para función
   const fetchFavoritesAndAttendance = async (id) => {
     try {
-      // Petición para obtener todos los eventos
-      const eventsResponse = await fetch(
-        `${API_URL}/events`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          }
+      const eventsResponse = await fetch(`${API_URL}/events`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
         }
-      );
+      });
       
       if (!eventsResponse.ok) {
         throw new Error(`HTTP error! status: ${eventsResponse.status}`);
@@ -149,17 +139,13 @@ const Profile = ({ navigation }) => {
       
       const eventsData = await eventsResponse.json();
 
-      // Petición para obtener eventos favoritos
-      const favResponse = await fetch(
-        `${API_URL}/favorites/${id}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          }
+      const favResponse = await fetch(`${API_URL}/favorites/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
         }
-      );
+      });
       
       if (!favResponse.ok) {
         throw new Error(`HTTP error! status: ${favResponse.status}`);
@@ -167,17 +153,13 @@ const Profile = ({ navigation }) => {
       
       const favData = await favResponse.json();
 
-      // Petición para obtener eventos de asistencia
-      const attendanceResponse = await fetch(
-        `${API_URL}/attendance/${id}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          }
+      const attendanceResponse = await fetch(`${API_URL}/attendance/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
         }
-      );
+      });
       
       if (!attendanceResponse.ok) {
         throw new Error(`HTTP error! status: ${attendanceResponse.status}`);
@@ -185,7 +167,6 @@ const Profile = ({ navigation }) => {
       
       const attendanceData = await attendanceResponse.json();
 
-      // Procesamiento de eventos favoritos - Lógica de transformación de datos
       let formattedFavorites = [];
       if (favData.success && favData.favorites && favData.favorites.length > 0 && eventsData.success && eventsData.events) {
         const favoriteIds = favData.favorites.map(fav => fav.eventId);
@@ -193,8 +174,6 @@ const Profile = ({ navigation }) => {
 
         formattedFavorites = favoriteEvents.map(event => {
           let rawDateTime = event.date;
-
-          // Corrección de formato de fecha si es necesario
           if (rawDateTime.includes('T:')) {
             rawDateTime = rawDateTime.replace('T:', 'T');
           }
@@ -211,7 +190,6 @@ const Profile = ({ navigation }) => {
         });
       }
 
-      // Procesamiento de eventos de asistencia - Similar lógica para consistencia
       let formattedAttendance = [];
       if (attendanceData.success && attendanceData.attendance && attendanceData.attendance.length > 0 && eventsData.success && eventsData.events) {
         const attendanceIds = attendanceData.attendance.map(att => att.eventId);
@@ -219,7 +197,6 @@ const Profile = ({ navigation }) => {
 
         formattedAttendance = attendedEvents.map(event => {
           let rawDateTime = event.date;
-
           if (rawDateTime.includes('T:')) {
             rawDateTime = rawDateTime.replace('T:', 'T');
           }
@@ -236,7 +213,6 @@ const Profile = ({ navigation }) => {
         });
       }
 
-      // Actualización de estados con datos procesados
       setSavedEvents(formattedFavorites);
       setAttendanceEvents(formattedAttendance);
     } catch (error) {
@@ -247,9 +223,7 @@ const Profile = ({ navigation }) => {
     }
   };
 
-  // Función para obtener color por departamento - camelCase para función
   const getDepartmentColor = (dept) => {
-    // Objeto de mapeo de colores por departamento
     const colors = {
       'Sistemas computacionales': '#4a6eff', 
       'Economía': '#ffb16c', 
@@ -264,23 +238,19 @@ const Profile = ({ navigation }) => {
     return colors[dept] || '#6b7280';
   };
 
-  // Función helper para renderizar tarjetas de eventos - Separación de lógica de renderizado
   const renderEventCard = (event) => (
-    <View key={event.id} style={styles.eventCard}>
+    <View key={event.id} style={[styles.eventCard, { backgroundColor: colors.cardBg }]}>
       <LinearGradient
-        colors={['#ffffff', '#f8fafc']}
+        colors={colors.cardGradient}
         style={styles.cardGradient}
       >
-        {/* Header de la tarjeta con badge del departamento */}
         <View style={styles.eventHeader}>
           <View style={[styles.categoryBadge, { backgroundColor: getDepartmentColor(event.department) }]}>
             <Text style={styles.categoryBadgeText}>{event.department}</Text>
           </View>
         </View>
         
-        {/* Contenido principal de la tarjeta */}
         <View style={styles.eventContent}>
-         
           <View style={styles.eventImageContainer}>
             <Image 
               source={{ uri: event.imageUrl }} 
@@ -290,34 +260,33 @@ const Profile = ({ navigation }) => {
             <View style={styles.imageOverlay} />
           </View>
           
-          {/* Detalles del evento */}
           <View style={styles.eventDetails}>
-            <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+            <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={2}>
+              {event.title}
+            </Text>
             
-           
             <View style={styles.eventMetaContainer}>
-             
               <View style={styles.metaItem}>
-                <View style={styles.metaIconContainer}>
+                <View style={[styles.metaIconContainer, { backgroundColor: isDark ? '#334155' : '#dbeafe' }]}>
                   <Image source={require("../assets/calendar.png")} style={styles.metaIcon} />
                 </View>
-                <Text style={styles.metaText}>{event.date}</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{event.date}</Text>
               </View>
               
-            
               <View style={styles.metaItem}>
-                <View style={styles.metaIconContainer}>
+                <View style={[styles.metaIconContainer, { backgroundColor: isDark ? '#334155' : '#dbeafe' }]}>
                   <Image source={require("../assets/clock.png")} style={styles.metaIcon} />
                 </View>
-                <Text style={styles.metaText}>{event.time}</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{event.time}</Text>
               </View>
               
-           
               <View style={styles.metaItem}>
-                <View style={styles.metaIconContainer}>
+                <View style={[styles.metaIconContainer, { backgroundColor: isDark ? '#334155' : '#dbeafe' }]}>
                   <Image source={require("../assets/location.png")} style={styles.metaIcon} />
                 </View>
-                <Text style={styles.metaText} numberOfLines={1}>{event.location}</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {event.location}
+                </Text>
               </View>
             </View>
           </View>
@@ -326,25 +295,13 @@ const Profile = ({ navigation }) => {
     </View>
   );
 
-  // Handler para navegación - camelCase para función
-  const handleNavigation = (screenName) => {
-    try {
-      navigation.navigate(screenName);
-    } catch (error) {
-      console.error(`Error navegando a ${screenName}:`, error);
-    }
-  };
-
-  // Función para obtener eventos actuales según pestaña activa
   const getCurrentEvents = () => {
     return activeTab === 'favorites' ? savedEvents : attendanceEvents;
   };
 
-  // Renderizado condicional para estado de carga
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <View style={styles.fullScreenLoading}></View>
+      <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
         <Image
           source={require("../assets/agendaLogo.png")}
           style={{ width: 120, height: 120, marginBottom: 20 }}
@@ -354,47 +311,40 @@ const Profile = ({ navigation }) => {
     );
   }
 
-  // Renderizado principal del componente
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={COLORS.lightBlue} barStyle="dark-content" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar backgroundColor={colors.headerBg} barStyle={isDark ? "light-content" : "dark-content"} />
 
-      {/* Header con botón de retroceso y título */}
-      <View style={styles.header}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.black }]}>
         <TouchableOpacity 
-          style={styles.backButton} 
+          style={[styles.backButton, { backgroundColor: colors.cardBg }]} 
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
           <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mi perfil</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Mi perfil</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      {/* ScrollView principal */}
       <ScrollView 
         style={styles.mainScrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Sección del perfil con gradiente */}
+        {/* Sección del perfil */}
         <LinearGradient
-          colors={[COLORS.lightBlue, COLORS.lightBlue]}
+          colors={colors.profileGradient}
           style={styles.profileSection}
         >
           <View style={styles.profileCard}>
-            {/* Imagen de perfil */}
-            <View style={styles.profileImageContainer}>
-              <Image source={require("../assets/student.png")} style={styles.profileImage} />
-            </View>
+           
             
-            {/* Información del perfil */}
             <View style={styles.profileInfo}>
               <Text style={styles.profileTitle}>Estudiante UABCS</Text>
               <Text style={styles.profileEmail}>{userEmail || 'Usuario'}</Text>
-              {/* Estadísticas del perfil */}
-              <View style={styles.profileStats}>
+              <View style={[styles.profileStats, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.15)' }]}>
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>{savedEvents.length}</Text>
                   <Text style={styles.statLabel}>Favoritos</Text>
@@ -409,38 +359,64 @@ const Profile = ({ navigation }) => {
           </View>
         </LinearGradient>
 
-        {/* Contenedor de pestañas */}
-        <View style={styles.tabContainer}>
-          {/* Pestaña de favoritos */}
+        {/* Switch de modo oscuro */}
+        <View style={[styles.themeToggleContainer, { backgroundColor: colors.cardBg }]}>
+          <View style={styles.themeToggleContent}>
+           
+            <Text style={[styles.themeToggleText, { color: colors.text }]}>
+              Modo {isDark ? 'oscuro' : 'claro'}
+            </Text>
+          </View>
+          <Switch
+            value={isDark}
+            onValueChange={toggleTheme}
+            trackColor={{ false: "#cbd5e1", true: "#3b82f6" }}
+            thumbColor={isDark ? "#f1f5f9" : "#ffffff"}
+          />
+        </View>
+
+        {/* Pestañas */}
+        <View style={[styles.tabContainer, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+            style={[styles.tab, activeTab === 'favorites' && { backgroundColor: isDark ? '#334155' : '#f1f5f9' }]}
             onPress={() => setActiveTab('favorites')}
             activeOpacity={0.7}
           >
             <View style={styles.tabContent}>
               <Image 
                 source={require("../assets/calendar.png")} 
-                style={[styles.tabCalendar, activeTab === 'favorites' && styles.activeTabIcon]} 
+                style={[
+                  styles.tabCalendar, 
+                  { tintColor: activeTab === 'favorites' ? '#3b82f6' : colors.textSecondary }
+                ]} 
               />
-              <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
+              <Text style={[
+                styles.tabText, 
+                { color: activeTab === 'favorites' ? '#3b82f6' : colors.textSecondary }
+              ]}>
                 Guardados
               </Text>
             </View>
             {activeTab === 'favorites' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
           
-          {/* Pestaña de asistencia */}
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'attended' && styles.activeTab]}
+            style={[styles.tab, activeTab === 'attended' && { backgroundColor: isDark ? '#334155' : '#f1f5f9' }]}
             onPress={() => setActiveTab('attended')}
             activeOpacity={0.7}
           >
             <View style={styles.tabContent}>
               <Image 
                 source={require("../assets/clock.png")} 
-                style={[styles.tabIcon, activeTab === 'attended' && styles.activeTabIcon]} 
+                style={[
+                  styles.tabIcon, 
+                  { tintColor: activeTab === 'attended' ? '#3b82f6' : colors.textSecondary }
+                ]} 
               />
-              <Text style={[styles.tabText, activeTab === 'attended' && styles.activeTabText]}>
+              <Text style={[
+                styles.tabText, 
+                { color: activeTab === 'attended' ? '#3b82f6' : colors.textSecondary }
+              ]}>
                 Asistir
               </Text>
             </View>
@@ -451,10 +427,9 @@ const Profile = ({ navigation }) => {
         {/* Contenedor de eventos */}
         <View style={styles.eventsContainer}>
           {getCurrentEvents().length === 0 ? (
-           
             <View style={styles.emptyStateContainer}>
               <LinearGradient
-                colors={[COLORS.softBlue, COLORS.lightPurple]}
+                colors={colors.emptyStateGradient}
                 style={styles.emptyStateCircle}
               >
                 <Image
@@ -463,10 +438,10 @@ const Profile = ({ navigation }) => {
                   resizeMode="contain"
                 />
               </LinearGradient>
-              <Text style={styles.emptyStateTitle}>
+              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
                 {activeTab === 'favorites' ? '¡Aún no tienes favoritos!' : '¡Aún no has asistido!'}
               </Text>
-              <Text style={styles.emptyStateSubtitle}>
+              <Text style={[styles.emptyStateSubtitle, { color: colors.textSecondary }]}>
                 {activeTab === 'favorites' 
                   ? 'Marca tus eventos favoritos para verlos aquí' 
                   : 'Los eventos a los que asistas aparecerán aquí'
@@ -474,45 +449,49 @@ const Profile = ({ navigation }) => {
               </Text>
             </View>
           ) : (
-            // Renderizado de eventos cuando existen
             getCurrentEvents().map((event) => renderEventCard(event))
           )}
         </View>
       </ScrollView>
 
       {/* Barra de navegación inferior */}
-      <View style={styles.bottomNav}>
-       
-        <TouchableOpacity style={styles.bottomNavItem} 
+      <View style={[styles.bottomNav, { backgroundColor: colors.navBg, borderColor: colors.border }]}>
+        <TouchableOpacity 
+          style={styles.bottomNavItem} 
           onPress={() => navigation.navigate("Home")}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+        >
           <View style={styles.navIconContainer}>
             <Image
               source={require("../assets/home.png")}
-              style={styles.navIcon}
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]}
             />
           </View>
         </TouchableOpacity>
 
-       
         <TouchableOpacity
           style={styles.bottomNavItem}
           onPress={() => navigation.navigate("EventScreen")}
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/more.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/more.png")} 
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+            />
           </View>
         </TouchableOpacity>
 
-        
         <TouchableOpacity
           style={styles.bottomNavItem}
           onPress={() => navigation.navigate("Profile")}
           activeOpacity={0.7}
         >
           <View style={[styles.navIconContainer, styles.activeNavItem]}>
-            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/profile.png")} 
+              style={[styles.navIcon, { tintColor: '#f0e342' }]} 
+            />
           </View>
         </TouchableOpacity>
       </View>
@@ -523,9 +502,7 @@ const Profile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: COLORS.warmGray, 
   },
-  
   header: { 
     flexDirection: "row", 
     alignItems: "center", 
@@ -533,12 +510,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, 
     paddingVertical: 12,
     paddingTop: 35,
-    backgroundColor: COLORS.cream,
   },
   backButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "#ffffff",
   },
   backIcon: {
     width: 20,
@@ -547,21 +522,13 @@ const styles = StyleSheet.create({
   headerTitle: { 
     fontSize: 20, 
     fontWeight: "700", 
-    color: "#333"
   },
-  tabCalendar: {
-    width: 30,
-    height: 30,
-    marginRight: 5,
-    },
-
   mainScrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: 20,
   },
-
   profileSection: {
     marginHorizontal: 20,
     marginTop: 15,
@@ -575,7 +542,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   profileCard: {
-    flexDirection: 'row',
+   
     alignItems: 'center',
   },
   profileImageContainer: {
@@ -588,6 +555,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+
   },
   profileTitle: {
     fontSize: 18,
@@ -600,11 +568,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
     marginBottom: 12,
+    alignItems: 'center',
   },
   profileStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -630,10 +598,35 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
-
+  themeToggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  themeToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  themeIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 12,
+  },
+  themeToggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
     marginHorizontal: 20,
     borderRadius: 12,
     padding: 4,
@@ -657,25 +650,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  tabIcon: {
-    width: 16,
-    height: 16, 
-    marginTop:8,
+  tabCalendar: {
+    width: 20,
+    height: 20,
     marginRight: 8,
-    tintColor: COLORS.textLight,
   },
-  activeTabIcon: {
-    tintColor: COLORS.deepBlue,
+  tabIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
   },
   tabText: {
     fontSize: 14,
-    color: COLORS.textLight,
     fontWeight: '600',
-    marginTop:5,
-  },
-  activeTabText: {
-    color: COLORS.deepBlue,
-    fontWeight: '700',
   },
   tabIndicator: {
     position: 'absolute',
@@ -683,10 +670,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: COLORS.accentOrange,
+    backgroundColor: '#fb923c',
     borderRadius: 1,
   },
-
   eventsContainer: {
     paddingHorizontal: 20,
   },
@@ -712,11 +698,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 1,
   },
   categoryBadgeText: {
     fontSize: 10,
@@ -756,7 +737,6 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textDark,
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -771,7 +751,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: COLORS.softBlue,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
@@ -779,15 +758,13 @@ const styles = StyleSheet.create({
   metaIcon: {
     width: 15,
     height: 15,
-    tintColor: COLORS.primary,
+    tintColor: '#3b82f6',
   },
   metaText: {
     fontSize: 12,
-    color: COLORS.textLight,
     fontWeight: '600',
     flex: 1,
   },
-
   emptyStateContainer: {
     alignItems: 'center',
     paddingTop: 60,
@@ -800,39 +777,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
   noEventsImage: {
     width: 50,
     height: 50,
-    tintColor: COLORS.primary,
+    tintColor: '#3b82f6',
   },
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: COLORS.textDark,
     textAlign: 'center',
     marginBottom: 10,
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: COLORS.textLight,
     textAlign: 'center',
     lineHeight: 20,
     fontWeight: '500',
   },
-
   bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
     paddingVertical: 9, 
-    borderTopWidth: 3, 
-    borderColor: "#ddd", 
-    backgroundColor: "#fcfbf8",
+    borderTopWidth: 2,
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -853,26 +820,15 @@ const styles = StyleSheet.create({
   navIcon: { 
     width: 25, 
     height: 25,
-    tintColor: COLORS.darkGray,
   },
   activeNavItem: { 
     borderBottomWidth: 2, 
     borderColor: '#f0e342',
   },
-
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fullScreenLoading: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.cream, 
-    zIndex: -1, 
   },
 });
 

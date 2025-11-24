@@ -21,6 +21,9 @@
         "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a la ubicación para mostrar eventos cercanos."
       }
     },
+      "expo": {
+    "userInterfaceStyle": "automatic"
+  },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

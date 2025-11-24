@@ -111,7 +111,7 @@ const WelcomeScreen = ({ navigation }) => {
             }
           ]}
         >
-          <Text style={styles.welcomeTitle}>¡Bienvenido!</Text>
+
         </Animated.View>
 
         {/* Botón de ingreso */}
@@ -167,15 +167,15 @@ const WelcomeScreen = ({ navigation }) => {
   );
 };
 
-// Estilos generales del componente
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#efdcbd',
+    backgroundColor: '#060925ff',
   },
   topSection: {
     height: '50%',
-    backgroundColor: '#efdcbd',
+    backgroundColor: '#1254b0ff',
     position: 'relative',
   },
   gradientOverlay: {
@@ -204,16 +204,7 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -150 }, { translateY: -150 }],
     zIndex: 10,
   },
-  logoShadow: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    right: 10,
-    bottom: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 150,
-    zIndex: -1,
-  },
+
   mascotImage: {
     width: 300,
     height: 300,
@@ -243,13 +234,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   button: {
-    backgroundColor: '#F5F5DC',
+    backgroundColor: '#09042aff',
     paddingVertical: 18,
     paddingHorizontal: 60,
     borderRadius: 25,
     width: '80%',
     position: 'relative',
-    shadowColor: '#003366',
+    shadowColor: '#0b1928ff',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -268,7 +259,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonText: {
-    color: '#003366',
+    color: '#d7d7d7ff',
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',

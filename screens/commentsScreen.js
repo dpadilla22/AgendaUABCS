@@ -1,20 +1,7 @@
 /**
- * commentsScreen.js
- * Autor: Danna Cahelca Padilla Nuñez,Jesus Javier Rojo Martinez
+ * commentsScreen.js con Modo Oscuro
+ * Autor: Danna Cahelca Padilla Nuñez, Jesus Javier Rojo Martinez
  * Fecha: 09/06/2025
- * Descripción:Patalla de comentarios de usuarios
- * 
- * Manual de Estándares Aplicado:
- * - Nombres de componentes en PascalCase. Ej: EventScreen
- * - Nombres de funciones y variables en camelCase. Ej: handleButtonPress
- * - Comentarios explicativos sobre la funcionalidad de secciones clave del código.
- * - Separación clara entre lógica, JSX y estilos.
- * - Nombres descriptivos para funciones, constantes y estilos.
- * - Uso de constantes (`const`) para valores que no cambian.
- * -Constantes globales en UPPER_SNAKE_CASE. Ej: COLORS, API_URL
- * - Funciones auxiliares antes de useEffect
- * - Manejo consistente de errores con try-catch
- * - Uso de async/await para operaciones asíncronas
  */
 import { useEffect, useState } from "react"
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, SafeAreaView, Image, StatusBar, RefreshControl, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native"
@@ -22,36 +9,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import Toast from "react-native-toast-message"
 import { fetchComments, createComment, formatDateTime } from "../components/comments"
-
-// Paleta de colores centralizada para mantener consistencia visual
-const COLORS = {
-  darkBlue: "#003366",
-  lightBlue: "#7AB3D1",
-  accent: "#4A90E2",
-  yellow: "#FFF7A3",
-  green: "#E6FFE6",
-  orange: "#FFEBCD",
-  red: "#FFE4E1",
-  gray: "#F5F5F5",
-  textDark: "#333333",
-  textLight: "#666666",
-  primary: "#4A90E2",
-  secondary: "#E8F4FD",
-  success: "#10B981",
-  warning: "#F59E0B",
-  error: "#EF4444",
-  cardBg: "#FFFFFF",
-  shadow: "rgba(0, 0, 0, 0.08)",
-  cream: "#F5F5DC",
-  darkGray: "#666666",
-  lightGray: "#CCCCCC",
-  placeholder: "#999999",
-}
+import { useAppTheme } from '../hooks/useThemeApp'
 
 const CommentsScreen = () => {
   const navigation = useNavigation()
+  const { colors, isDark } = useAppTheme()
   
-  // Estados principales de la pantalla
   const [comments, setComments] = useState([])
   const [refreshing, setRefreshing] = useState(false)
   const [commentText, setCommentText] = useState("")
@@ -59,8 +22,6 @@ const CommentsScreen = () => {
   const [currentUser, setCurrentUser] = useState(null)
   const [accountId, setAccountId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-
-  // Estados del modal personalizado para notificaciones
   const [showModal, setShowModal] = useState(false)
   const [modalConfig, setModalConfig] = useState({
     title: "",
@@ -73,7 +34,6 @@ const CommentsScreen = () => {
     cancelText: "Cancelar",
   })
 
-  // Inicialización de la pantalla con carga paralela de datos
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true)
@@ -84,13 +44,6 @@ const CommentsScreen = () => {
     initialize()
   }, [])
 
-  /**
-   * Muestra un modal personalizado con configuración flexible
-   * @param {string} title - Título del modal
-   * @param {string} message - Mensaje a mostrar
-   * @param {string} type - Tipo de modal (error, success, warning, info)
-   * @param {Object} options - Opciones adicionales del modal
-   */
   const showCustomModal = (title, message, type = "error", options = {}) => {
     setModalConfig({
       title,
@@ -133,22 +86,15 @@ const CommentsScreen = () => {
     hideModal()
   }
 
-  /**
-   * Obtiene los datos del usuario actual desde AsyncStorage
-   * Maneja múltiples formatos de almacenamiento para compatibilidad
-   * con diferentes versiones de la aplicación
-   */
   const getCurrentUser = async () => {
     try {
       console.log("Intentando obtener datos de usuario...")
 
-      // Intenta obtener el ID de cuenta desde diferentes keys para compatibilidad
       let id = await AsyncStorage.getItem("accountId")
       if (!id) {
         id = await AsyncStorage.getItem("idAccount")
       }
 
-      // Procesa los datos de nombre de usuario
       const userData = await AsyncStorage.getItem("nameUser")
       let userName = null
 
@@ -157,17 +103,14 @@ const CommentsScreen = () => {
           const parsedData = JSON.parse(userData)
           userName = parsedData.name || parsedData.nameUser
 
-          // Fallback para obtener ID si no se encontró anteriormente
           if (parsedData.idAccount && !id) {
             id = parsedData.idAccount
           }
         } catch (e) {
-          // Si no es JSON válido, lo usa como string simple
           userName = userData
         }
       }
 
-      // Intenta obtener datos completos del usuario
       const userDataComplete = await AsyncStorage.getItem("userData")
       if (userDataComplete) {
         try {
@@ -185,7 +128,6 @@ const CommentsScreen = () => {
         }
       }
 
-      // Crea un objeto de usuario mínimo si no existe currentUser
       if (id && !currentUser) {
         setCurrentUser({
           idAccount: id,
@@ -206,10 +148,6 @@ const CommentsScreen = () => {
     }
   }
 
-  /**
-   * Carga los comentarios desde el servidor
-   * Maneja errores y muestra notificaciones apropiadas
-   */
   const loadComments = async () => {
     try {
       const result = await fetchComments()
@@ -224,9 +162,6 @@ const CommentsScreen = () => {
     }
   }
 
-  /**
-   * Maneja el pull-to-refresh actualizando comentarios y datos de usuario
-   */
   const onRefresh = async () => {
     setRefreshing(true)
     await loadComments()
@@ -234,18 +169,12 @@ const CommentsScreen = () => {
     setRefreshing(false)
   }
 
-  /**
-   * Envía un nuevo comentario al servidor
-   * Valida la entrada del usuario y maneja autenticación
-   */
   const submitComment = async () => {
-    // Validación de entrada
     if (!commentText.trim()) {
       showCustomModal("Campo requerido", "Por favor escribe un comentario antes de enviarlo.")
       return
     }
 
-    // Verificación de autenticación con reintentos
     if (!accountId) {
       await getCurrentUser()
 
@@ -278,7 +207,7 @@ const CommentsScreen = () => {
       
       setCommentText("")
       showCustomModal("Comentario enviado", "Tu comentario ha sido publicado correctamente.", "success")
-      await loadComments() // Recarga comentarios para mostrar el nuevo
+      await loadComments()
     } catch (error) {
       console.error("Error submitting comment:", error)
       showCustomModal("Error al enviar", "No se pudo enviar tu comentario. Por favor, inténtalo nuevamente.", "error")
@@ -287,53 +216,58 @@ const CommentsScreen = () => {
     }
   }
 
-  /**
-   * Obtiene el identificador de usuario para mostrar
-   * Proporciona fallback para usuarios anónimos
-   */
   const getUserIdentifier = (item) => {
     return item.nameUser || "Usuario Anónimo"
   }
 
-  /**
-   * Renderiza cada item de comentario en la lista
-   */
   const renderCommentItem = ({ item, index }) => {
     return (
-      <View style={styles.commentCard}>
+      <View style={[styles.commentCard, { 
+        backgroundColor: colors.cardBg,
+        borderColor: colors.border
+      }]}>
         <View style={styles.commentHeader}>
-          <View style={styles.avatarContainer}>
-            <Image source={require("../assets/profile.png")} style={styles.avatar} />
+          <View style={[styles.avatarContainer, { backgroundColor: isDark ? colors.inputBg : '#E0E0E0' }]}>
+            <Image 
+              source={require("../assets/profile.png")} 
+              style={[styles.avatar, { tintColor: colors.textSecondary }]} 
+            />
           </View>
           <View style={styles.commentContent}>
-            <Text style={styles.userNameText}>{getUserIdentifier(item)}</Text>
-            <Text style={styles.timeText}>{formatDateTime(item.dateComment)}</Text>
-            <Text style={styles.commentText}>{item.descriptionComment}</Text>
+            <Text style={[styles.userNameText, { color: '#4A90E2' }]}>{getUserIdentifier(item)}</Text>
+            <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatDateTime(item.dateComment)}</Text>
+            <Text style={[styles.commentText, { color: colors.text }]}>{item.descriptionComment}</Text>
           </View>
         </View>
       </View>
     )
   }
 
-  /**
-   * Renderiza el área de entrada de comentarios
-   * Adapta la UI según el estado de carga y autenticación
-   */
   const renderCommentInput = () => (
-    <View style={styles.inputCard}>
+    <View style={[styles.inputCard, { 
+      backgroundColor: colors.cardBg,
+      borderColor: colors.border
+    }]}>
       <View style={styles.inputHeader}>
-        <View style={styles.avatarContainer}>
-          <Image source={require("../assets/profile.png")} style={styles.avatar} />
+        <View style={[styles.avatarContainer, { backgroundColor: isDark ? colors.inputBg : '#E0E0E0' }]}>
+          <Image 
+            source={require("../assets/profile.png")} 
+            style={[styles.avatar, { tintColor: colors.textSecondary }]} 
+          />
         </View>
         <View style={styles.inputContainer}>
           {isLoading ? (
-            <Text style={styles.loadingText}>Cargando...</Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Cargando...</Text>
           ) : accountId ? (
             <>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { 
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.border,
+                  color: colors.text
+                }]}
                 placeholder="Deja tu comentario sobre la aplicación..."
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={colors.textSecondary}
                 value={commentText}
                 onChangeText={setCommentText}
                 multiline={true}
@@ -349,9 +283,8 @@ const CommentsScreen = () => {
               </TouchableOpacity>
             </>
           ) : (
-            // Estado de error de autenticación
-            <View style={styles.authErrorContainer}>
-              <Text style={styles.authErrorText}>
+            <View style={[styles.authErrorContainer, { backgroundColor: isDark ? '#4a1d1d' : '#FFE4E1' }]}>
+              <Text style={[styles.authErrorText, { color: colors.text }]}>
                 No se pudo verificar tu sesión. Por favor, cierra la aplicación e inicia sesión nuevamente.
               </Text>
               <TouchableOpacity style={styles.retryButton} onPress={getCurrentUser}>
@@ -364,39 +297,32 @@ const CommentsScreen = () => {
     </View>
   )
 
-  /**
-   * Renderiza el estado vacío cuando no hay comentarios
-   */
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyTitle}>Sin comentarios</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin comentarios</Text>
+      <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
         Sé el primero en compartir tu opinión{"\n"}
         sobre nuestra aplicación
       </Text>
     </View>
   )
 
-  /**
-   * Componente de modal personalizado reutilizable
-   * Adapta colores y comportamiento según el tipo de mensaje
-   */
   const CustomModal = () => (
     <Modal visible={showModal} transparent={true} animationType="fade" onRequestClose={hideModal}>
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.cardBg }]}>
           <View
             style={[
               styles.modalHeader,
               {
                 backgroundColor:
                   modalConfig.type === "success"
-                    ? COLORS.success
+                    ? "#10B981"
                     : modalConfig.type === "warning"
-                      ? COLORS.warning
+                      ? "#F59E0B"
                       : modalConfig.type === "info"
-                        ? COLORS.primary
-                        : COLORS.error,
+                        ? "#4A90E2"
+                        : "#EF4444",
               },
             ]}
           >
@@ -404,21 +330,36 @@ const CommentsScreen = () => {
           </View>
 
           <View style={styles.modalBody}>
-            <Text style={styles.modalMessage}>{modalConfig.message}</Text>
+            <Text style={[styles.modalMessage, { color: colors.text }]}>{modalConfig.message}</Text>
           </View>
 
-          <View style={styles.modalFooter}>
+          <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
             {modalConfig.showCancel && (
-              <TouchableOpacity style={styles.modalButtonSecondary} onPress={handleModalCancel} activeOpacity={0.7}>
-                <Text style={styles.modalButtonSecondaryText}>{modalConfig.cancelText}</Text>
+              <TouchableOpacity 
+                style={[styles.modalButtonSecondary, { 
+                  backgroundColor: colors.inputBg,
+                  borderRightColor: colors.border
+                }]} 
+                onPress={handleModalCancel} 
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.modalButtonSecondaryText, { color: colors.textSecondary }]}>
+                  {modalConfig.cancelText}
+                </Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[styles.modalButtonPrimary, !modalConfig.showCancel && styles.modalButtonPrimaryFull]}
+              style={[
+                styles.modalButtonPrimary, 
+                { backgroundColor: colors.inputBg },
+                !modalConfig.showCancel && styles.modalButtonPrimaryFull
+              ]}
               onPress={handleModalConfirm}
               activeOpacity={0.7}
             >
-              <Text style={styles.modalButtonPrimaryText}>{modalConfig.confirmText}</Text>
+              <Text style={[styles.modalButtonPrimaryText, { color: colors.text }]}>
+                {modalConfig.confirmText}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -427,19 +368,29 @@ const CommentsScreen = () => {
   )
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.cream} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar 
+        backgroundColor={colors.headerBg} 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+      />
 
-      {/* Header con navegación */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Image source={require("../assets/back-arrow.png")} style={styles.backIcon} />
+      <View style={[styles.header, { 
+        backgroundColor: colors.black,
+        borderBottomColor: colors.border
+      }]}>
+        <TouchableOpacity 
+          style={[styles.backButton, { backgroundColor: colors.cardBg }]} 
+          onPress={() => navigation.goBack()}
+        >
+          <Image 
+            source={require("../assets/back-arrow.png")} 
+            style={[styles.backIcon, { tintColor: colors.text }]} 
+          />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Comentarios</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Comentarios</Text>
         <View style={styles.emptySpace} />
       </View>
 
-      {/* Contenido principal con manejo de teclado */}
       <KeyboardAvoidingView style={styles.contentContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView
           style={styles.scrollContainer}
@@ -448,15 +399,14 @@ const CommentsScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[COLORS.primary]}
-              tintColor={COLORS.primary}
+              colors={["#4A90E2"]}
+              tintColor="#4A90E2"
             />
           }
           showsVerticalScrollIndicator={false}
         >
           {renderCommentInput()}
 
-          {/* Lista de comentarios o estado vacío */}
           {comments.length === 0 ? (
             renderEmptyState()
           ) : (
@@ -471,14 +421,22 @@ const CommentsScreen = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Modal de notificaciones */}
       <CustomModal />
 
-      {/* Navegación inferior */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate("Home")} activeOpacity={0.7}>
+      <View style={[styles.bottomNav, { 
+        backgroundColor: colors.navBg,
+        borderTopColor: colors.border
+      }]}>
+        <TouchableOpacity 
+          style={styles.bottomNavItem} 
+          onPress={() => navigation.navigate("Home")} 
+          activeOpacity={0.7}
+        >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/home.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/home.png")} 
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+            />
           </View>
         </TouchableOpacity>
 
@@ -488,7 +446,10 @@ const CommentsScreen = () => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/more.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/more.png")} 
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+            />
           </View>
         </TouchableOpacity>
 
@@ -498,12 +459,14 @@ const CommentsScreen = () => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Image source={require("../assets/profile.png")} style={styles.navIcon} />
+            <Image 
+              source={require("../assets/profile.png")} 
+              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+            />
           </View>
         </TouchableOpacity>
       </View>
 
-      {/* Toast para notificaciones simples */}
       <Toast />
     </SafeAreaView>
   )
@@ -512,7 +475,6 @@ const CommentsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAFBFC",
   },
   header: {
     flexDirection: "row",
@@ -521,14 +483,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: COLORS.cream,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
   },
   backButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
   },
   backIcon: {
     width: 20,
@@ -537,7 +496,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.textDark,
   },
   emptySpace: {
     width: 36,
@@ -555,17 +513,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   inputCard: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
   },
   inputHeader: {
     flexDirection: "row",
@@ -575,7 +531,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.lightGray,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -583,25 +538,21 @@ const styles = StyleSheet.create({
   avatar: {
     width: 24,
     height: 24,
-    tintColor: COLORS.darkGray,
   },
   inputContainer: {
     flex: 1,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: COLORS.textDark,
-    backgroundColor: "#FAFAFA",
     minHeight: 80,
     textAlignVertical: "top",
     marginBottom: 12,
   },
   submitButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#4A90E2",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
@@ -613,17 +564,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   commentCard: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
   },
   commentHeader: {
     flexDirection: "row",
@@ -634,26 +583,17 @@ const styles = StyleSheet.create({
   },
   userNameText: {
     fontSize: 14,
-    color: COLORS.primary,
     fontWeight: "600",
     marginBottom: 4,
   },
   timeText: {
     fontSize: 12,
-    color: COLORS.textLight,
     fontWeight: "400",
     marginBottom: 8,
   },
   commentText: {
     fontSize: 14,
-    color: COLORS.textDark,
     lineHeight: 20,
-  },
-  debugText: {
-    fontSize: 10,
-    color: COLORS.textLight,
-    marginTop: 8,
-    fontStyle: "italic",
   },
   separator: {
     height: 8,
@@ -668,13 +608,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: COLORS.textDark,
     marginBottom: 8,
     textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 16,
-    color: COLORS.textLight,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -683,8 +621,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingVertical: 9,
     borderTopWidth: 3,
-    borderColor: "#ddd",
-    backgroundColor: "#fcfbf8",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -705,28 +641,24 @@ const styles = StyleSheet.create({
   navIcon: {
     width: 25,
     height: 25,
-    tintColor: COLORS.darkGray,
   },
   loadingText: {
     fontSize: 14,
-    color: COLORS.textLight,
     textAlign: "center",
     padding: 20,
   },
   authErrorContainer: {
     padding: 12,
-    backgroundColor: COLORS.red,
     borderRadius: 12,
     marginBottom: 12,
   },
   authErrorText: {
     fontSize: 14,
-    color: COLORS.textDark,
     marginBottom: 12,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#4A90E2",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
@@ -737,8 +669,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -747,7 +677,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: "white",
     borderRadius: 20,
     minWidth: 280,
     maxWidth: "90%",
@@ -777,20 +706,17 @@ const styles = StyleSheet.create({
   },
   modalMessage: {
     fontSize: 16,
-    color: "#374151",
     textAlign: "center",
     lineHeight: 24,
   },
   modalFooter: {
     flexDirection: "row",
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
   },
   modalButtonPrimary: {
     flex: 1,
     paddingVertical: 16,
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
   },
   modalButtonPrimaryFull: {
     borderTopLeftRadius: 0,
@@ -800,19 +726,15 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
     borderRightWidth: 1,
-    borderRightColor: "#F3F4F6",
   },
   modalButtonPrimaryText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1F2937",
   },
   modalButtonSecondaryText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#6B7280",
   },
 })
 
