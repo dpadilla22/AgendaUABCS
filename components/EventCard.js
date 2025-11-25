@@ -14,10 +14,12 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useAppTheme } from '../hooks/useThemeApp';
 
 const EventCard = ({ id,title, department, date, time, location, imageUrl,showBookmark = false }) => {
   const navigation = useNavigation();
  
+  
 const getDepartmentColor = (dept) => {
     const colors = {
       'Sistemas computacionales': '#3B82F6', 
@@ -61,9 +63,11 @@ const getDepartmentColor = (dept) => {
       event: eventData
     });
   };
-  
+  const { colors, isDark } = useAppTheme();
   return (
+    
     <TouchableOpacity style={styles.card} onPress={handlePress}>
+      
       <View style={styles.cardContent}>
         <View style={styles.imageContainer}>
           <Image 
@@ -106,13 +110,14 @@ const getDepartmentColor = (dept) => {
 
       </View>
     </TouchableOpacity>
+    
   );
 };
 
 const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
-    marginHorizontal: 16,
+    marginHorizontal: 3,
     backgroundColor: '#fff',
     borderRadius: 12,
     elevation: 5,

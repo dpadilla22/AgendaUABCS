@@ -218,7 +218,7 @@ const DepartamentScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.black }]}>
       <StatusBar 
-        backgroundColor={colors.headerBg} 
+        backgroundColor={colors.black} 
         barStyle={isDark ? "light-content" : "dark-content"} 
       />
 

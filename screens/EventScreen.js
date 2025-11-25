@@ -609,14 +609,14 @@ const SuggestionScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              { backgroundColor: isDark ? colors.buttonPrimary : '#F5F5DC' },
+              { backgroundColor: isDark ? colors.buttonPrimary : '#0f5897ff' },
               isSubmitting && styles.submitButtonDisabled
             ]}
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
             <View style={styles.submitButtonContent}>
-              <Text style={[styles.submitButtonText, { color: isDark ? '#fff' : '#000' }]}>
+              <Text style={[styles.submitButtonText, { color: isDark ? '#ffffffff' : '#ffffffff' }]}>
                 {isSubmitting ? "Enviando..." : "Enviar Sugerencia"}
               </Text>
             </View>
@@ -840,8 +840,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   submitButtonDisabled: {
-    backgroundColor: "#999",
-    shadowColor: "#999",
+    backgroundColor: "#295dcfff",
+    shadowColor: "#2252b9ff",
   },
   submitButtonContent: {
     flexDirection: "row",
@@ -850,6 +850,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 18,
     fontWeight: "bold",
+    color: '#fff',
   },
   footerContainer: {
     borderRadius: 15,
