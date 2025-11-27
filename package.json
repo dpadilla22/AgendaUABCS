@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "eas:android": "eas build -p android --profile preview",
-    "test": "cd database/API && npm test",
+    "test": "cd __tests__ && npm test",
     "test:watch": "cd database/API && npm test -- --watch",
     "test:coverage": "cd database/API && npm test -- --coverage"
   },

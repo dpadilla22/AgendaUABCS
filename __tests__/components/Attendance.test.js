@@ -1,6 +1,6 @@
 // attendance.test.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { markAttendance, unmarkAttendance } from './attendance';
+import { markAttendance, unmarkAttendance } from '../../components/Attendance';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
