@@ -15,12 +15,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LocationPermissionModal from "../components/LocationPermissionModal";
 import { useAppTheme } from '../hooks/useThemeApp';
 
-// CONSTANTES GLOBALES
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_WIDTH = screenWidth - 32; 
 const CAROUSEL_HEIGHT = 220; 
 
-// DATOS ESTÁTICOS
+
 const carouselData = [
   {
     id: 1,
@@ -55,10 +54,8 @@ const carouselData = [
 ];
 
 const HomeScreen = ({ navigation }) => {
-  // HOOK DE TEMA
   const { colors, isDark } = useAppTheme();
   
-  // ESTADOS PRINCIPALES
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,15 +70,13 @@ const HomeScreen = ({ navigation }) => {
   const [hasLocationPermission, setHasLocationPermission] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
-  // REFERENCIAS
   const carouselRef = useRef(null);
   const autoScrollTimer = useRef(null);
   const searchInputRef = useRef(null);
 
-  // CONFIGURACIÓN API
   const API_URL = "https://agendauabcs.up.railway.app";
 
-  // FUNCIONES UTILITARIAS
+  
   const getHour = (dateString) => {
     const dateObj = new Date(dateString);
     return dateObj.toLocaleTimeString('es-ES', {
@@ -102,17 +97,17 @@ const HomeScreen = ({ navigation }) => {
 
   const getDepartmentColor = (dept) => {
     const colors = {
-      'Sistemas computacionales': '#4a6eff', 
-      'Economía': '#ffb16c', 
-      'Ciencias Sociales y jurídicas': '#97795e', 
-      'Agronomia': '#f9f285', 
-      'Ciencias de la tierra': '#1fd514',
-      'Humanidades': '#a980f2',
-      'Ingeniería en pesquerías': '#fb6d51',
-      'Ciencias marinas y costeras': '#a8ecff',
-      'Ciencia animal y conservación del hábitat': '#f7b2f0',
+      'Sistemas computacionales': '#3B82F6', 
+      'Economía': '#F59E0B', 
+      'Ciencias Sociales y jurídicas': '#06B6D4', 
+      'Agronomia': '#10B981', 
+      'Ciencias de la tierra': '#8B5CF6',
+      'Humanidades': '#F97316',
+      'Ingeniería en pesquerías': '#EF4444',
+      'Ciencias marinas y costeras': '#478884ff',
+      'Ciencia animal y conservación del hábitat': '#FBBF24',
     };
-    return colors[dept] || '#6b7280'; 
+    return colors[dept] || (isDark ? '#999' : '#6B7280');
   };
 
   const getFilteredEvents = () => {
@@ -163,7 +158,6 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // EVENT HANDLERS
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -282,7 +276,6 @@ const HomeScreen = ({ navigation }) => {
     setActiveTab(tab);
   };
 
-  // FUNCIONES DE PERMISOS
   const checkLocationPermission = async () => {
     try {
       const permissionGranted = await AsyncStorage.getItem("locationPermissionGranted");
@@ -347,7 +340,7 @@ const HomeScreen = ({ navigation }) => {
     console.log("Permisos de ubicación denegados");
   };
 
-  // EFFECTS
+  
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -396,7 +389,6 @@ const HomeScreen = ({ navigation }) => {
     initLocationPermissions();
   }, []);
 
-  // RENDER CONDICIONAL PARA LOADING
   if (loading) {
     return (
       <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
@@ -411,22 +403,22 @@ const HomeScreen = ({ navigation }) => {
 
   const filteredEvents = getFilteredEvents();
   
-  // JSX PRINCIPAL
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar 
-        backgroundColor={colors.headerBg} 
-        barStyle={isDark ? "light-content" : "dark-content"} 
-      />
+ 
+ <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+  <StatusBar 
+    backgroundColor={colors.headerBg} 
+    barStyle={isDark ? "light-content" : "dark-content"} 
+  />
 
-      <View style={[styles.whiteHeader, { backgroundColor: colors.black }]}>
-        <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
-          <View style={styles.menuIcon}>
-            <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
-            <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
-            <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
-          </View>
-        </TouchableOpacity>
+  <View style={[styles.whiteHeader, { backgroundColor: colors.headerBg }]}>
+    <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
+      <View style={styles.menuIcon}>
+        <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
+        <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
+        <View style={[styles.menuLine, { backgroundColor: colors.text }]}></View>
+      </View>
+    </TouchableOpacity>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>Agenda UABCS</Text>
 
@@ -698,18 +690,18 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ) : (
             filteredEvents.map((event, index) => {
-              const time = getHour(event.date);
-              return (
-                <EventCard
-                  key={index}
-                  id={event.id} 
-                  title={event.title}
-                  department={event.department}
-                  date={event.date}
-                  time={time}
-                  location={event.location}
-                  imageUrl={event.imageUrl}
-                  showBookmark={false}
+               const time = getHour(event.date);
+  return (
+    <EventCard
+      key={event.id}  
+      id={event.id} 
+      title={event.title}
+      department={event.department} 
+      date={event.date}
+      time={time}
+      location={event.location}
+      imageUrl={event.imageUrl}
+      showBookmark={false}
                 />
               );
             })
@@ -739,7 +731,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.navIconContainer}>
             <Image 
               source={require("../assets/more.png")} 
-              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+              style={[styles.navIcon, { tintColor: colors.text }]} 
             />
           </View>
         </TouchableOpacity>
@@ -752,7 +744,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.navIconContainer}>
             <Image 
               source={require("../assets/profile.png")} 
-              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+              style={[styles.navIcon, { tintColor: colors.text }]} 
             />
           </View>
         </TouchableOpacity>
@@ -966,7 +958,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   carouselSection: {
-    marginTop: 20,
+    marginTop: 30,
     marginBottom: 20,
   },
   carouselContainer: {

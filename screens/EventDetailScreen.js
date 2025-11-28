@@ -59,7 +59,7 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
       case "warning":
         return { name: "warning", color: "#F59E0B" }
       default:
-        return { name: "information-circle", color: "#7BBFFF" }
+        return { name: "information-circle", color: "#5B8DEF" }
     }
   }
 
@@ -86,12 +86,12 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
           ]}
         >
           <View style={styles.modalContent}>
-            <View style={[styles.modalIconContainer, { backgroundColor: isDark ? colors.inputBg : '#F8F9FA' }]}>
+            <View style={[styles.modalIconContainer, { backgroundColor: isDark ? colors.text : '#F8F9FA' }]}>
               <Ionicons name={icon.name} size={50} color={icon.color} />
             </View>
 
             <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
-            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>{message}</Text>
+            <Text style={[styles.modalMessage, { color: colors.text }]}>{message}</Text>
 
             <View style={styles.modalButtons}>
               {onCancel && (
@@ -102,14 +102,15 @@ const CustomModal = ({ visible, title, message, onConfirm, onCancel, type = "inf
                   }]} 
                   onPress={onCancel}
                 >
-                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancelar</Text>
                 </TouchableOpacity>
               )}
 
               <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton, { backgroundColor: '#003366' }]} 
+                style={[styles.modalButton, styles.confirmButton,  { backgroundColor: isDark ? colors.buttonPrimary : colors.buttonSecondary }]} 
                 onPress={onConfirm}
               >
+                
                 <Text style={styles.confirmButtonText}>{onCancel ? "Confirmar" : "Entendido"}</Text>
               </TouchableOpacity>
             </View>
@@ -536,7 +537,7 @@ const EventDetailScreen = ({ navigation, route }) => {
               <Ionicons
                 name={isBookmarked ? "bookmark" : "bookmark-outline"}
                 size={24}
-                color={isBookmarked ? "#FFCC33" : "#fff"}
+                color={isBookmarked ? "#FFD700" : "#fff"}
                 style={{ opacity: bookmarkLoading ? 0.5 : 1 }}
               />
             </TouchableOpacity>
@@ -562,8 +563,8 @@ const EventDetailScreen = ({ navigation, route }) => {
         }]}>
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
-              <View style={[styles.detailIcon, { backgroundColor: isDark ? colors.inputBg : '#f9ff55ff' }]}>
-                <Ionicons name="calendar-outline" size={20} color={isDark ? colors.text : "#003366"} />
+              <View style={[styles.detailIcon, { backgroundColor: isDark ? 'rgba(91, 141, 239, 0.15)' : 'rgba(91, 141, 239, 0.1)' }]}>
+                <Ionicons name="calendar-outline" size={22} color="#5B8DEF" />
               </View>
               <View>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Fecha</Text>
@@ -572,8 +573,8 @@ const EventDetailScreen = ({ navigation, route }) => {
             </View>
 
             <View style={styles.detailItem}>
-              <View style={[styles.detailIcon, { backgroundColor: isDark ? colors.inputBg : '#f9ff55ff' }]}>
-                <Ionicons name="time-outline" size={20} color={isDark ? colors.text : "#003366"} />
+              <View style={[styles.detailIcon, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)' }]}>
+                <Ionicons name="time-outline" size={22} color="#5B8DEF"/>
               </View>
               <View>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Horario</Text>
@@ -592,13 +593,15 @@ const EventDetailScreen = ({ navigation, route }) => {
             >
               <View style={[
                 styles.detailIcon,
-                { backgroundColor: isDark ? colors.inputBg : '#f9ff55ff' },
-                !locationPermission && styles.disabledIcon
+                { backgroundColor: locationPermission 
+                  ? (isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.1)')
+                  : (isDark ? 'rgba(156, 163, 175, 0.15)' : 'rgba(156, 163, 175, 0.1)')
+                }
               ]}>
                 <Ionicons 
                   name="location-outline" 
-                  size={20} 
-                  color={locationPermission ? (isDark ? colors.text : "#003366") : colors.textSecondary} 
+                  size={22} 
+                  color={locationPermission ? "#5B8DEF" : colors.textSecondary} 
                 />
               </View>
               <View style={styles.locationContent}>
@@ -629,7 +632,7 @@ const EventDetailScreen = ({ navigation, route }) => {
               <Ionicons 
                 name="open-outline" 
                 size={16} 
-                color={locationPermission ? (isDark ? colors.text : "#003366") : colors.textSecondary} 
+                color={locationPermission ?"#5B8DEF": colors.textSecondary} 
                 style={styles.openIcon} 
               />
             </TouchableOpacity>
@@ -638,24 +641,29 @@ const EventDetailScreen = ({ navigation, route }) => {
 
         {/* Action Section */}
         <View style={styles.actionSection}>
-          <TouchableOpacity
-            style={[
-              styles.attendButton, 
-              { backgroundColor: isDark ? (isAttending ? '#0b2d4dff' : colors.buttonPrimary) : (isAttending ? '#051c31ff' : '#2f42d2ff') }
-            ]}
-            onPress={handleAttendanceToggle}
-            disabled={loading}
-          >
-            <Ionicons
-              name={isAttending ? "checkmark-circle" : "person-add"}
-              size={20}
-              color="#fff"
-              style={styles.buttonIcon}
-            />
-            <Text style={styles.attendButtonText}>
-              {loading ? "Procesando..." : isAttending ? "Asistiendo" : "Asistir al Evento"}
-            </Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+  style={[
+    styles.attendButton, 
+    { 
+      backgroundColor: isAttending 
+        ? (isDark ? colors.buttonSecondary : '#1a0f3dff')
+        : (isDark ? colors.buttonPrimary : '#09042aff'),
+      opacity: loading ? 0.7 : 1
+    }
+  ]}
+  onPress={handleAttendanceToggle}
+  disabled={loading}
+>
+  <Ionicons
+    name={isAttending ? "checkmark-circle" : "person-add"}
+    size={20}
+    color="#fff"
+    style={styles.buttonIcon}
+  />
+  <Text style={styles.attendButtonText}>
+    {loading ? "Procesando..." : isAttending ? "Asistiendo" : "Asistir al Evento"}
+  </Text>
+</TouchableOpacity>
         </View>
 
         <View style={{ height: 100 }} />
@@ -672,19 +680,26 @@ const EventDetailScreen = ({ navigation, route }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Ionicons name="home-outline" size={25} color={colors.textSecondary} />
+            <Ionicons name="home-outline" size={25} color={colors.text} />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.bottomNavItem}
-          onPress={() => navigation.navigate("EventScreen")}
-          activeOpacity={0.7}
-        >
-          <View style={styles.navIconContainer}>
-            <Ionicons name="grid-outline" size={25} color={colors.textSecondary} />
-          </View>
-        </TouchableOpacity>
+       <TouchableOpacity
+  style={styles.bottomNavItem}
+  onPress={() => navigation.navigate("EventScreen")}
+  activeOpacity={0.7}
+>
+  <View style={styles.navIconContainer}>
+    <Image
+      source={require("../assets/more.png")}
+      style={[
+        styles.navIcon,
+        { tintColor: colors.text } 
+      ]}
+    />
+  </View>
+</TouchableOpacity>
+
 
         <TouchableOpacity
           style={styles.bottomNavItem}
@@ -692,7 +707,7 @@ const EventDetailScreen = ({ navigation, route }) => {
           activeOpacity={0.7}
         >
           <View style={styles.navIconContainer}>
-            <Ionicons name="person-outline" size={25} color={colors.textSecondary} />
+            <Ionicons name="person-outline" size={25} color={colors.text} />
           </View>
         </TouchableOpacity>
       </View>
@@ -802,9 +817,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   detailIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
@@ -829,155 +844,151 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  attendButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
-  buttonIcon: {
-    marginRight: 4,
-  },
-  locationContent: {
-    flex: 1,
-  },
-  tapToOpenText: {
-    fontSize: 12,
-    color: "#7BBFFF",
-    marginTop: 2,
-    fontStyle: 'italic',
-  },
-  openIcon: {
-    marginLeft: 10,
-  },
-  disabledDetailItem: {
-    opacity: 0.5,
-  },
-  disabledIcon: {
-    backgroundColor: '#D9D9D9',
-  },
-  disabledText: {
-    color: '#999',
-  },
-  disabledTapText: {
-    color: '#999',
-    fontStyle: 'italic',
-  },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 9,
-    borderTopWidth: 3,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  bottomNavItem: {
-    alignItems: "center",
-    padding: 8,
-    flex: 1,
-  },
-  navIconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    height: 32,
-    width: 32,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalContainer: {
-    borderRadius: 20,
-    width: "100%",
-    maxWidth: 340,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-  },
-  modalContent: {
-    padding: 30,
-    alignItems: "center",
-  },
-  modalIconContainer: {
-    marginBottom: 20,
-    padding: 15,
-    borderRadius: 50,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalMessage: {
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 24,
-    marginBottom: 30,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-    width: "100%",
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  confirmButton: {
-    backgroundColor: "#003366",
-  },
-  cancelButton: {
-    borderWidth: 1,
-  },
-  confirmButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    marginTop: 20,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  errorButton: {
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  errorButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+shadowColor: "#000",
+shadowOffset: { width: 0, height: 4 },
+shadowOpacity: 0.3,
+shadowRadius: 8,
+},
+attendButtonText: {
+color: "#fff",
+fontSize: 16,
+fontWeight: "bold",
+marginLeft: 8,
+},
+buttonIcon: {
+marginRight: 4,
+},
+locationContent: {
+flex: 1,
+},
+tapToOpenText: {
+fontSize: 12,
+color: "#5769d1ff",
+marginTop: 2,
+fontStyle: 'italic',
+},
+openIcon: {
+marginLeft: 10,
+},
+disabledDetailItem: {
+opacity: 0.6,
+},
+disabledText: {
+opacity: 0.5,
+},
+disabledTapText: {
+color: '#999',
+fontStyle: 'italic',
+},
+bottomNav: {
+flexDirection: "row",
+justifyContent: "space-around",
+paddingVertical: 9,
+borderTopWidth: 3,
+elevation: 5,
+shadowColor: "#000",
+shadowOffset: { width: 0, height: -2 },
+shadowOpacity: 0.1,
+shadowRadius: 4,
+},
+bottomNavItem: {
+alignItems: "center",
+padding: 8,
+flex: 1,
+},
+navIconContainer: {
+alignItems: "center",
+justifyContent: "center",
+height: 32,
+width: 32,
+},
+modalOverlay: {
+flex: 1,
+backgroundColor: "rgba(0, 0, 0, 0.5)",
+justifyContent: "center",
+alignItems: "center",
+padding: 20,
+},
+modalContainer: {
+borderRadius: 20,
+width: "100%",
+maxWidth: 340,
+elevation: 10,
+shadowColor: "#000",
+shadowOffset: { width: 0, height: 10 },
+shadowOpacity: 0.25,
+shadowRadius: 20,
+},
+modalContent: {
+padding: 30,
+alignItems: "center",
+},
+modalIconContainer: {
+marginBottom: 20,
+padding: 15,
+borderRadius: 50,
+},
+modalTitle: {
+fontSize: 20,
+fontWeight: "bold",
+marginBottom: 12,
+textAlign: "center",
+},
+modalMessage: {
+fontSize: 16,
+textAlign: "center",
+lineHeight: 24,
+marginBottom: 30,
+},
+modalButtons: {
+flexDirection: "row",
+gap: 12,
+width: "100%",
+},
+modalButton: {
+flex: 1,
+paddingVertical: 12,
+paddingHorizontal: 20,
+borderRadius: 12,
+alignItems: "center",
+justifyContent: "center",
+},
+confirmButton: {
+backgroundColor: "#09042aff",
+},
+cancelButton: {
+borderWidth: 1,
+},
+confirmButtonText: {
+color: "white",
+fontSize: 16,
+fontWeight: "600",
+},
+cancelButtonText: {
+fontSize: 16,
+fontWeight: "600",
+},
+errorContainer: {
+flex: 1,
+justifyContent: 'center',
+alignItems: 'center',
+padding: 20,
+},
+errorText: {
+fontSize: 16,
+marginTop: 20,
+marginBottom: 20,
+textAlign: 'center',
+},
+errorButton: {
+paddingHorizontal: 30,
+paddingVertical: 12,
+borderRadius: 8,
+},
+errorButtonText: {
+color: '#fff',
+fontSize: 16,
+fontWeight: '600',
+},
 });
-
 export default EventDetailScreen;

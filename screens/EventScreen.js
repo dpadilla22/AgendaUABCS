@@ -5,12 +5,10 @@ import DateTimePicker from "@react-native-community/datetimepicker"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAppTheme } from '../hooks/useThemeApp'
 
-// Configuración de la URL base de la API
 const API_BASE_URL = "https://agendauabcs.up.railway.app"
 
-// Configuración de departamentos con sus respectivos colores e IDs
 const DEPARTMENTS = [
-  { name: "Agronomía", color: "#66BB6A", id: 1 },
+  { name: "Agronomía", color: "#567d58ff", id: 1 },
   { name: "Ciencia Animal y Conservación del Hábitat", color: "#FFA726", id: 2 },
   { name: "Ciencias de la Tierra", color: "#FF7B6B", id: 3 },
   { name: "Ciencias Marinas y Costeras", color: "#7BBFFF", id: 4 },
@@ -36,10 +34,10 @@ export const loadAccountId = async () => {
 }
 
 const SuggestionScreen = ({ navigation, route }) => {
-  // HOOK DE TEMA
+  
   const { colors, isDark } = useAppTheme()
   
-  // Estados principales
+
   const [formData, setFormData] = useState({
     titulo: "",
     departamento: "",
@@ -63,7 +61,7 @@ const SuggestionScreen = ({ navigation, route }) => {
     showCancel: false
   })
 
-  // Referencias para animaciones
+  
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(50)).current
   const scaleAnim = useRef(new Animated.Value(0.9)).current
@@ -421,20 +419,41 @@ const SuggestionScreen = ({ navigation, route }) => {
       />
 
       {/* Header */}
-      <View style={[styles.simpleHeader, { backgroundColor: colors.black }]}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.cardBg }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Image
-            source={require("../assets/back-arrow.png")}
-            style={[styles.backIcon, { tintColor: colors.text }]}
-          />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Sugerir Evento</Text>
-        </View>
-      </View>
+      <View style={[
+  styles.simpleHeader, 
+  { 
+    backgroundColor: colors.divider,
+    borderBottomWidth: 1,       
+    borderBottomColor: '#fff'   
+  }
+]}>
+  <TouchableOpacity
+    style={[
+      styles.backButton, 
+      { 
+        backgroundColor: colors.cardBg,
+        borderWidth: 1,       
+        borderColor: '#fff',     
+        borderRadius: 20
+      }
+    ]}
+    onPress={() => navigation.goBack()}
+    activeOpacity={0.7}
+  >
+   <Image
+  source={require("../assets/back-arrow.png")}
+  style={[
+    styles.backIcon,
+    { tintColor: colors.text }  
+  ]}
+/>
+
+  </TouchableOpacity>
+
+  <View style={styles.headerTitleContainer}>
+    <Text style={[styles.headerTitle, { color: colors.text }]}>Sugerir Evento</Text>
+  </View>
+</View>
 
       {/* Contenido principal */}
       <Animated.ScrollView
@@ -451,25 +470,25 @@ const SuggestionScreen = ({ navigation, route }) => {
           <View style={styles.inputHeader}>
             <View>
               <Text style={[styles.label, { color: colors.text }]}>Título del Evento</Text>
-              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+              <Text style={[styles.sublabel, { color: colors.text }]}>
                 Proporcione un nombre descriptivo para el evento
               </Text>
             </View>
           </View>
           <TextInput
             style={[styles.textInput, {
-              backgroundColor: colors.inputBg,
-              borderColor: colors.border,
-              color: colors.text
+              backgroundColor: colors.cardBg,
+              borderColor: colors.divider,
+              color: colors.cardBg
             }]}
             placeholder="Nombre del evento"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.text}
             value={formData.titulo}
             onChangeText={(value) => handleInputChange("titulo", value)}
             maxLength={100}
           />
           <View style={styles.inputFooter}>
-            <Text style={[styles.characterCount, { color: colors.textSecondary }]}>
+            <Text style={[styles.characterCount, { color: colors.text }]}>
               {formData.titulo.length}/100
             </Text>
           </View>
@@ -478,13 +497,13 @@ const SuggestionScreen = ({ navigation, route }) => {
         {/* Selector de departamento */}
         <Animated.View style={[styles.inputCard, {
           backgroundColor: colors.cardBg,
-          borderColor: colors.border,
+          borderColor: colors.divider,
           transform: [{ scale: scaleAnim }]
         }]}>
           <View style={styles.inputHeader}>
             <View>
               <Text style={[styles.label, { color: colors.text }]}>Departamento</Text>
-              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+              <Text style={[styles.sublabel, { color: colors.text }]}>
                 Área académica a la que pertenece el evento
               </Text>
             </View>
@@ -517,7 +536,7 @@ const SuggestionScreen = ({ navigation, route }) => {
               )}
               <Text style={[
                 styles.selectText,
-                { color: formData.departamento ? colors.text : colors.textSecondary }
+                { color: formData.departamento ? colors.text : colors.text }
               ]}>
                 {formData.departamento || "Seleccionar departamento"}
               </Text>
@@ -529,13 +548,13 @@ const SuggestionScreen = ({ navigation, route }) => {
         {/* Selector de fecha */}
         <Animated.View style={[styles.inputCard, {
           backgroundColor: colors.cardBg,
-          borderColor: colors.border,
+          borderColor: colors.divider,
           transform: [{ scale: scaleAnim }]
         }]}>
           <View style={styles.inputHeader}>
             <View>
               <Text style={[styles.label, { color: colors.text }]}>Fecha del Evento</Text>
-              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+              <Text style={[styles.sublabel, { color: colors.text }]}>
                 Fecha programada para la realización del evento
               </Text>
             </View>
@@ -543,49 +562,49 @@ const SuggestionScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[styles.selectInput, {
               backgroundColor: colors.inputBg,
-              borderColor: colors.border
+              borderColor: colors.divider
             }]}
             onPress={() => setShowDatePicker(true)}
           >
             <Text style={[styles.selectText, { color: colors.text }]}>{formatDate(date)}</Text>
-            <Text style={[styles.chevronIcon, { color: colors.textSecondary }]}>▼</Text>
+            <Text style={[styles.chevronIcon, { color: colors.text }]}>▼</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* Selector de hora */}
         <Animated.View style={[styles.inputCard, {
           backgroundColor: colors.cardBg,
-          borderColor: colors.border,
+          borderColor: colors.divider,
           transform: [{ scale: scaleAnim }]
         }]}>
           <View style={styles.inputHeader}>
             <View>
               <Text style={[styles.label, { color: colors.text }]}>Hora del Evento</Text>
-              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>Hora de inicio del evento</Text>
+              <Text style={[styles.sublabel, { color: colors.text }]}>Hora de inicio del evento</Text>
             </View>
           </View>
           <TouchableOpacity
             style={[styles.selectInput, {
               backgroundColor: colors.inputBg,
-              borderColor: colors.border
+              borderColor: colors.divider
             }]}
             onPress={() => setShowTimePicker(true)}
           >
             <Text style={[styles.selectText, { color: colors.text }]}>{formatTime(time)}</Text>
-            <Text style={[styles.chevronIcon, { color: colors.textSecondary }]}>▼</Text>
+            <Text style={[styles.chevronIcon, { color: colors.text }]}>▼</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* Campo de ubicación */}
         <Animated.View style={[styles.inputCard, {
           backgroundColor: colors.cardBg,
-          borderColor: colors.border,
+          borderColor: colors.divider,
           transform: [{ scale: scaleAnim }]
         }]}>
           <View style={styles.inputHeader}>
             <View>
               <Text style={[styles.label, { color: colors.text }]}>Ubicación</Text>
-              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+              <Text style={[styles.sublabel, { color: colors.text }]}>
                 Lugar donde se realizará el evento
               </Text>
             </View>
@@ -593,11 +612,11 @@ const SuggestionScreen = ({ navigation, route }) => {
           <TextInput
             style={[styles.textInput, {
               backgroundColor: colors.inputBg,
-              borderColor: colors.border,
+              borderColor: colors.divider,
               color: colors.text
             }]}
             placeholder="Ej: Poliforo"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.text}
             value={formData.ubicacion}
             onChangeText={(value) => handleInputChange("ubicacion", value)}
             maxLength={100}
@@ -609,14 +628,14 @@ const SuggestionScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              { backgroundColor: isDark ? colors.buttonPrimary : '#0f5897ff' },
+             
               isSubmitting && styles.submitButtonDisabled
             ]}
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
             <View style={styles.submitButtonContent}>
-              <Text style={[styles.submitButtonText, { color: isDark ? '#ffffffff' : '#ffffffff' }]}>
+              <Text style={[styles.submitButtonText, { color: isDark ? colors.text: colors.text }]}>
                 {isSubmitting ? "Enviando..." : "Enviar Sugerencia"}
               </Text>
             </View>

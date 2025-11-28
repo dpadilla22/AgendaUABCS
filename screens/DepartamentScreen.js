@@ -216,71 +216,109 @@ const DepartamentScreen = ({ navigation, route }) => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.black }]}>
-      <StatusBar 
-        backgroundColor={colors.black} 
-        barStyle={isDark ? "light-content" : "dark-content"} 
-      />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+  <StatusBar 
+    backgroundColor={colors.headerBg} 
+    barStyle={isDark ? "light-content" : "dark-content"} 
+  />
 
-      {loading ? (
-        <View style={[styles.fullScreenLoading, { backgroundColor: colors.background }]}>
-          <Image
-            source={require("../assets/agendaLogo.png")}
-            style={styles.loadingImage}
-            resizeMode="contain"
-          />
-        </View>
+  {loading ? (
+    <View style={[styles.fullScreenLoading, { backgroundColor: colors.headerBg }]}>
+      <Image
+        source={require("../assets/agendaLogo.png")}
+        style={styles.loadingImage}
+        resizeMode="contain"
+      />
+    </View>
       ) : (
         <>
-          <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
-            <TouchableOpacity 
-              style={[styles.backButton, { backgroundColor: isDark ? 'rgba(90, 90, 90, 0.1)' : 'rgba(255, 255, 255, 0.2)' }]} 
-              onPress={() => navigation.goBack()}
-            >
-              <Image
-                source={require("../assets/back-arrow.png")}
-                style={[styles.backIcon, { tintColor: colors.text }]}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Calendario</Text>
-            <View style={styles.emptySpace} />
-          </View>
+  <View style={[
+  styles.header, 
+  { 
+    backgroundColor: colors.headerBg,
+    borderBottomWidth: 1,       
+    borderBottomColor: '#fff'   
+  }
+]}>
+  <TouchableOpacity 
+    style={[
+      styles.backButton, 
+      { 
+        backgroundColor: isDark ? 'rgba(90, 90, 90, 0.1)' : 'rgba(255, 255, 255, 0.2)',
+        borderWidth: 1,        
+        borderColor: '#fff',     
+        borderRadius: 20
+      }
+    ]} 
+    onPress={() => navigation.goBack()}
+    activeOpacity={0.7}
+  >
+   <Image
+  source={require("../assets/back-arrow.png")}
+  style={[
+    styles.backIcon,
+    { tintColor: colors.text }  
+  ]}
+/>
+
+  </TouchableOpacity>
+
+  <Text style={[styles.headerTitle, { color: colors.text }]}>Calendario</Text>
+  <View style={styles.emptySpace} />
+</View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={[styles.calendarContainer, { backgroundColor: colors.cardBg }]}>
-              <Calendar
-                current={selectedDate}
-                minDate={todayString}
-                onDayPress={day => {
-                  console.log('Selected date:', day.dateString);
-                  setSelectedDate(day.dateString);
-                }}
-                markedDates={getMarkedDates()}
-                theme={{
-                  backgroundColor: colors.cardBg,
-                  calendarBackground: colors.cardBg,
-                  textSectionTitleColor: colors.text,
-                  selectedDayBackgroundColor: '#3498db',
-                  selectedDayTextColor: '#fff',
-                  todayTextColor: '#3498db',
-                  dayTextColor: colors.text,
-                  textDisabledColor: colors.textSecondary,
-                  arrowColor: colors.text,
-                  monthTextColor: colors.text,
-                  dotColor: '#3498db',
-                  selectedDotColor: '#fff',
-                  textDayFontWeight: '400',
-                  textMonthFontWeight: 'bold',
-                  textDayHeaderFontWeight: '600',
-                }}
-                style={{ borderRadius: 20, padding: 10 }}
-              />
+<Calendar
+  current={selectedDate}
+  minDate={todayString}
+  onDayPress={day => setSelectedDate(day.dateString)}
+  markedDates={getMarkedDates()}
+  theme={{
+    backgroundColor: colors.background,
+    calendarBackground: isDark ? colors.cardBg : '#fff', 
+    textSectionTitleColor: isDark ? colors.textSecondary : '#4A5568',
+    selectedDayBackgroundColor: '#3498db',
+    selectedDayTextColor: '#fff',
+    todayTextColor: isDark ? '#63B3ED' : '#3498db',
+    dayTextColor: colors.text,
+    textDisabledColor: colors.textTertiary,
+    arrowColor: colors.text,
+    monthTextColor: colors.text,
+    dotColor: '#3498db',
+    selectedDotColor: '#fff',
+    textDayFontWeight: '400',
+    textMonthFontWeight: 'bold',
+    textDayHeaderFontWeight: '600',
+    todayBackgroundColor: isDark ? colors.cardBg : '#E0F2FE',
+    'stylesheet.day.basic': {
+      base: {
+        width: 32,
+        height: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 16,
+      },
+      selected: {
+        backgroundColor: '#3498db',
+      },
+      today: {
+        backgroundColor: isDark ? colors.cardBg : '#E0F2FE',
+      },
+      text: {
+        color: isDark ? colors.text : '#1A202C', 
+      },
+    },
+  }}
+  style={{ borderRadius: 20, padding: 10 }}
+/>
+
             </View>
 
-            <View style={[styles.eventsContainer, { backgroundColor: colors.cardBg }]}>
+            <View style={[styles.eventsContainer, { backgroundColor: colors.divider }]}>
               <View style={styles.eventsHeader}>
                 <Text style={[styles.eventsTitle, { color: colors.text }]}>{nombreDepartamento}</Text>
-                <Text style={[styles.eventsSubtitle, { color: colors.textSecondary }]}>
+                <Text style={[styles.eventsSubtitle, { color: colors.text }]}>
                   Eventos del {formatDate(selectedDate + 'T12:00:00')}
                 </Text>
                 {eventosFiltrados.length > 0 && (
@@ -299,7 +337,7 @@ const DepartamentScreen = ({ navigation, route }) => {
                   <Text style={[styles.emptyText, { color: colors.text }]}>
                     No hay eventos para esta fecha
                   </Text>
-                  <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+                  <Text style={[styles.emptySubtext, { color: colors.text }]}>
                     Selecciona otra fecha en el calendario
                   </Text>
                 </View>
@@ -315,7 +353,6 @@ const DepartamentScreen = ({ navigation, route }) => {
               )}
             </View>
           </ScrollView>
-
           <View style={[styles.bottomNav, { 
             backgroundColor: colors.navBg,
             borderTopColor: colors.border
@@ -328,7 +365,7 @@ const DepartamentScreen = ({ navigation, route }) => {
               <View style={styles.navIconContainer}>
                 <Image
                   source={require("../assets/home.png")}
-                  style={[styles.navIcon, { tintColor: colors.textSecondary }]}
+                  style={[styles.navIcon, { tintColor: colors.text }]}
                 />
               </View>
             </TouchableOpacity>
@@ -341,7 +378,7 @@ const DepartamentScreen = ({ navigation, route }) => {
               <View style={styles.navIconContainer}>
                 <Image 
                   source={require("../assets/more.png")} 
-                  style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+                  style={[styles.navIcon, { tintColor: colors.text }]} 
                 />
               </View>
             </TouchableOpacity>
@@ -354,7 +391,7 @@ const DepartamentScreen = ({ navigation, route }) => {
               <View style={styles.navIconContainer}>
                 <Image 
                   source={require("../assets/profile.png")} 
-                  style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+                  style={[styles.navIcon, { tintColor: colors.text }]} 
                 />
               </View>
             </TouchableOpacity>

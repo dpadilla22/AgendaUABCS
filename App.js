@@ -16,19 +16,24 @@ import EventScreen from './screens/EventScreen';
 import EventDetailScreen from './screens/EventDetailScreen';
 import CommentsScreen from './screens/commentsScreen';
 import dashboard from './screens/dashboard';
+import { useAppTheme } from './hooks/useThemeApp';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 function DrawerNavigator() {
+    const { colors, isDark } = useAppTheme();
   return (
     <Drawer.Navigator
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
-        drawerActiveTintColor: '#4A96BD',
-        drawerActiveBackgroundColor: '#FFF7A3',
-        drawerInactiveTintColor: 'black',
+        drawerStyle: {
+          backgroundColor: colors.drawerBg,
+        },
+        drawerActiveTintColor: colors.drawerActiveText,
+        drawerActiveBackgroundColor: colors.drawerActiveBg,
+        drawerInactiveTintColor: colors.drawerInactiveText,
       }}
     >
       <Drawer.Screen
@@ -95,7 +100,7 @@ function DrawerNavigator() {
         }}
       />
 
-      <Drawer.Screen 
+      {/* <Drawer.Screen 
         name="Cerrar sesión" 
         component={WelcomeScreen}
         options={{
@@ -106,7 +111,7 @@ function DrawerNavigator() {
             paddingTop: 120
           }
         }}
-      />
+      /> */}
     </Drawer.Navigator>
   );
 }

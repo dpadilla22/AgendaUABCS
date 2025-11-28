@@ -1,21 +1,7 @@
 import { useState } from "react"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Dimensions,
-  Animated,
-  ImageBackground,
-} from "react-native"
+import {StyleSheet,Text,View,TouchableOpacity,TextInput,ActivityIndicator,Keyboard,KeyboardAvoidingView,Platform,TouchableWithoutFeedback,Dimensions,Animated,ImageBackground,} from "react-native"
 import Toast from "react-native-toast-message"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAppTheme } from "../hooks/useThemeApp"
@@ -318,7 +304,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   loginButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#09042aff',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",

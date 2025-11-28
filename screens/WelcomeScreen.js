@@ -26,33 +26,42 @@ const WelcomeScreen = ({ navigation }) => {
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
 
+  // Animaciones: posición y opacidad del texto
+  const textTranslateY = useRef(new Animated.Value(30)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
+
   // Animaciones: posición y opacidad del botón
   const buttonTranslateY = useRef(new Animated.Value(50)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
-  // Animación: opacidad de las secciones principales
-  const sectionsOpacity = useRef(new Animated.Value(0)).current;
-
   // Animaciones al montar el componente
   useEffect(() => {
     Animated.sequence([
-      // Mostrar secciones
-      Animated.timing(sectionsOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
       // Animar aparición y escala del logo
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 600,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.spring(logoScale, {
           toValue: 1,
           tension: 50,
           friction: 7,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Animar texto descriptivo
+      Animated.parallel([
+        Animated.timing(textOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(textTranslateY, {
+          toValue: 0,
+          tension: 80,
+          friction: 8,
           useNativeDriver: true,
         }),
       ]),
@@ -95,23 +104,39 @@ const WelcomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Sección superior con fondo de color y overlay */}
-      <Animated.View style={[styles.topSection, { opacity: sectionsOpacity }]}>
-        <View style={styles.gradientOverlay} />
-      </Animated.View>
-
-      {/* Sección inferior con botón y texto */}
-      <Animated.View style={[styles.bottomSection, { opacity: sectionsOpacity }]}>
+      <View style={styles.content}>
+        {/* Logo animado */}
         <Animated.View 
           style={[
-            styles.welcomeTextContainer,
+            styles.logoContainer,
             {
-              opacity: buttonOpacity,
-              transform: [{ translateY: buttonTranslateY }]
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }]
             }
           ]}
         >
+          <Image
+            source={require('../assets/agendaLogo.png')}
+            style={styles.mascotImage}
+          />
+        </Animated.View>
 
+        {/* Texto descriptivo */}
+        <Animated.View 
+          style={[
+            styles.textContainer,
+            {
+              opacity: textOpacity,
+              transform: [{ translateY: textTranslateY }]
+            }
+          ]}
+        >
+          <Text style={styles.mainText}>Encuentra eventos{'\n'}increíbles cerca de ti</Text>
+          <View style={styles.dotsContainer}>
+            <View style={[styles.dot, styles.dotActive]} />
+            <View style={styles.dot} />
+            <View style={styles.dot} />
+          </View>
         </Animated.View>
 
         {/* Botón de ingreso */}
@@ -129,118 +154,78 @@ const WelcomeScreen = ({ navigation }) => {
             onPress={handleButtonPress}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Ingresar</Text>
-            <View style={styles.buttonGlow} />
+            <Text style={styles.buttonText}>→</Text>
           </TouchableOpacity>
         </Animated.View>
+      </View>
 
-       
-        <Animated.View 
-          style={[
-            styles.decorativeElements,
-            { opacity: buttonOpacity }
-          ]}
-        >
-         
-        </Animated.View>
-      </Animated.View>
-
-      {/* Logo animado */}
-      <Animated.View 
-        style={[
-          styles.logoContainer,
-          {
-            opacity: logoOpacity,
-            transform: [{ scale: logoScale }]
-          }
-        ]}
-      >
-        <View style={styles.logoShadow} />
-        <Image
-          source={require('../assets/agendaLogo.png')}
-          style={styles.mascotImage}
-        />
-      </Animated.View>
-
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </SafeAreaView>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#060925ff',
+    backgroundColor: '#FFFFFF',
   },
-  topSection: {
-    height: '50%',
-    backgroundColor: '#1254b0ff',
-    position: 'relative',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(244, 225, 83, 0.1)',
-  },
-  bottomSection: {
-    height: '65%',
-    backgroundColor: 'white',
+  content: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 180,
-    paddingBottom: 40,
+    justifyContent: 'space-between',
+    paddingVertical: 60,
     paddingHorizontal: 20,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
   },
   logoContainer: {
-    position: 'absolute',
-    top: '30%',
-    left: '10%',
-    transform: [{ translateX: -150 }, { translateY: -150 }],
-    zIndex: 10,
+    alignItems: 'center',
+    marginTop: 40,
   },
-
   mascotImage: {
-    width: 300,
-    height: 300,
+    width: width * 0.8,
+    height: height * 0.45,
     resizeMode: 'contain',
   },
-  welcomeTextContainer: {
+  textContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
-  welcomeTitle: {
-    fontSize: 28,
+  mainText: {
+    fontSize: 26,
     fontWeight: '700',
-    color: '#003366',
-    marginBottom: 8,
+    color: '#1a1a1a',
     textAlign: 'center',
+    lineHeight: 34,
+    marginBottom: 30,
   },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 20,
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D1D5DB',
+  },
+  dotActive: {
+    backgroundColor: '#09042aff',
+    width: 24,
   },
   buttonContainer: {
+    alignItems: 'flex-end',
     width: '100%',
-    alignItems: 'center',
-    marginBottom: 30,
+    paddingRight: 20,
+    marginBottom: 20,
   },
   button: {
     backgroundColor: '#09042aff',
-    paddingVertical: 18,
-    paddingHorizontal: 60,
-    borderRadius: 25,
-    width: '80%',
-    position: 'relative',
-    shadowColor: '#0b1928ff',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -249,26 +234,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  buttonGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 25,
-  },
   buttonText: {
-    color: '#d7d7d7ff',
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 28,
     fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  decorativeElements: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
 });
 

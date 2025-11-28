@@ -252,12 +252,12 @@ const CommentsScreen = () => {
         <View style={[styles.avatarContainer, { backgroundColor: isDark ? colors.inputBg : '#E0E0E0' }]}>
           <Image 
             source={require("../assets/profile.png")} 
-            style={[styles.avatar, { tintColor: colors.textSecondary }]} 
+            style={[styles.avatar, { tintColor: colors.text }]} 
           />
         </View>
         <View style={styles.inputContainer}>
           {isLoading ? (
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Cargando...</Text>
+            <Text style={[styles.loadingText, { color: colors.text }]}>Cargando...</Text>
           ) : accountId ? (
             <>
               <TextInput
@@ -267,7 +267,7 @@ const CommentsScreen = () => {
                   color: colors.text
                 }]}
                 placeholder="Deja tu comentario sobre la aplicación..."
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.text}
                 value={commentText}
                 onChangeText={setCommentText}
                 multiline={true}
@@ -375,8 +375,8 @@ const CommentsScreen = () => {
       />
 
       <View style={[styles.header, { 
-        backgroundColor: colors.black,
-        borderBottomColor: colors.border
+        backgroundColor: colors.headerBg,
+        borderBottomColor: colors.headerBg
       }]}>
         <TouchableOpacity 
           style={[styles.backButton, { backgroundColor: colors.cardBg }]} 
@@ -435,7 +435,7 @@ const CommentsScreen = () => {
           <View style={styles.navIconContainer}>
             <Image 
               source={require("../assets/home.png")} 
-              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+              style={[styles.navIcon, { tintColor: colors.text }]} 
             />
           </View>
         </TouchableOpacity>
@@ -448,7 +448,7 @@ const CommentsScreen = () => {
           <View style={styles.navIconContainer}>
             <Image 
               source={require("../assets/more.png")} 
-              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+              style={[styles.navIcon, { tintColor: colors.text }]} 
             />
           </View>
         </TouchableOpacity>
@@ -461,7 +461,7 @@ const CommentsScreen = () => {
           <View style={styles.navIconContainer}>
             <Image 
               source={require("../assets/profile.png")} 
-              style={[styles.navIcon, { tintColor: colors.textSecondary }]} 
+              style={[styles.navIcon, { tintColor: colors.text }]} 
             />
           </View>
         </TouchableOpacity>
