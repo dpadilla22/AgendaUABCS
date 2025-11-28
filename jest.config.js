@@ -8,4 +8,5 @@ export default {
     '!**/coverage/**',
     '!jest.config.js',
   ],
+  roots: ['<rootDir>/database/', '<rootDir>/__tests__/'],
 };
