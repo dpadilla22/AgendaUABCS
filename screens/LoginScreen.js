@@ -1,10 +1,15 @@
+// screens/LoginScreen.js
 import { useState } from "react"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
-import {StyleSheet,Text,View,TouchableOpacity,TextInput,ActivityIndicator,Keyboard,KeyboardAvoidingView,Platform,TouchableWithoutFeedback,Dimensions,Animated,ImageBackground,} from "react-native"
+import {
+  StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator,
+  Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback,
+  Dimensions, Animated, ImageBackground
+} from "react-native"
 import Toast from "react-native-toast-message"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAppTheme } from "../hooks/useThemeApp"
+import { validateForm, isAdminUser, handleUserLogin, handleAdminLogin } from '../utils/loginUtils'
 
 const { width, height } = Dimensions.get("window")
 
@@ -38,80 +43,61 @@ const LoginScreen = ({ navigation }) => {
 
   const [scaleAnim] = useState(new Animated.Value(0.95))
 
-  const validateForm = () => {
-    let isValid = true
-    if (!username.trim()) {
-      setUsernameError("El usuario es requerido")
-      isValid = false
-    } else {
-      setUsernameError("")
-    }
-    if (!password) {
-      setPasswordError("La contraseña es requerida")
-      isValid = false
-    } else {
-      setPasswordError("")
-    }
-    return isValid
-  }
-
   const handleUsernameChange = (text) => {
     setUsername(text)
+    if (usernameError) setUsernameError("")
+    if (generalError) setGeneralError("")
   }
 
   const handlePasswordChange = (text) => {
     setPassword(text)
+    if (passwordError) setPasswordError("")
+    if (generalError) setGeneralError("")
   }
 
   const handleLogin = async () => {
-    if (!validateForm()) {
+    const validation = validateForm(username, password)
+    if (!validation.isValid) {
+      setUsernameError(validation.errors.username)
+      setPasswordError(validation.errors.password)
       return
     }
 
     setLoading(true)
     Keyboard.dismiss()
+    setGeneralError("")
 
     try {
-      if (username.trim() === "admin_22" && password === "admin123") {
+      // Verificar si es admin
+      if (isAdminUser(username, password)) {
+        const adminResult = await handleAdminLogin()
+        
         Toast.show({
           type: "success",
-          text1: "¡Bienvenido Administrador!",
+          text1: adminResult.message,
           text2: "Acceso al panel de administración",
         })
-        navigation.navigate("AdminDashboard")
+        navigation.navigate(adminResult.screen)
         setLoading(false)
         return
       }
 
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifierUser: username.trim(),
-          passwordUser: password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        await AsyncStorage.setItem("accountId", data.user.idAccount.toString())
-        await AsyncStorage.setItem("userName", data.user.email)
-        await AsyncStorage.setItem("userData", JSON.stringify(data.user))
-
+      // Login de usuario normal
+      const userResult = await handleUserLogin(username, password, API_URL)
+      
+      if (userResult.success) {
         Toast.show({
           type: "success",
           text1: "¡Bienvenido!",
-          text2: `${data.user.name}`,
+          text2: userResult.message,
         })
-
-        navigation.navigate("Home", { user: data.user })
+        navigation.navigate("Home", { user: userResult.user })
       } else {
-        setGeneralError(data.message || "Credenciales incorrectas")
+        setGeneralError(userResult.error)
       }
     } catch (error) {
-      console.error("Error de conexión:", error)
-      setGeneralError("No se pudo conectar al servidor")
+      console.error("Error en login:", error)
+      setGeneralError("Error inesperado en el login")
     } finally {
       setLoading(false)
     }
@@ -216,6 +202,7 @@ const LoginScreen = ({ navigation }) => {
   )
 }
 
+// Los estilos se mantienen igual...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -350,15 +337,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
     marginLeft: 4,
-    fontWeight: "500",
-  },
-  forgotContainer: {
-    alignItems: "center",
-    marginTop: 16,
-  },
-  forgotText: {
-    color: COLORS.secondary,
-    fontSize: 13,
     fontWeight: "500",
   },
 })

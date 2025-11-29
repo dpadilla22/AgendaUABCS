@@ -1,119 +1,172 @@
-
-describe('Profile Screen - Tests Completos', () => {
- 
-  const mockUserData = { email: 'estudiante@uabcs.mx' };
-  const mockStats = { favorites: 3, attendance: 5 };
-
-  const getUserData = async () => mockUserData;
-  const getUserStats = async () => mockStats;
-
-  const profileDisplay = async (userData = mockUserData, stats = mockStats) => ({
-  displayTitle: 'Estudiante UABCS',
-  displayEmail: userData?.email || 'Usuario',
-  displayStats: {
-    favorites: stats?.favorites || 0,
-    attendance: stats?.attendance || 0,
-  },
-  sections: {
-    favorites: { title: `Favoritos (${stats?.favorites || 0})`, expanded: false },
-    attendance: { title: `Asistencia (${stats?.attendance || 0})`, expanded: false },
-  },
-});
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  getHour, 
+  formatDate, 
+  getDepartmentColor, 
+  processEventsData,
+  getUserEmail,
+  getAccountId 
+} from '../../utils/profileUtils';
 
 
-  const getHour = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-  };
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+}));
 
-  const formatDate = (dateString) => {
-    const [year, month, day] = dateString.split('T')[0].split('-');
-    return new Date(`${year}-${month}-${day}T12:00:00`).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+describe('Profile Utils', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getHour', () => {
+    it('formatea hora correctamente', () => {
+      expect(getHour('2025-06-15T14:30:00')).toBe('14:30');
+      expect(getHour('2025-06-15T09:05:00')).toBe('09:05');
     });
-  };
-
-  const simulateLogout = async () => ({ success: true, screen: 'Welcome' });
-
-  it('muestra el email del usuario correctamente', async () => {
-    const display = await profileDisplay();
-    expect(display.displayEmail).toBe('estudiante@uabcs.mx');
-    expect(display.displayEmail).toContain('@');
   });
 
-  it('muestra "Usuario" cuando no hay email', async () => {
-    const display = await profileDisplay({ email: '' });
-    expect(display.displayEmail).toBe('Usuario');
+  describe('formatDate', () => {
+    it('formatea fecha correctamente', () => {
+      const result = formatDate('2025-06-15T10:00:00');
+      expect(result).toContain('junio');
+      expect(result).toContain('2025');
+    });
   });
 
-  it('muestra estadísticas de favoritos y asistencia correctamente', async () => {
-    const display = await profileDisplay();
-    expect(display.displayStats.favorites).toBe(3);
-    expect(display.displayStats.attendance).toBe(5);
-    expect(typeof display.displayStats.favorites).toBe('number');
-    expect(typeof display.displayStats.attendance).toBe('number');
+  describe('getDepartmentColor', () => {
+    it('asigna colores correctos a departamentos conocidos', () => {
+      expect(getDepartmentColor('Sistemas computacionales')).toBe('#3B82F6');
+      expect(getDepartmentColor('Economía')).toBe('#F59E0B');
+      expect(getDepartmentColor('Ciencias Sociales y jurídicas')).toBe('#06B6D4');
+    });
+
+    it('usa color por defecto para departamento desconocido', () => {
+      expect(getDepartmentColor('Departamento Desconocido')).toBe('#6B7280');
+      expect(getDepartmentColor('Departamento Desconocido', true)).toBe('#999');
+    });
   });
 
-  it('maneja títulos de secciones con contadores', async () => {
-    const display = await profileDisplay();
-    expect(display.sections.favorites.title).toBe('Favoritos (3)');
-    expect(display.sections.attendance.title).toBe('Asistencia (5)');
+  describe('processEventsData', () => {
+    const mockEventsData = {
+      success: true,
+      events: [
+        {
+          id: 1,
+          title: 'Conferencia de Tecnología',
+          department: 'Sistemas computacionales',
+          date: '2025-06-15T10:00:00',
+          location: 'Auditorio Principal',
+          imageUrl: 'https://example.com/image1.jpg'
+        },
+        {
+          id: 2,
+          title: 'Taller de Economía',
+          department: 'Economía',
+          date: '2025-06-20T14:00:00',
+          location: 'Sala de Conferencias',
+          imageUrl: 'https://example.com/image2.jpg'
+        }
+      ]
+    };
+
+    it('procesa favoritos correctamente', () => {
+      const favData = {
+        success: true,
+        favorites: [{ eventId: 1 }]
+      };
+      const attendanceData = {
+        success: true,
+        attendance: []
+      };
+
+      const result = processEventsData(mockEventsData, favData, attendanceData);
+      
+      expect(result.favorites).toHaveLength(1);
+      expect(result.favorites[0].title).toBe('Conferencia de Tecnología');
+      expect(result.favorites[0].department).toBe('Sistemas computacionales');
+      expect(result.favorites[0].date).toContain('junio');
+      expect(result.favorites[0].time).toBe('10:00');
+      expect(result.attendance).toHaveLength(0);
+    });
+
+    it('procesa asistencia correctamente', () => {
+      const favData = {
+        success: true,
+        favorites: []
+      };
+      const attendanceData = {
+        success: true,
+        attendance: [{ eventId: 2 }]
+      };
+
+      const result = processEventsData(mockEventsData, favData, attendanceData);
+      
+      expect(result.attendance).toHaveLength(1);
+      expect(result.attendance[0].title).toBe('Taller de Economía');
+      expect(result.attendance[0].department).toBe('Economía');
+      expect(result.attendance[0].date).toContain('junio');
+      expect(result.attendance[0].time).toBe('14:00');
+      expect(result.favorites).toHaveLength(0);
+    });
+
+    it('maneja eventos sin datos completos', () => {
+      const incompleteEvent = {
+        success: true,
+        events: [
+          {
+            id: 3,
+            date: 'fecha-invalida',
+           
+          }
+        ]
+      };
+
+      const favData = {
+        success: true,
+        favorites: [{ eventId: 3 }]
+      };
+
+      const result = processEventsData(incompleteEvent, favData, { success: true, attendance: [] });
+      
+      expect(result.favorites[0].title).toBe('Evento sin título');
+      expect(result.favorites[0].department).toBe('Sin departamento');
+      expect(result.favorites[0].location).toBe('Ubicación no especificada');
+      expect(result.favorites[0].imageUrl).toBe('https://via.placeholder.com/150');
+    });
   });
 
-  it('maneja estado de secciones expandibles', async () => {
-    const display = await profileDisplay();
-    expect(display.sections.favorites.expanded).toBe(false);
-    display.sections.favorites.expanded = true;
-    expect(display.sections.favorites.expanded).toBe(true);
+  describe('getUserEmail', () => {
+    it('obtiene email desde AsyncStorage', async () => {
+     
+      AsyncStorage.getItem.mockResolvedValue('estudiante@uabcs.mx');
+      
+      const email = await getUserEmail();
+      expect(email).toBe('estudiante@uabcs.mx');
+      expect(AsyncStorage.getItem).toHaveBeenCalledWith('userName');
+    });
+
+    it('retorna string vacío cuando no hay email', async () => {
+      AsyncStorage.getItem.mockResolvedValue(null);
+      
+      const email = await getUserEmail();
+      expect(email).toBe('');
+    });
   });
 
-  it('maneja listas vacías de eventos', async () => {
-    const display = await profileDisplay({ email: 'usuario@uabcs.mx' }, { favorites: 0, attendance: 0 });
-    expect(display.displayStats.favorites).toBe(0);
-    expect(display.displayStats.attendance).toBe(0);
-    expect(display.sections.favorites.title).toBe('Favoritos (0)');
-    expect(display.sections.attendance.title).toBe('Asistencia (0)');
-  });
+  describe('getAccountId', () => {
+    it('obtiene accountId desde AsyncStorage', async () => {
+      AsyncStorage.getItem.mockResolvedValue('12345');
+      
+      const accountId = await getAccountId();
+      expect(accountId).toBe('12345');
+      expect(AsyncStorage.getItem).toHaveBeenCalledWith('accountId');
+    });
 
-  it('valida el formato del título del perfil', async () => {
-    const display = await profileDisplay();
-    expect(display.displayTitle).toBe('Estudiante UABCS');
-    expect(display.displayTitle).toContain('UABCS');
-  });
-
-  it('simula el proceso de carga de datos', async () => {
-    let loading = true;
-    const userData = await getUserData();
-    const stats = await getUserStats();
-    loading = false;
-    expect(loading).toBe(false);
-    expect(userData).toBeDefined();
-    expect(stats).toBeDefined();
-  });
-
-  it('maneja datos corruptos de AsyncStorage', async () => {
-    const display = await profileDisplay(null, { favorites: 0, attendance: 0 });
-    expect(display.displayEmail).toBe('Usuario');
-    expect(display.displayStats.favorites).toBe(0);
-    expect(display.displayStats.attendance).toBe(0);
-  });
-
-  it('formatea correctamente fechas de eventos', () => {
-    const formatted = formatDate('2025-06-15T10:00:00');
-    expect(formatted).toContain('junio');
-    expect(formatted).toContain('2025');
-  });
-
-  it('formatea correctamente horas de eventos', () => {
-    const hour = getHour('2025-06-15T14:30:00');
-    expect(hour).toBe('14:30');
-  });
-
-  it('maneja el cierre de sesión', async () => {
-    const result = await simulateLogout();
-    expect(result.success).toBe(true);
-    expect(result.screen).toBe('Welcome');
+    it('retorna null cuando no hay accountId', async () => {
+      AsyncStorage.getItem.mockResolvedValue(null);
+      
+      const accountId = await getAccountId();
+      expect(accountId).toBeNull();
+    });
   });
 });

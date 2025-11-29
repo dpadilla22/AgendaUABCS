@@ -23,8 +23,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemeContext } from "../components/Theme";
 import { useAppTheme } from '../hooks/useThemeApp';
 
-
-
+import { 
+  getHour, 
+  formatDate, 
+  getDepartmentColor, 
+  processEventsData,
+  getUserEmail,
+  getAccountId 
+} from '../utils/profileUtils';
 
 const API_URL = 'https://agendauabcs.up.railway.app';
 
@@ -38,50 +44,18 @@ const Profile = ({ navigation }) => {
   const [favoritesExpanded, setFavoritesExpanded] = useState(false);
   const [attendanceExpanded, setAttendanceExpanded] = useState(false);
 
-
-
-  const getHour = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  };
-
-  const formatDate = (dateString) => {
-    const [year, month, day] = dateString.split('T')[0].split('-');
-    const date = new Date(`${year}-${month}-${day}T12:00:00`);
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
   useEffect(() => {
-    const getEmail = async () => {
-      try {
-        let email = await AsyncStorage.getItem('userName');
-        if (!email) {
-          const userData = await AsyncStorage.getItem('user');
-          if (userData) {
-            const user = JSON.parse(userData);
-            email = user.email;
-          }
-        }
-        setUserEmail(email || '');
-      } catch (error) {
-        console.error("Error obteniendo email:", error);
-      }
+    const loadEmail = async () => {
+      const email = await getUserEmail();
+      setUserEmail(email);
     };
-    getEmail();
+    loadEmail();
   }, []);
 
   useEffect(() => {
     const fetchAccountIdAndFavorites = async () => {
       try {
-        const id = await AsyncStorage.getItem("accountId");
+        const id = await getAccountId();
         if (id) {
           setAccountId(id);
           await fetchFavoritesAndAttendance(id);
@@ -142,54 +116,10 @@ const Profile = ({ navigation }) => {
       
       const attendanceData = await attendanceResponse.json();
 
-      let formattedFavorites = [];
-      if (favData.success && favData.favorites && favData.favorites.length > 0 && eventsData.success && eventsData.events) {
-        const favoriteIds = favData.favorites.map(fav => fav.eventId);
-        const favoriteEvents = eventsData.events.filter(event => favoriteIds.includes(event.id));
-
-        formattedFavorites = favoriteEvents.map(event => {
-          let rawDateTime = event.date;
-          if (rawDateTime.includes('T:')) {
-            rawDateTime = rawDateTime.replace('T:', 'T');
-          }
-
-          return {
-            id: event.id,
-            title: event.title || "Evento sin título",
-            department: event.department || "Sin departamento",
-            date: formatDate(rawDateTime),
-            time: getHour(rawDateTime),
-            location: event.location || "Ubicación no especificada",
-            imageUrl: event.imageUrl || "https://via.placeholder.com/150"
-          };
-        });
-      }
-
-      let formattedAttendance = [];
-      if (attendanceData.success && attendanceData.attendance && attendanceData.attendance.length > 0 && eventsData.success && eventsData.events) {
-        const attendanceIds = attendanceData.attendance.map(att => att.eventId);
-        const attendedEvents = eventsData.events.filter(event => attendanceIds.includes(event.id));
-
-        formattedAttendance = attendedEvents.map(event => {
-          let rawDateTime = event.date;
-          if (rawDateTime.includes('T:')) {
-            rawDateTime = rawDateTime.replace('T:', 'T');
-          }
-
-          return {
-            id: event.id,
-            title: event.title || "Evento sin título",
-            department: event.department || "Sin departamento",
-            date: formatDate(rawDateTime),
-            time: getHour(rawDateTime),
-            location: event.location || "Ubicación no especificada",
-            imageUrl: event.imageUrl || "https://via.placeholder.com/150"
-          };
-        });
-      }
-
-      setSavedEvents(formattedFavorites);
-      setAttendanceEvents(formattedAttendance);
+      const processedData = processEventsData(eventsData, favData, attendanceData);
+      
+      setSavedEvents(processedData.favorites);
+      setAttendanceEvents(processedData.attendance);
     } catch (error) {
       console.error("Error al obtener favoritos y asistencia:", error);
       setSavedEvents([]);
@@ -197,55 +127,44 @@ const Profile = ({ navigation }) => {
       Alert.alert("Error", "No se pudieron cargar los eventos guardados");
     }
   };
-
- const getDepartmentColor = (dept) => {
-    const colorsitos = {
-      'Sistemas computacionales': '#3B82F6', 
-      'Economía': '#F59E0B', 
-      'Ciencias Sociales y jurídicas': '#06B6D4', 
-      'Agronomia': '#10B981', 
-      'Ciencias de la tierra': '#8B5CF6',
-      'Humanidades': '#F97316',
-      'Ingeniería en pesquerías': '#EF4444',
-      'Ciencias marinas y costeras': '#478884ff',
-      'Ciencia animal y conservación del hábitat': '#FBBF24',
-    };
-    return colorsitos[dept] || (isDark ? '#999' : '#6B7280');
-  };
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Cerrar sesión",
-      "¿Estás seguro de que quieres cerrar sesión?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel"
-        },
-        {
-          text: "Cerrar sesión",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.clear();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'WelcomeScreen' }],
-              });
-            } catch (error) {
-              console.error("Error al cerrar sesión:", error);
-              Alert.alert("Error", "No se pudo cerrar la sesión");
-            }
+const handleLogout = async () => {
+  Alert.alert(
+    "Cerrar sesión",
+    "¿Estás seguro de que quieres cerrar sesión?",
+    [
+      {
+        text: "Cancelar",
+        style: "cancel"
+      },
+      {
+        text: "Cerrar sesión",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // Limpiar AsyncStorage completamente
+            await AsyncStorage.clear();
+            
+            navigation.navigate('Welcome');
+            
+           
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Welcome' }],
+            });
+            
+          } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+            Alert.alert("Error", "No se pudo cerrar la sesión");
           }
         }
-      ]
-    );
-  };
-
+      }
+    ]
+  );
+};
   const renderEventCard = (event) => (
     <View key={event.id} style={[styles.eventCard, { backgroundColor: colors.cardBg }]}>
       <View style={styles.eventHeader}>
-        <View style={[styles.categoryBadge, { backgroundColor: getDepartmentColor(event.department) }]}>
+        <View style={[styles.categoryBadge, { backgroundColor: getDepartmentColor(event.department, isDark) }]}>
           <Text style={styles.categoryBadgeText}>{event.department}</Text>
         </View>
       </View>
@@ -301,46 +220,45 @@ const Profile = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-  <StatusBar 
-    backgroundColor={colors.headerBg} 
-    barStyle={isDark ? "light-content" : "dark-content"} 
-  />
+      <StatusBar 
+        backgroundColor={colors.headerBg} 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+      />
 
-  {/* Header */}
- <View style={[
-  styles.header, 
-  { 
-    backgroundColor: colors.headerBg,
-    borderBottomWidth: 1,    
-    borderBottomColor: '#fff' 
-  }
-]}>
-  <TouchableOpacity 
-    style={[
-      styles.backButton, 
-      { 
-        backgroundColor: colors.cardBg,
-        borderWidth: 1,
-        borderColor: '#fff',
-        borderRadius: 20
-      }
-    ]} 
-    onPress={() => navigation.goBack()}
-    activeOpacity={0.7}
-  >
-   <Image
-  source={require("../assets/back-arrow.png")}
-  style={[
-    styles.backIcon,
-    { tintColor: colors.text }  
-  ]}
-/>
+      {/* Header */}
+      <View style={[
+        styles.header, 
+        { 
+          backgroundColor: colors.headerBg,
+          borderBottomWidth: 1,    
+          borderBottomColor: '#fff' 
+        }
+      ]}>
+        <TouchableOpacity 
+          style={[
+            styles.backButton, 
+            { 
+              backgroundColor: colors.cardBg,
+              borderWidth: 1,
+              borderColor: '#fff',
+              borderRadius: 20
+            }
+          ]} 
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("../assets/back-arrow.png")}
+            style={[
+              styles.backIcon,
+              { tintColor: colors.text }  
+            ]}
+          />
+        </TouchableOpacity>
 
-  </TouchableOpacity>
-
-  <Text style={[styles.headerTitle, { color: colors.text }]}>Mi perfil</Text>
-  <View style={{ width: 40 }} />
-</View>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Mi perfil</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
       <ScrollView 
         style={styles.mainScrollView}
@@ -390,7 +308,6 @@ const Profile = ({ navigation }) => {
             activeOpacity={0.7}
           >
             <View style={styles.sectionTitleContainer}>
-              {/* <Image source={require("../assets/calendar.png")} style={[styles.sectionIcon, { tintColor: '#3b82f6' }]} /> */}
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 Favoritos ({savedEvents.length})
               </Text>
@@ -420,7 +337,6 @@ const Profile = ({ navigation }) => {
             activeOpacity={0.7}
           >
             <View style={styles.sectionTitleContainer}>
-              {/* <Image source={require("../assets/clock.png")} style={[styles.sectionIcon, { tintColor: '#10b981' }]} /> */}
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 Asistencia ({attendanceEvents.length})
               </Text>
@@ -440,24 +356,19 @@ const Profile = ({ navigation }) => {
             </View>
           )}
         </View>
-<TouchableOpacity 
-  style={[
-    styles.logoutButton, 
-    { backgroundColor: isDark ? colors.buttonPrimary : colors.buttonSecondary }
-  ]}
-  onPress={async () => {
-    await AsyncStorage.removeItem('userToken');
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Welcome' }],
-    });
-  }}
-  activeOpacity={0.8}
->
-  <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
-</TouchableOpacity>
 
-</ScrollView>
+        <TouchableOpacity 
+          style={[
+            styles.logoutButton, 
+            { backgroundColor: isDark ? colors.buttonPrimary : colors.buttonSecondary }
+          ]}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
       {/* Barra de navegación inferior */}
       <View style={[styles.bottomNav, { backgroundColor: colors.navBg, borderColor: colors.border }]}>
         <TouchableOpacity 
@@ -594,7 +505,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-     shadowRadius: 2,
+    shadowRadius: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -607,22 +518,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  sectionIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 10,
-  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-  },
-  chevronIcon: {
-    width: 16,
-    height: 16,
-    transform: [{ rotate: '-90deg' }],
-  },
-  chevronExpanded: {
-    transform: [{ rotate: '90deg' }],
   },
   eventsContainer: {
     paddingHorizontal: 12,
@@ -633,10 +531,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     elevation: 1,
-    // shadowColor: "#000",
-    // shadowOffset: { width: 0, height: 1 },
-    // shadowOpacity: 0.05,
-    // shadowRadius: 2,
   },
   eventHeader: {
     marginBottom: 8,

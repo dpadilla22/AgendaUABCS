@@ -10,6 +10,8 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAppTheme } from '../hooks/useThemeApp';
+// Importar utilidades
+import { getDepartmentColor, formatDate, prepareNavigationData } from '../utils/eventCardUtils';
 
 const EventCard = ({ 
   id, title, department, date, time, location, imageUrl, showBookmark = false 
@@ -22,57 +24,27 @@ const EventCard = ({
   const cardShadow = isDark ? 0 : 5; 
   const cardBorderColor = isDark ? '#333' : 'transparent';
 
-  const getDepartmentColor = (dept) => {
-    const colorsitos = {
-      'Sistemas computacionales': '#3B82F6', 
-      'Economía': '#F59E0B', 
-      'Ciencias Sociales y jurídicas': '#06B6D4', 
-      'Agronomia': '#10B981', 
-      'Ciencias de la tierra': '#8B5CF6',
-      'Humanidades': '#F97316',
-      'Ingeniería en pesquerías': '#EF4444',
-      'Ciencias marinas y costeras': '#478884ff',
-      'Ciencia animal y conservación del hábitat': '#FBBF24',
-    };
-    return colorsitos[dept] || (isDark ? '#145172ff' : '#22033dff');
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "Fecha no disponible";
-
-    try {
-      const options = { day: '2-digit', month: 'long', year: 'numeric' };
-      return new Date(dateString).toLocaleDateString('es-ES', options);
-    } catch (error) {
-      return dateString; 
-    }
-  };
-
   const handlePress = () => {
     const eventData = { id, title, department, date, time, location, imageUrl };
-    navigation.navigate('EventDetailScreen', { 
-      eventId: id,    
-      event: eventData
-    });
+    const navigationData = prepareNavigationData(eventData);
+    navigation.navigate('EventDetailScreen', navigationData);
   };
  
-return (
-  <TouchableOpacity 
-  testID="event-card"
-  style={[
-    styles.card,
-    {
-      backgroundColor: isDark ? colors.cardGradient[5] : colors.cardGradient[0],
-      elevation: cardShadow,
-      borderWidth: isDark ? 0 : 2,
-      borderColor: isDark ? 'transparent' : cardBorderColor,
-    }
-  ]}
-  onPress={handlePress}
->
-
-    <View style={[styles.cardContent, { backgroundColor: colors.cardBg }]}>
-
+  return (
+    <TouchableOpacity 
+      testID="event-card"
+      style={[
+        styles.card,
+        {
+          backgroundColor: isDark ? colors.cardGradient[5] : colors.cardGradient[0],
+          elevation: cardShadow,
+          borderWidth: isDark ? 0 : 2,
+          borderColor: isDark ? 'transparent' : cardBorderColor,
+        }
+      ]}
+      onPress={handlePress}
+    >
+      <View style={[styles.cardContent, { backgroundColor: colors.cardBg }]}>
         
         {/* Imagen */}
         <View style={styles.imageContainer}>
@@ -85,7 +57,7 @@ return (
         {/* Info */}
         <View style={styles.infoContainer}>
           
-          <View style={[styles.departmentTag, { backgroundColor: getDepartmentColor(department) }]}>
+          <View style={[styles.departmentTag, { backgroundColor: getDepartmentColor(department, isDark) }]}>
             <Text style={styles.departmentText}>{department}</Text>
           </View>
           
@@ -116,11 +88,11 @@ return (
         </View>
 
         {/* Bookmark */}
-      {showBookmark && (
-  <TouchableOpacity style={styles.bookmarkButton} testID="bookmark-icon">
-    <Ionicons name="bookmark-outline" size={22} color={colors.text} />
-  </TouchableOpacity>
-)}
+        {showBookmark && (
+          <TouchableOpacity style={styles.bookmarkButton} testID="bookmark-icon">
+            <Ionicons name="bookmark-outline" size={22} color={colors.text} />
+          </TouchableOpacity>
+        )}
 
       </View>
     </TouchableOpacity>
@@ -131,9 +103,7 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
     marginHorizontal: 3,
-      borderRadius: 16, 
-
-  
+    borderRadius: 16, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
@@ -143,22 +113,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
   },
- imageContainer: {
-  width: 80,
-  height: 80,
-  borderRadius: 40, 
-  overflow: 'hidden',
-  marginRight: 12,
-  borderWidth: 2,
-  borderColor: '#ddd', 
-},
-
- image: {
-  width: '100%',
-  height: '100%',
-  borderRadius: 40, 
-},
-
+  imageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40, 
+    overflow: 'hidden',
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#ddd', 
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40, 
+  },
   infoContainer: {
     flex: 1,
   },
@@ -195,4 +163,3 @@ const styles = StyleSheet.create({
 });
 
 export default EventCard;
-
