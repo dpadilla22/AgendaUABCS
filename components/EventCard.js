@@ -58,17 +58,19 @@ const EventCard = ({
  
 return (
   <TouchableOpacity 
-    style={[
-      styles.card,
-      {
-        backgroundColor: isDark ? colors.cardGradient[5] : colors.cardGradient[0],
-        elevation: cardShadow,
-        borderWidth: isDark ? 0 : 2,
-        borderColor: isDark ? 'transparent' : cardBorderColor,
-      }
-    ]}
-    onPress={handlePress}
-  >
+  testID="event-card"
+  style={[
+    styles.card,
+    {
+      backgroundColor: isDark ? colors.cardGradient[5] : colors.cardGradient[0],
+      elevation: cardShadow,
+      borderWidth: isDark ? 0 : 2,
+      borderColor: isDark ? 'transparent' : cardBorderColor,
+    }
+  ]}
+  onPress={handlePress}
+>
+
     <View style={[styles.cardContent, { backgroundColor: colors.cardBg }]}>
 
         
@@ -114,11 +116,11 @@ return (
         </View>
 
         {/* Bookmark */}
-        {showBookmark && (
-          <TouchableOpacity style={styles.bookmarkButton}>
-            <Ionicons name="bookmark-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
-        )}
+      {showBookmark && (
+  <TouchableOpacity style={styles.bookmarkButton} testID="bookmark-icon">
+    <Ionicons name="bookmark-outline" size={22} color={colors.text} />
+  </TouchableOpacity>
+)}
 
       </View>
     </TouchableOpacity>
@@ -193,3 +195,4 @@ const styles = StyleSheet.create({
 });
 
 export default EventCard;
+
