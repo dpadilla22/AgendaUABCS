@@ -1,4 +1,4 @@
-<h1 align="left">📖Agenda UABCS v1.0</h1>
+<h1 align="left">📖Agenda UABCS v2.0</h1>
 
 ###
 
@@ -24,7 +24,7 @@
 
 ###
 
-<p align="left">Identifier / identificador: italiaE_22<br>Password / contraseña: IngenieriaRules</p>
+<p align="left">Identifier / identificador: FulanoPer322<br>Password / contraseña: Fulanito22_23</p>
 
 ###
 
@@ -40,12 +40,12 @@
 
 ###
 
-<p align="left">1.1- Open the next link on your phone / Abra el siguiente enlace en su teléfono:<br><br>https://expo.dev/accounts/sr.m/projects/agenda-uabcs/builds/60ac982f-ba4f-43a6-84a6-2606c8670972<br><br>Or scan this QR code / O escanee el siguiente código QR:</p>
+<p align="left">1.1- Open the next link on your phone / Abra el siguiente enlace en su teléfono:<br><br>https://expo.dev/accounts/sr.m/projects/agenda-uabcs/builds/1f8a4fe3-a042-4202-8476-1510d23bdac5<br><br>Or scan this QR code / O escanee el siguiente código QR:</p>
 
 ###
 
 <div align="center">
-  <img height="300" src="https://res.cloudinary.com/dmkkorgf6/image/upload/v1749505193/99f8d0d4-e597-4464-a0dd-72bf40184833_hxwifg.jpg"  />
+  <img width="244" height="325" alt="image" src="https://github.com/user-attachments/assets/2c6d24a5-df6b-44ce-a579-5b33fe3f2e1b" />
 </div>
 
 ###
